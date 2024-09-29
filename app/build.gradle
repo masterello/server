@@ -1,0 +1,7 @@
+
+dependencies {
+    implementation project(':auth')
+    implementation project(':user:user-impl')
+    implementation project(':db')
+
+}

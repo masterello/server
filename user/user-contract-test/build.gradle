@@ -1,0 +1,6 @@
+
+dependencies {
+    implementation project(':user:user-contract')
+    implementation 'org.springframework.security:spring-security-crypto:6.1.3'
+
+}

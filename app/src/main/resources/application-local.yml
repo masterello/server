@@ -1,0 +1,54 @@
+spring:
+  datasource:
+    password: masterello
+    username: masterello
+    url: jdbc:postgresql://localhost:5432/masterello
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: 'true'
+    hibernate:
+      ddl-auto: validate
+  application:
+    name: masterello
+  sql:
+    init:
+      mode: always
+  mail:
+    host: localhost
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          port: '25'
+          starttls:
+            enable: 'false'
+            required: 'false'
+          auth: 'false'
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            clientId: 777134146814-n0jtdcbahc7ts5n2gfl5kvpdmf5tspd1.apps.googleusercontent.com
+            clientSecret: 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
+            redirectUri: https://masterello.com/{action}/oauth2/code/{registrationId}
+            authorizationGrantType:
+              - authorization_code
+              - refresh_token
+              - password
+masterello:
+  auth:
+    token:
+      access-token-ttl: 5m
+      refresh-token-ttl: 1h
+    google:
+      verification-url: "https://oauth2.googleapis.com"
+  email:
+    from: masterello1234@gmail.com
+    subject: Please verify your registration
+    sender: Masterello

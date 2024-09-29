@@ -1,0 +1,435 @@
+{
+	"info": {
+		"_postman_id": "5d420f96-55b3-4021-b718-1094ead521bd",
+		"name": "masterello",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Get auth token",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"username\": \"dmitry.borodin90+123@gmail.com\",\n\t\"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8100/oauth2/token?grant_type=password",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8100",
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "password"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8100/oauth2/logout",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8100",
+							"path": [
+								"oauth2",
+								"logout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Google token",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8100/oauth2/token?grant_type=google_oid&token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjkxNDEzY2Y0ZmEwY2I5MmEzYzNmNWEwNTQ1MDkxMzJjNDc2NjA5MzciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NjMwMDMyNTkyMzUzMjAxNTMiLCJlbWFpbCI6ImRtaXRyeS5ib3JvZGluOTBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiIyM280ektCSVFaV3JpQ3ZDWm1iLXR3Iiwibm9uY2UiOiJiS3J6eHBWamxNM1ZfbGtsNHpDRlhDa0Y1QS1JTXRxc1pKOFlyYVczMW1vIiwibmFtZSI6IkRtaXRyaWkgQm9yb2RpbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMZ3Z3RGNUREJZQ0w1eW5BQUl6ak1ZM1d1MTBBdUg4SGotbzc1aWh4M3I9czk2LWMiLCJnaXZlbl9uYW1lIjoiRG1pdHJpaSIsImZhbWlseV9uYW1lIjoiQm9yb2RpbiIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjoxNzA0NDYzNzY2LCJleHAiOjE3MDQ0NjczNjZ9.a4U27lKOHuGnPOoy546CD1OU584wxGubI83_zHuDJ3xOw4ncd-1wx2DJWqdwrLNAD_9QLgtFv4jUfd2Zjc1S9IpGz6wwXsCiZ1zxaY3aq7XDJWfkO6wgKn84eFsc3dbvXDdHn57G9ruOneaOx9XZ7Trnq7rVymyUZy3SFoJw7CIw5uq2p7tVOTVPlr00MZwZw_OeYiyGqr6Vux8YXs2CkO7OzfmLlwp2Af6Rf44HIyyQ8qTvGBltdz_F0rsNr5cOlBPlnZBqX40waKWuuEL6X1_ghtBIj3Xn8QDGCUuRbuyMsr1s4Fa6d7yylbECbLFA2i1M5eqZ8mgzHhsa2vVERg#",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8100",
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "google_oid"
+								},
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjkxNDEzY2Y0ZmEwY2I5MmEzYzNmNWEwNTQ1MDkxMzJjNDc2NjA5MzciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NjMwMDMyNTkyMzUzMjAxNTMiLCJlbWFpbCI6ImRtaXRyeS5ib3JvZGluOTBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiIyM280ektCSVFaV3JpQ3ZDWm1iLXR3Iiwibm9uY2UiOiJiS3J6eHBWamxNM1ZfbGtsNHpDRlhDa0Y1QS1JTXRxc1pKOFlyYVczMW1vIiwibmFtZSI6IkRtaXRyaWkgQm9yb2RpbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMZ3Z3RGNUREJZQ0w1eW5BQUl6ak1ZM1d1MTBBdUg4SGotbzc1aWh4M3I9czk2LWMiLCJnaXZlbl9uYW1lIjoiRG1pdHJpaSIsImZhbWlseV9uYW1lIjoiQm9yb2RpbiIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjoxNzA0NDYzNzY2LCJleHAiOjE3MDQ0NjczNjZ9.a4U27lKOHuGnPOoy546CD1OU584wxGubI83_zHuDJ3xOw4ncd-1wx2DJWqdwrLNAD_9QLgtFv4jUfd2Zjc1S9IpGz6wwXsCiZ1zxaY3aq7XDJWfkO6wgKn84eFsc3dbvXDdHn57G9ruOneaOx9XZ7Trnq7rVymyUZy3SFoJw7CIw5uq2p7tVOTVPlr00MZwZw_OeYiyGqr6Vux8YXs2CkO7OzfmLlwp2Af6Rf44HIyyQ8qTvGBltdz_F0rsNr5cOlBPlnZBqX40waKWuuEL6X1_ghtBIj3Xn8QDGCUuRbuyMsr1s4Fa6d7yylbECbLFA2i1M5eqZ8mgzHhsa2vVERg#"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RefreshToken",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								},
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8100/oauth2/token?grant_type=refresh_token&refresh_token=laImf5DmgHAwtFayJtHB99OY9yR-5JMm5-ye65dL02z4RNmuYvamgpdz4AfT5hFecKr6m9DTo0zHj8KEy1c1zgXT10IkoaNmWNVKJ_olwMIakbD5YHe866it0Iopu373",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8100",
+							"path": [
+								"oauth2",
+								"token"
+							],
+							"query": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token"
+								},
+								{
+									"key": "refresh_token",
+									"value": "laImf5DmgHAwtFayJtHB99OY9yR-5JMm5-ye65dL02z4RNmuYvamgpdz4AfT5hFecKr6m9DTo0zHj8KEy1c1zgXT10IkoaNmWNVKJ_olwMIakbD5YHe866it0Iopu373"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "code",
+								"value": "Basic ZXh0ZXJuYWxfYXBpX2NsaWVudDpzZWNyZXQ=",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8100/oauth2/introspect?token=fOflJGEimv6WB3WKjMxxSyP3IH9DS3nko9qbQxLw85_8DI0TMGt622JOnaAg6DcmTGmlZYKNfUMJjqUbRzuKTydFZBKMsN7BtL5__G0EPJUdxT8rbo7t0VzwOcHTvIW7",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8100",
+							"path": [
+								"oauth2",
+								"introspect"
+							],
+							"query": [
+								{
+									"key": "token",
+									"value": "fOflJGEimv6WB3WKjMxxSyP3IH9DS3nko9qbQxLw85_8DI0TMGt622JOnaAg6DcmTGmlZYKNfUMJjqUbRzuKTydFZBKMsN7BtL5__G0EPJUdxT8rbo7t0VzwOcHTvIW7"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "signup",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"dmitry.borodin90+123@gmail.com\",\n\t\"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8100/api/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8100",
+							"path": [
+								"api",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add role",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"userId\": \"2115bd5c-ad18-48ea-8a22-160469d55ff3\",\n\t\"role\": \"WORKER\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8100/api/add-role",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8100",
+							"path": [
+								"api",
+								"add-role"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get user",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "{{clientSecret}}",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "{{clientId}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8100/api/user/2115bd5c-ad18-48ea-8a22-160469d55ff3",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8100",
+							"path": [
+								"api",
+								"user",
+								"2115bd5c-ad18-48ea-8a22-160469d55ff3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "verify Google oid",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://oauth2.googleapis.com/tokeninfo?id_token=eyJhbGciOiJSUzI1NiIsImtpZCI6ImI5YWM2MDFkMTMxZmQ0ZmZkNTU2ZmYwMzJhYWIxODg4ODBjZGUzYjkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NjMwMDMyNTkyMzUzMjAxNTMiLCJlbWFpbCI6ImRtaXRyeS5ib3JvZGluOTBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJGRFRmT2VyYWFUY3BMTFRGSTE3Unh3Iiwibm9uY2UiOiJ0TmhHZjk4T1Bmd29saUYxTnhlNlVEclR0TzFqRWVGdnNsMUFoT2w2X0JFIiwibmFtZSI6IkRtaXRyaWkgQm9yb2RpbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMZ3Z3RGNUREJZQ0w1eW5BQUl6ak1ZM1d1MTBBdUg4SGotbzc1aWh4M3I9czk2LWMiLCJnaXZlbl9uYW1lIjoiRG1pdHJpaSIsImZhbWlseV9uYW1lIjoiQm9yb2RpbiIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjoxNjk2MzMxNzIwLCJleHAiOjE2OTYzMzUzMjB9.jwRqWMQ8XLuqf1xbT0bMbLfte52nBkJr4YTVz4XyU6kFwTTKQUsBGg1CEQ0WUSH8FLf5wZL_CZIsk_QYUAcdumUKdDEVc1_uS64jFW2RKqkGo6qjZ7bz2Wjs-mqONFeVvH1vPTd5hgm1jmjFovHVO0TjuBHOnNjvJP6OKMhRufRU-we2NM67HvF57a-6xUV--kK_d3FcjwzwA0_D43O_WwKMDaWP9HYAYI_08m_jx34N3MbpYpEDvVTJrOsHwM-YYamhTnnYQ1YPvAxc7QRbEXUYOt3OL0lt-P1TetfThI2Jy68OQJqehbSj4jytRlcH7MHqCo_vMSOmSZZtGfMRHg",
+							"protocol": "https",
+							"host": [
+								"oauth2",
+								"googleapis",
+								"com"
+							],
+							"path": [
+								"tokeninfo"
+							],
+							"query": [
+								{
+									"key": "id_token",
+									"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImI5YWM2MDFkMTMxZmQ0ZmZkNTU2ZmYwMzJhYWIxODg4ODBjZGUzYjkiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NjMwMDMyNTkyMzUzMjAxNTMiLCJlbWFpbCI6ImRtaXRyeS5ib3JvZGluOTBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJGRFRmT2VyYWFUY3BMTFRGSTE3Unh3Iiwibm9uY2UiOiJ0TmhHZjk4T1Bmd29saUYxTnhlNlVEclR0TzFqRWVGdnNsMUFoT2w2X0JFIiwibmFtZSI6IkRtaXRyaWkgQm9yb2RpbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMZ3Z3RGNUREJZQ0w1eW5BQUl6ak1ZM1d1MTBBdUg4SGotbzc1aWh4M3I9czk2LWMiLCJnaXZlbl9uYW1lIjoiRG1pdHJpaSIsImZhbWlseV9uYW1lIjoiQm9yb2RpbiIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjoxNjk2MzMxNzIwLCJleHAiOjE2OTYzMzUzMjB9.jwRqWMQ8XLuqf1xbT0bMbLfte52nBkJr4YTVz4XyU6kFwTTKQUsBGg1CEQ0WUSH8FLf5wZL_CZIsk_QYUAcdumUKdDEVc1_uS64jFW2RKqkGo6qjZ7bz2Wjs-mqONFeVvH1vPTd5hgm1jmjFovHVO0TjuBHOnNjvJP6OKMhRufRU-we2NM67HvF57a-6xUV--kK_d3FcjwzwA0_D43O_WwKMDaWP9HYAYI_08m_jx34N3MbpYpEDvVTJrOsHwM-YYamhTnnYQ1YPvAxc7QRbEXUYOt3OL0lt-P1TetfThI2Jy68OQJqehbSj4jytRlcH7MHqCo_vMSOmSZZtGfMRHg"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

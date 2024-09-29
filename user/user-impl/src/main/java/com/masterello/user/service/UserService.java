@@ -1,0 +1,99 @@
+package com.masterello.user.service;
+
+import com.github.fge.jsonpatch.JsonPatch;
+import com.masterello.commons.core.json.service.PatchService;
+import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.exception.InvalidUserUpdateException;
+import com.masterello.user.exception.UserAlreadyExistsException;
+import com.masterello.user.exception.UserHasRequestedRoleException;
+import com.masterello.user.exception.UserNotFoundException;
+import com.masterello.user.repository.UserRepository;
+import com.masterello.user.value.MasterelloUser;
+import com.masterello.user.value.Role;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+
+@RequiredArgsConstructor
+@Slf4j
+@Service
+public class UserService implements MasterelloUserService  {
+
+    private final UserRepository userRepository;
+    private final PatchService patchService;
+
+    @Transactional
+    public MasterelloUser createUser(MasterelloUserEntity user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new UserAlreadyExistsException();
+        }
+        return userRepository.saveAndFlush(user);
+    }
+
+    public MasterelloUser addRole(UUID userId, Role role) {
+        MasterelloUserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found by id"));
+
+        if (user.getRoles().contains(role)) {
+            throw new UserHasRequestedRoleException(role);
+        }
+        Set<Role> roles = new HashSet<>(user.getRoles());
+        roles.add(role);
+        user.setRoles(roles);
+        return userRepository.save(user);
+    }
+
+    public boolean userExist(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public MasterelloUser retrieveUserByUuid(UUID userUuid) {
+        log.info("Retrieving user by uuid {}", userUuid);
+
+        return userRepository.findById(userUuid)
+                .orElseThrow(() -> {
+                    log.warn("User with uuid {} not found in the system", userUuid);
+                    return new UserNotFoundException("User not found by id");
+                });
+    }
+
+    public MasterelloUser updateUser(UUID uuid, JsonPatch patch) {
+        var user = userRepository.findById(uuid)
+                .orElseThrow(() -> {
+                    log.warn("User with uuid {} not found in the system", uuid);
+                    return new UserNotFoundException("User not found by id");
+                });
+
+        MasterelloUserEntity patchedUser;
+        try {
+            patchedUser = patchService.applyPatch(patch, user, MasterelloUserEntity.class);
+        } catch (Exception ex) {
+            throw new InvalidUserUpdateException("Error when applying update to user", ex);
+        }
+        return userRepository.saveAndFlush(patchedUser);
+    }
+
+    @Override
+    public Optional<MasterelloUser> findById(UUID id) {
+        return userRepository.findById(id)
+                .map(Function.identity());
+    }
+
+    @Override
+    public Optional<MasterelloUser> findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(Function.identity());
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+}

@@ -1,0 +1,62 @@
+package com.masterello.user.service;
+
+
+import com.masterello.user.value.MasterelloUser;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.io.UnsupportedEncodingException;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class EmailService {
+    @Value("${masterello.email.from}")
+    private String from;
+    @Value("${masterello.email.sender}")
+    private String sender;
+    @Value("${masterello.email.subject}")
+    private String subject;
+    private static final String LINK = "/api/confirmationLink/verifyUserToken?code=";
+    private static final String CONTENT = """
+            Dear ${username},<br>
+            Please click the link below to verify your registration:<br>
+            <h3><a href="${verifyURL}">VERIFY</a></h3>
+            Thank you,<br>
+            Masterello
+            """;
+    private final JavaMailSender mailSender;
+
+    //TODO: replace with AWS SES solution, when migrated to AWS acc
+    public void sendEmail(@NonNull MasterelloUser user, @NonNull String verificationCode) throws MessagingException, UnsupportedEncodingException {
+        String text = CONTENT.replace("${username}", buildUserName(user))
+                .replace("${verifyURL}", buildRequestUrl(verificationCode));
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+
+        helper.setFrom(from, sender);
+        helper.setTo(user.getEmail());
+        helper.setSubject(subject);
+        helper.setText(text, true);
+
+        mailSender.send(message);
+    }
+
+    private String buildRequestUrl(String verificationCode) {
+        final String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        return baseUrl + LINK + verificationCode;
+    }
+
+    private String buildUserName(MasterelloUser user) {
+        return user.getName() + " " + user.getLastname();
+    }
+}

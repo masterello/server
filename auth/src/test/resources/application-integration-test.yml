@@ -1,0 +1,35 @@
+server:
+#  port: 8090
+  tomcat:
+    accesslog:
+      enabled: true
+      directory: "/dev"
+      prefix: stdout
+      buffered: false
+      suffix:
+      file-date-format:
+      pattern: "[ACCESS] %h %t \"%r\" %s %b"
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            clientId: 777134146814-n0jtdcbahc7ts5n2gfl5kvpdmf5tspd1.apps.googleusercontent.com
+            clientSecret: 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
+            redirectUri: https://masterello.com/{action}/oauth2/code/{registrationId}
+            authorizationGrantType:
+              - authorization_code
+              - refresh_token
+              - password
+  jpa.hibernate.ddl-auto: create
+
+masterello:
+  auth:
+    token:
+      access-token-ttl: 5m
+      refresh-token-ttl: 1h
+    google:
+      verification-url: "http://localhost:8111/google"
+

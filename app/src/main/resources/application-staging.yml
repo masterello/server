@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+    username: auth-user
+    url: jdbc:postgresql://rds-staging.cjgq4gw6c4p3.eu-west-1.rds.amazonaws.com:5432/auth-db
+  mail:
+    host: email-smtp.eu-west-1.amazonaws.com
+    username: ${SES_USERNAME}
+    password: ${SES_PASSWORD}
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          port: '587'
+          starttls:
+            enable: 'true'
+            required: 'true'
+          auth: 'true'

@@ -1,0 +1,17 @@
+
+rootProject.name = 'server'
+include 'db'
+include 'app'
+include 'user:user-impl'
+include 'user:user-contract'
+include 'user:user-contract-test'
+
+include 'auth'
+include 'auth-contract'
+
+include 'worker'
+
+include 'common'
+include 'common-security'
+include 'common-test'
+

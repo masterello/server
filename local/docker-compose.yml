@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  db-auth:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=masterello
+      - POSTGRES_PASSWORD=masterello
+    ports:
+      - '5432:5432'
+    volumes:
+      - db:/var/lib/postgresql/auth-data
+  fakesmtp:
+    image: rnwood/smtp4dev
+    ports:
+      - "25:25"
+      - "80:80"
+    environment:
+      - requireTLS=false
+volumes:
+  db:
+    driver: local
