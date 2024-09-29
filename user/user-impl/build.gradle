@@ -1,9 +1,9 @@
 
 dependencies {
-    implementation project(':common')
-    implementation project(':common-security')
+    implementation project(':common:common-core')
+    implementation project(':common:common-security')
     implementation project(':user:user-contract')
-    implementation project(':auth-contract')
+    implementation project(':auth:auth-contract')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-mail'

@@ -6,7 +6,6 @@ import com.masterello.user.dto.AddRoleRequest;
 import com.masterello.user.dto.SignUpRequest;
 import com.masterello.user.dto.UserDTO;
 import com.masterello.user.mapper.UserMapper;
-import com.masterello.user.service.AuthNService;
 import com.masterello.user.service.SignUpService;
 import com.masterello.user.service.UserService;
 
