@@ -6,11 +6,8 @@ import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Set;
 import java.util.UUID;
@@ -33,8 +30,6 @@ public class UserContractTestConfig {
 
     private static class TestAuthNService implements AuthNService {
 
-        final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
         @Override
         public MasterelloUser googleSignup(String email) {
             return MasterelloTestUser.builder()
@@ -44,11 +39,6 @@ public class UserContractTestConfig {
                     .status(UserStatus.ACTIVE)
                     .emailVerified(true)
                     .build();
-        }
-
-        @Override
-        public boolean checkPassword(String rawPassword, String encodedPassword) {
-            return passwordEncoder.matches(rawPassword, encodedPassword);
         }
     }
 }

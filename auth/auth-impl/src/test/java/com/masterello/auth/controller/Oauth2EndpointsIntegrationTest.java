@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 
@@ -55,6 +56,8 @@ public class Oauth2EndpointsIntegrationTest extends AbstractIntegrationTest {
     private MasterelloUserService userService;
     @Autowired
     private AuthNService authNService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @BeforeEach
     public void setUp() {
         MasterelloTestUser user1 = getUser(UUID.fromString(USER_1_ID), USER_1_EMAIL, USER_1_E_PASS, true);
@@ -76,7 +79,7 @@ public class Oauth2EndpointsIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void getToken_with_passportgrant() {
-        authNService.checkPassword(USER_1_PASS, USER_1_E_PASS);
+        passwordEncoder.matches(USER_1_PASS, USER_1_E_PASS);
         LoginRequest request = new LoginRequest(USER_1_EMAIL, USER_1_PASS);
         //@formatter:off
         ValidatableResponse validatableResponse = login(request);

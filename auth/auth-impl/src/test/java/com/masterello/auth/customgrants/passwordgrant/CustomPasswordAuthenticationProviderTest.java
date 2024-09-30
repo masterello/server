@@ -4,9 +4,7 @@ import com.masterello.auth.domain.SecurityUserDetails;
 import com.masterello.auth.service.SecurityUserDetailsService;
 import com.masterello.auth.utils.AuthTestDataProvider;
 import com.masterello.user.service.AuthNService;
-import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloTestUser;
-import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +40,7 @@ class CustomPasswordAuthenticationProviderTest {
     @Mock
     private SecurityUserDetailsService userDetailsService;
     @Mock
-    private AuthNService authNService;
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private CustomPasswordAuthenticationProvider authenticationProvider;
@@ -67,7 +65,7 @@ class CustomPasswordAuthenticationProviderTest {
                                 OAuth2ParameterNames.PASSWORD, password));
 
         when(userDetailsService.loadUserByUsername(username)).thenReturn(createTestUser(username, password));
-        when(authNService.checkPassword(password, password)).thenReturn(true);
+        when(passwordEncoder.matches(password, password)).thenReturn(true);
 
         // Act
         Authentication result = authenticationProvider.authenticate(authenticationToken);
@@ -108,7 +106,7 @@ class CustomPasswordAuthenticationProviderTest {
                                 OAuth2ParameterNames.PASSWORD, wrongPassword));
 
         when(userDetailsService.loadUserByUsername(username)).thenReturn(createTestUser(username, password));
-        when(authNService.checkPassword(wrongPassword, password)).thenReturn(false);
+        when(passwordEncoder.matches(wrongPassword, password)).thenReturn(false);
 
         // Act & Assert
         assertThrows(OAuth2AuthenticationException.class, () -> authenticationProvider.authenticate(authenticationToken));

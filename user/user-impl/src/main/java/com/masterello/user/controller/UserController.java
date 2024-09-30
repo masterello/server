@@ -10,9 +10,9 @@ import com.masterello.user.service.SignUpService;
 import com.masterello.user.service.UserService;
 
 import com.masterello.user.value.MasterelloUser;
-import com.masterello.validation.AuthZRule;
-import com.masterello.validation.AuthZRules;
-import com.masterello.validation.OwnerId;
+import com.masterello.commons.security.validation.AuthZRule;
+import com.masterello.commons.security.validation.AuthZRules;
+import com.masterello.commons.security.validation.OwnerId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

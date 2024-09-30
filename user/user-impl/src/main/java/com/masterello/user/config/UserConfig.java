@@ -18,9 +18,4 @@ public class UserConfig {
     public PatchService patchService(ObjectMapper objectMapper) {
         return new PatchService(objectMapper);
     }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 }

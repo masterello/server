@@ -1,8 +1,8 @@
-package com.masterello.filter;
+package com.masterello.commons.security.filter;
 
 import com.masterello.auth.service.AuthService;
-import com.masterello.data.AnonymousMasterelloAuthentication;
-import com.masterello.data.MasterelloAuthentication;
+import com.masterello.commons.security.data.AnonymousMasterelloAuthentication;
+import com.masterello.commons.security.data.MasterelloAuthentication;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;

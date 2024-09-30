@@ -1,5 +1,5 @@
 
 
 dependencies {
-    implementation project(':common:common-core')
+    implementation project(':commons:common-core')
 }

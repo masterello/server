@@ -6,11 +6,19 @@ import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
 import com.masterello.auth.domain.Authorization;
 import com.masterello.auth.repository.AuthorizationRepository;
+import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -23,29 +31,48 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Service
 public class IntrospectService implements AuthService {
-    private final AuthorizationRepository authorizationRepository;
-    private final AuthEntityToOAuth2AuthorizationConverter converter;
+    private final JpaOAuth2AuthorizationService authorizationService;
+    private final MasterelloUserService userService;
     private final TokenProperties tokenProperties;
 
     @Override
     public Optional<AuthData> validateToken(String token) {
-        Optional<Authorization> optAuth = authorizationRepository.findByAccessTokenValue(token);
-        if(optAuth.isEmpty()) {
+        OAuth2Authorization auth = authorizationService.findByToken(token, OAuth2TokenType.ACCESS_TOKEN);
+
+        if(auth == null) {
             return Optional.empty();
         }
 
-        Authorization auth = optAuth.get();
-        OffsetDateTime accessTokenExpiresAt = Instant.now().plus(tokenProperties.getAccessTokenTtl())
-                .atOffset(auth.getAccessTokenExpiresAt().getOffset());
-        auth.setAccessTokenExpiresAt(accessTokenExpiresAt);
+        OAuth2Authorization.Token<OAuth2AccessToken> accessToken =
+                auth.getAccessToken();
+        if (!accessToken.isActive()) {
+            return Optional.empty();
+        }
 
-        auth.setRefreshTokenExpiresAt(Instant.now().plus(tokenProperties.getRefreshTokenTtl())
-                .atOffset(auth.getRefreshTokenExpiresAt().getOffset()));
+        OAuth2AccessToken aToken = accessToken.getToken();
+        Instant newAccessTokenExpiresAt = Instant.now().plus(tokenProperties.getAccessTokenTtl());
 
-        val saved = authorizationRepository.save(auth);
-        val oAuth2Authorization = converter.toOAuth2Authorization(saved);
-        OAuth2ClientAuthenticationToken principal = (OAuth2ClientAuthenticationToken)oAuth2Authorization.getAttributes().get(Principal.class.getName());
-        MasterelloUser user = (MasterelloUser) principal.getDetails();
+        OAuth2Authorization.Token<OAuth2RefreshToken> refreshToken =
+                auth.getRefreshToken();
+        if (refreshToken != null && !refreshToken.isActive()) {
+            return Optional.empty();
+        }
+
+        OAuth2RefreshToken rToken = refreshToken.getToken();
+        Instant newRefreshTokenExpiresAt = Instant.now().plus(tokenProperties.getRefreshTokenTtl());
+
+
+        val updatedAuth = OAuth2Authorization.from(auth)
+                .accessToken(new OAuth2AccessToken(aToken.getTokenType(), aToken.getTokenValue(),
+                        aToken.getIssuedAt(), newAccessTokenExpiresAt, aToken.getScopes()))
+                .refreshToken(new OAuth2RefreshToken(rToken.getTokenValue(), rToken.getIssuedAt(),
+                        newRefreshTokenExpiresAt))
+                .build();
+
+        authorizationService.save(updatedAuth);
+
+        val principal = (OAuth2ClientAuthenticationToken)updatedAuth.getAttributes().get(Principal.class.getName());
+        val user = (MasterelloUser)principal.getDetails();
 
         return Optional.ofNullable(AuthData.builder()
                         .username(user.getUsername())
@@ -55,6 +82,8 @@ public class IntrospectService implements AuthService {
                 .build());
 
     }
+
+
 
     private List<AuthZRole> toAuthZRoles(Set<Role> roles) {
         return roles.stream()

@@ -4,9 +4,9 @@ rootProject.name = 'server'
 include 'app'
 include 'db'
 
-include 'common:common-security'
-include 'common:common-test'
-include 'common:common-core'
+include 'commons:common-security'
+include 'commons:common-test'
+include 'commons:common-core'
 
 include 'user:user-impl'
 include 'user:user-contract'

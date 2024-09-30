@@ -1,4 +1,4 @@
-package com.masterello.data;
+package com.masterello.commons.security.data;
 
 import com.masterello.auth.data.AuthData;
 import lombok.RequiredArgsConstructor;

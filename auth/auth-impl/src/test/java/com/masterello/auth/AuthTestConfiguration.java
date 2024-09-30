@@ -5,7 +5,8 @@ import org.springframework.context.annotation.ComponentScan;
 
 @ComponentScan(basePackages = {
         "com.masterello.auth",
-        "com.masterello.user"
+        "com.masterello.user",
+        "com.masterello.commons"
 })
 @EnableAutoConfiguration
 public class AuthTestConfiguration {

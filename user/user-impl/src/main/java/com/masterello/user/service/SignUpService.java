@@ -49,9 +49,4 @@ public class SignUpService implements AuthNService{
                 .build();
         return userDetailsService.createUser(user);
     }
-
-    @Override
-    public boolean checkPassword(String rawPassword, String encodedPassword) {
-        return passwordEncoder.matches(rawPassword, encodedPassword);
-    }
 }

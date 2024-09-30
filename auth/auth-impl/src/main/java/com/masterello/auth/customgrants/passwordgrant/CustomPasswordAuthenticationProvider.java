@@ -2,11 +2,11 @@ package com.masterello.auth.customgrants.passwordgrant;
 
 import com.masterello.auth.customgrants.AbstractAuthenticationProvider;
 import com.masterello.auth.service.SecurityUserDetailsService;
-import com.masterello.user.service.AuthNService;
 import com.masterello.user.value.MasterelloUser;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -19,13 +19,13 @@ import static com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthe
 @Component
 public class CustomPasswordAuthenticationProvider extends AbstractAuthenticationProvider implements AuthenticationProvider {
 
-    private final AuthNService authNService;
+    private final PasswordEncoder passwordEncoder;
 
     public CustomPasswordAuthenticationProvider(OAuth2AuthorizationService authorizationService,
                                                 OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator,
-                                                SecurityUserDetailsService userDetailsService, AuthNService authNService) {
+                                                SecurityUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
         super(authorizationService, tokenGenerator, userDetailsService);
-        this.authNService = authNService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class CustomPasswordAuthenticationProvider extends AbstractAuthentication
         String password = customPasswordAuthenticationToken.getPassword();
         MasterelloUser user = fetchUser(username);
 
-        if (!authNService.checkPassword(password, user.getPassword())) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
         }
 

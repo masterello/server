@@ -1,9 +1,9 @@
-package com.masterello.validation;
+package com.masterello.commons.security.validation;
 
 import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
-import com.masterello.data.MasterelloAuthentication;
-import com.masterello.exception.UnauthorisedException;
+import com.masterello.commons.security.data.MasterelloAuthentication;
+import com.masterello.commons.security.exception.UnauthorisedException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -28,12 +28,12 @@ import static java.util.Collections.emptyList;
 @Component
 public class AuthZAspect {
 
-    @Around("@annotation(com.masterello.validation.AuthZRules)")
+    @Around("@annotation(com.masterello.commons.security.validation.AuthZRules)")
     public Object processAuthZRules(ProceedingJoinPoint joinPoint) throws Throwable {
         return doProcessAuthZRules(joinPoint, method -> method.getAnnotation(AuthZRules.class).value());
     }
 
-    @Around("@annotation(com.masterello.validation.AuthZRule)")
+    @Around("@annotation(com.masterello.commons.security.validation.AuthZRule)")
     public Object processAuthZRule(ProceedingJoinPoint joinPoint) throws Throwable {
         return doProcessAuthZRules(joinPoint, method -> new AuthZRule[]{method.getAnnotation(AuthZRule.class)});
     }

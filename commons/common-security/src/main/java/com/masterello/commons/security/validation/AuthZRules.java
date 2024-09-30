@@ -1,4 +1,4 @@
-package com.masterello.validation;
+package com.masterello.commons.security.validation;
 
 import java.lang.annotation.*;
 

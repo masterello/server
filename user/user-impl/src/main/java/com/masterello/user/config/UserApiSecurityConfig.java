@@ -1,6 +1,6 @@
 package com.masterello.user.config;
 
-import com.masterello.filter.AuthFilter;
+import com.masterello.commons.security.filter.AuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
