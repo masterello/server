@@ -16,6 +16,5 @@ include 'auth:auth-impl'
 include 'auth:auth-contract'
 
 include 'worker'
-
-
+include 'auth:auth-contract-test'
 

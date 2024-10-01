@@ -1,0 +1,217 @@
+package com.masterello.user.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatch;
+import com.masterello.commons.core.json.exception.PatchFailedException;
+import com.masterello.commons.core.json.service.PatchService;
+import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.exception.InvalidUserUpdateException;
+import com.masterello.user.exception.UserAlreadyExistsException;
+import com.masterello.user.exception.UserNotFoundException;
+import com.masterello.user.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.io.IOException;
+import java.util.Optional;
+import java.util.UUID;
+
+import static com.masterello.user.util.TestDataProvider.buildCompleteUser;
+import static com.masterello.user.util.TestDataProvider.buildUser;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+    @Spy
+    private PatchService patchService = new PatchService(new ObjectMapper());
+    @InjectMocks
+    private UserService userService;
+
+    @Test
+    public void retrieveUserByUuid_userNotFound() {
+        //GIVEN
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.empty());
+
+        //WHEN
+        assertThrows(UserNotFoundException.class, () -> userService.retrieveUserByUuid(UUID.randomUUID()));
+
+        //THEN
+        verify(userRepository, times(1)).findById(any());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void retrieveUserByUuid() {
+        //GIVEN
+        var user = buildUser();
+
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.of(user));
+
+        //WHEN
+        var retrievedUser = userService.retrieveUserByUuid(UUID.randomUUID());
+
+        //THEN
+        assertEquals(user.getCity(), retrievedUser.getCity());
+        assertEquals(user.getLastname(), retrievedUser.getLastname());
+        assertEquals(user.getName(), retrievedUser.getName());
+        assertEquals(user.getPhone(), retrievedUser.getPhone());
+        assertEquals(user.getEmail(), retrievedUser.getEmail());
+        assertEquals(user.getPassword(), retrievedUser.getPassword());
+
+        verify(userRepository, times(1)).findById(any());
+
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void createUser_already_created() {
+        //GIVEN
+        MasterelloUserEntity user = buildUser();
+        when(userRepository.existsByEmail(user.getEmail())).thenReturn(true);
+
+        //WHEN
+        assertThrows(UserAlreadyExistsException.class, () -> userService.createUser(user));
+
+        //THEN
+        verify(userRepository, times(1)).existsByEmail(user.getEmail());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void createUser() {
+        //GIVEN
+        var user = buildUser();
+        var savedUser = buildCompleteUser();
+        when(userRepository.existsByEmail(any())).thenReturn(false);
+        when(userRepository.saveAndFlush(any())).thenReturn(savedUser);
+
+        //WHEN
+        var createdUser = userService.createUser(user);
+
+        //THEN
+        assertEquals(user.getCity(), createdUser.getCity());
+        assertEquals(user.getLastname(), createdUser.getLastname());
+        assertEquals(user.getName(), createdUser.getName());
+        assertEquals(user.getPhone(), createdUser.getPhone());
+        assertEquals(user.getEmail(), createdUser.getEmail());
+        assertEquals(user.getPassword(), createdUser.getPassword());
+
+        verify(userRepository, times(1)).existsByEmail(any());
+        verify(userRepository, times(1)).saveAndFlush(any());
+
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void updateUser_no_user() throws IOException {
+        //GIVEN
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.empty());
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree("""
+                [
+                    {"op":"replace","path":"/city","value":"Warsaw"}
+                ]
+                """);
+
+        //WHEN
+        assertThrows(UserNotFoundException.class, () -> userService.updateUser(UUID.randomUUID(), JsonPatch.fromJson(node)));
+
+        //THEN
+        verify(userRepository, times(1)).findById(any());
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void updateUser() throws IOException {
+        //GIVEN
+        var user = buildUser();
+        var savedUser = buildCompleteUser();
+
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.of(user));
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode patch = mapper.readTree("""
+                [
+                    {"op":"replace","path":"/city","value":"Warsaw"}
+                ]
+                """);
+        when(userRepository.saveAndFlush(any())).thenReturn(savedUser);
+
+        //WHEN
+        userService.updateUser(UUID.randomUUID(), JsonPatch.fromJson(patch));
+
+        //THEN
+        verify(userRepository, times(1)).findById(any());
+        verify(userRepository, times(1)).saveAndFlush(any());
+
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void updateUser_error() throws IOException {
+        //GIVEN
+        var user = buildUser();
+
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.of(user));
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode patch = mapper.readTree("""
+                [
+                    {"op":"replace","path":"/aaa","value":"Warsaw"}
+                ]
+                """);
+
+        //WHEN
+        InvalidUserUpdateException invalidUserUpdateException = assertThrows(InvalidUserUpdateException.class, () -> userService.updateUser(UUID.randomUUID(), JsonPatch.fromJson(patch)));
+        assertTrue(invalidUserUpdateException.getCause().getClass().isAssignableFrom(PatchFailedException.class));
+
+
+        //THEN
+        verify(userRepository, times(1)).findById(any());
+
+        verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void updateUser_error_forbiddenFields() throws IOException {
+        //GIVEN
+        var user = buildUser();
+
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.of(user));
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode patch = mapper.readTree("""
+                [
+                    {"op":"replace","path":"/email","value":"Email is not patchable"}
+                ]
+                """);
+
+        //WHEN
+        InvalidUserUpdateException invalidUserUpdateException = assertThrows(InvalidUserUpdateException.class, () -> userService.updateUser(UUID.randomUUID(), JsonPatch.fromJson(patch)));
+
+        assertTrue(invalidUserUpdateException.getCause().getClass().isAssignableFrom(PatchFailedException.class));
+        assertEquals("Fields are not supported for patching: [email]", invalidUserUpdateException.getCause().getMessage());
+
+        //THEN
+        verify(userRepository, times(1)).findById(any());
+
+        verifyNoMoreInteractions(userRepository);
+    }
+}

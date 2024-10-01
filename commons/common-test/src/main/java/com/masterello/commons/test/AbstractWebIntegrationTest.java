@@ -1,6 +1,5 @@
-package com.masterello.auth.controller;
+package com.masterello.commons.test;
 
-import com.masterello.auth.AuthTestConfiguration;
 import io.restassured.RestAssured;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
@@ -8,8 +7,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -19,12 +19,13 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {AuthTestConfiguration.class})
 @AutoConfigureMockMvc
-@Testcontainers
 @ActiveProfiles("integration-test")
 @Slf4j
-public class AbstractIntegrationTest {
+public class AbstractWebIntegrationTest extends AbstractDBIntegrationTest{
+
+    @MockBean
+    protected JavaMailSender mailSender;
 
     @Autowired
     private MockMvc mockMvc;
@@ -32,27 +33,8 @@ public class AbstractIntegrationTest {
     @LocalServerPort
     private Integer port;
 
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
-            "postgres:15-alpine"
-    );
-
-    public AbstractIntegrationTest() {
-    }
-
-    @BeforeAll
-    static void beforeAll() {
-        postgres.start();
-    }
-
     @BeforeEach
     void globalSetUp() {
         RestAssured.baseURI = "http://localhost:" + port;
-    }
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
     }
 }

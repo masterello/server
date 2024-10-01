@@ -1,6 +1,7 @@
 package com.masterello.user.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.masterello.commons.core.json.Patchable;
 import com.masterello.user.value.Language;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
@@ -37,15 +38,15 @@ public class MasterelloUserEntity implements MasterelloUser {
     @Column(name = "password")
     private String password;
 
-//    @Patchable
+    @Patchable
     @Column(name = "title")
     private String title;
 
-//    @Patchable
+    @Patchable
     @Column(name = "name")
     private String name;
 
-//    @Patchable
+    @Patchable
     @Column(name = "lastname")
     private String lastname;
 
@@ -56,11 +57,11 @@ public class MasterelloUserEntity implements MasterelloUser {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
-//    @Patchable
+    @Patchable
     @Column(name = "phone")
     private String phone;
 
-//    @Patchable
+    @Patchable
     @Column(name = "city")
     private String city;
 
@@ -71,7 +72,7 @@ public class MasterelloUserEntity implements MasterelloUser {
     @Builder.Default
     private boolean emailVerified = false;
 
-//    @Patchable
+    @Patchable
     @ElementCollection(targetClass = Language.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "user_languages", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING)

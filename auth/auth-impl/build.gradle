@@ -22,7 +22,7 @@ dependencies {
     implementation 'org.apache.commons:commons-collections4:4.5.0-M1'
 
     testImplementation project(':user:user-contract-test')
-
+    testImplementation  project(':commons:common-test')
     testImplementation 'org.projectlombok:lombok:1.18.28'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'

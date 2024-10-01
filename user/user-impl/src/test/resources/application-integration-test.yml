@@ -10,8 +10,12 @@ server:
       file-date-format:
       pattern: "[ACCESS] %h %t \"%r\" %s %b"
 
+spring:
+  jpa.hibernate.ddl-auto: create
+
 masterello:
   email:
     from: masterello1234@gmail.com
     subject: Please verify your registration
     sender: Masterello
+

@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import com.masterello.auth.AuthTestConfiguration;
 import com.masterello.auth.dto.GoogleTokenInfo;
+import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.service.AuthNService;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloTestUser;
@@ -20,6 +22,7 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
@@ -45,7 +48,8 @@ import static org.mockito.Mockito.when;
         @Sql(scripts = {"classpath:sql/clean-auth.sql"}, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 })
 @WireMockTest(httpPort = 8111)
-public class Oauth2EndpointsIntegrationTest extends AbstractIntegrationTest {
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {AuthTestConfiguration.class})
+public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
 
     private static final String GOOGLE_TOKEN = "googoogle_token";
     public static final String USER_FROM_GOOGLE = "new_user_from_google@gmail.com";
