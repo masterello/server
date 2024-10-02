@@ -26,6 +26,9 @@ project(':auth-contract-test').projectDir = new File('auth/auth-contract-test')
 include 'worker-impl'
 project(':worker-impl').projectDir = new File('worker/worker-impl')
 
+include 'category-impl'
+project(':category-impl').projectDir = new File('category/category-impl')
+
 //include 'worker:worker-contract'
 //include 'worker:worker-contract-test'
 

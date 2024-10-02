@@ -1,7 +1,7 @@
 package com.masterello.worker.service;
 
 import com.github.fge.jsonpatch.JsonPatch;
-import com.masterello.user.domain.Language;
+import com.masterello.user.value.Language;
 import com.masterello.worker.client.CategoryServiceClient;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;

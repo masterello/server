@@ -2,6 +2,7 @@
 dependencies {
     implementation project(':auth-impl')
     implementation project(':user-impl')
+    implementation project(':category-impl')
     implementation project(':db')
 
     testImplementation  project(':commons:common-test')

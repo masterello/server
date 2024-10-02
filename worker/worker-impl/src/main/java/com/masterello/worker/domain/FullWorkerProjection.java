@@ -1,7 +1,7 @@
 package com.masterello.worker.domain;
 
-import com.masterello.user.domain.Language;
 import com.masterello.commons.core.sort.Sortable;
+import com.masterello.user.value.Language;
 import lombok.Builder;
 import lombok.Data;
 
