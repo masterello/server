@@ -8,13 +8,24 @@ include 'commons:common-security'
 include 'commons:common-test'
 include 'commons:common-core'
 
-include 'user:user-impl'
-include 'user:user-contract'
-include 'user:user-contract-test'
 
-include 'auth:auth-impl'
-include 'auth:auth-contract'
+include 'user-impl'
+project(':user-impl').projectDir = new File('user/user-impl')
+include 'user-contract'
+project(':user-contract').projectDir = new File('user/user-contract')
+include 'user-contract-test'
+project(':user-contract-test').projectDir = new File('user/user-contract-test')
 
-include 'worker'
-include 'auth:auth-contract-test'
+include 'auth-impl'
+project(':auth-impl').projectDir = new File('auth/auth-impl')
+include 'auth-contract'
+project(':auth-contract').projectDir = new File('auth/auth-contract')
+include 'auth-contract-test'
+project(':auth-contract-test').projectDir = new File('auth/auth-contract-test')
+
+include 'worker-impl'
+project(':worker-impl').projectDir = new File('worker/worker-impl')
+
+//include 'worker:worker-contract'
+//include 'worker:worker-contract-test'
 

@@ -1,7 +1,7 @@
 
 dependencies {
-    implementation project(':auth:auth-impl')
-    implementation project(':user:user-impl')
+    implementation project(':auth-impl')
+    implementation project(':user-impl')
     implementation project(':db')
 
     testImplementation  project(':commons:common-test')
@@ -14,8 +14,4 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock:3.0.1'
     testImplementation 'org.springframework:spring-test'
 
-}
-
-test {
-    useJUnitPlatform()
 }

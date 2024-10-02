@@ -1,0 +1,15 @@
+
+dependencies {
+    implementation project(':commons:common-core')
+    implementation project(':commons:common-security')
+    implementation project(':user-contract')
+    implementation project(':auth-contract')
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'com.github.fge:json-patch:1.7'
+    implementation 'org.jooq:jooq:3.17.4'
+
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
