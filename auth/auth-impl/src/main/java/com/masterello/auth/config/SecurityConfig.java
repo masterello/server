@@ -104,26 +104,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-//    TODO move to other modules
-//    /**
-//     * Security config for service api - sign-up, roles updates
-//     */
-//    @Bean
-//    @Order(3)
-//    public SecurityFilterChain apiAuthFilter(HttpSecurity http) throws Exception {
-//        http
-//                .securityMatcher("/api/**")
-//                .csrf(AbstractHttpConfigurer::disable)
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/api/signup", "/api/confirmationLink/**", "/api/supported-languages",
-//                                "/api/worker/search").permitAll()
-//                        .anyRequest().authenticated())
-//                .addFilterBefore(passportTokenFilter, AnonymousAuthenticationFilter.class)
-//                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-//
-//        return http.build();
-//    }
-
     /**
      * Actuator config
      */

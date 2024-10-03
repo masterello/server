@@ -8,12 +8,13 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.masterello.commons.core.json.exception.PatchFailedException;
 import com.masterello.commons.core.json.util.PatchUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
-
+@Service
 @RequiredArgsConstructor
 public class PatchService {
 

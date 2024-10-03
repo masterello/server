@@ -1,0 +1,35 @@
+{
+  "workers": [
+    {
+      "uuid": "8824a15c-98f5-49d9-bd97-43d1cba3f62c",
+      "title": null,
+      "name": "worker6",
+      "lastname": "workerson",
+      "city": "berlin",
+      "languages": ["EN"],
+      "workerInfo": null
+    },
+    {
+      "uuid": "57bc029c-d8e3-458f-b25a-7f73283cec98",
+      "title": "Frau",
+      "name": "worker4",
+      "lastname": "workerson",
+      "city": "berlin",
+      "languages": ["DE"],
+      "workerInfo": {
+        "description": "not so good electrician",
+        "phone": "+49555555555",
+        "telegram": "meh-electrician-t",
+        "whatsapp": "meh-electrician-w",
+        "viber": "meh-electrician-v",
+        "services": [
+          {
+            "serviceId": 40,
+            "amount": 400
+          }
+        ]
+      }
+    }
+  ],
+  "count": 5
+}

@@ -19,7 +19,7 @@ public class UserApiSecurityConfig {
     private final AuthFilter authFilter;
 
     @Bean
-    public SecurityFilterChain apiAuthFilter(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiUserFilter(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/user/**")
                 .csrf(AbstractHttpConfigurer::disable)

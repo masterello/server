@@ -1,8 +1,10 @@
 package com.masterello.worker.service;
 
 import com.github.fge.jsonpatch.JsonPatch;
+import com.masterello.category.dto.CategoryBulkRequest;
+import com.masterello.category.dto.CategoryDto;
+import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.user.value.Language;
-import com.masterello.worker.client.CategoryServiceClient;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.WorkerInfo;
@@ -17,11 +19,16 @@ import com.masterello.commons.core.sort.util.SortUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -31,7 +38,7 @@ public class WorkerService {
     private final WorkerInfoRepository workerInfoRepository;
     private final PatchService patchService;
     private final SearchWorkerRepository searchWorkerRepository;
-    private final CategoryServiceClient categoryServiceClient;
+    private final ReadOnlyCategoryService categoryService;
 
     public WorkerInfo storeWorkerInfo(WorkerInfo workerInfo) {
         return workerInfoRepository.save(workerInfo);
@@ -59,7 +66,8 @@ public class WorkerService {
     }
 
     public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, PageRequest pageRequest) {
-        val categoriesWithChildren = CollectionUtils.isEmpty(serviceIds) ? serviceIds : categoryServiceClient.getWithChildCategoryCodes(serviceIds);
+
+        final List<Integer> categoriesWithChildren = getCategories(serviceIds);
         PageRequest.Sort sort = validateAndGetSort(pageRequest);
         val total = searchWorkerRepository.getTotalCount(languages, categoriesWithChildren);
         if( total > 0 ) {
@@ -71,6 +79,21 @@ public class WorkerService {
         } else {
             return FullWorkerPage.emptyPage(total);
         }
+    }
+
+    @NotNull
+    private List<Integer> getCategories(List<Integer> serviceIds) {
+        if(serviceIds == null) {
+            return Collections.emptyList();
+        }
+        CategoryBulkRequest categoryBulkRequest = new CategoryBulkRequest(serviceIds, true);
+        Map<Integer, List<CategoryDto>> categoriesWithChildren = CollectionUtils.isEmpty(serviceIds) ? Map.of() : categoryService.getAllChildCategoriesBulk(categoryBulkRequest);
+        val children = categoriesWithChildren.values().stream()
+                .flatMap(List::stream)
+                .map(CategoryDto::getCategoryCode);
+
+        return Stream.concat(children, serviceIds.stream())
+                .collect(Collectors.toList());
     }
 
     private static PageRequest.Sort validateAndGetSort(PageRequest pageRequest) {

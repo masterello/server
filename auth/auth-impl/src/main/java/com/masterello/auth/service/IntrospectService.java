@@ -1,29 +1,21 @@
 package com.masterello.auth.service;
 
 import com.masterello.auth.config.TokenProperties;
-import com.masterello.auth.converter.AuthEntityToOAuth2AuthorizationConverter;
 import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
-import com.masterello.auth.domain.Authorization;
-import com.masterello.auth.repository.AuthorizationRepository;
-import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -32,7 +24,6 @@ import java.util.Set;
 @Service
 public class IntrospectService implements AuthService {
     private final JpaOAuth2AuthorizationService authorizationService;
-    private final MasterelloUserService userService;
     private final TokenProperties tokenProperties;
 
     @Override

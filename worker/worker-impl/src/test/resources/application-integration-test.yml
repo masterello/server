@@ -1,0 +1,32 @@
+server:
+  port: 8090
+  tomcat:
+    accesslog:
+      enabled: true
+      directory: "/dev"
+      prefix: stdout
+      buffered: false
+      suffix:
+      file-date-format:
+      pattern: "[ACCESS] %h %t \"%r\" %s %b"
+
+spring:
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: 'true'
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: always
+
+masterello:
+  email:
+    from: masterello1234@gmail.com
+    subject: Please verify your registration
+    sender: Masterello
+

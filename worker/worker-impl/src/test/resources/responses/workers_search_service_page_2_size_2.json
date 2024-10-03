@@ -1,0 +1,51 @@
+{
+  "workers": [
+    {
+      "uuid": "d1c822c9-0ee4-462a-a88e-7c45e3bb0e54",
+      "title": "Ms.",
+      "name": "worker3",
+      "lastname": "workerson",
+      "city": "berlin",
+      "languages": ["DE", "EN"],
+      "workerInfo": {
+        "description": "best vocal-coach",
+        "phone": "+49444444444",
+        "telegram": "vocal-coach-t",
+        "whatsapp": "vocal-coach-w",
+        "viber": "vocal-coach-v",
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 300
+          },
+          {
+            "serviceId": 30,
+            "amount": 300
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52",
+      "title": null,
+      "name": "worker5",
+      "lastname": "workerson",
+      "city": "berlin",
+      "languages": [],
+      "workerInfo": {
+        "description": "not so good plumber",
+        "phone": "+49666666666",
+        "telegram": "meh-plumber-t",
+        "whatsapp": "meh-plumber-w",
+        "viber": "meh-plumber-v",
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 500
+          }
+        ]
+      }
+    }
+  ],
+  "count": 6
+}

@@ -4,9 +4,12 @@ rootProject.name = 'server'
 include 'app'
 include 'db'
 
-include 'commons:common-security'
-include 'commons:common-test'
-include 'commons:common-core'
+include 'common-security'
+project(':common-security').projectDir = new File('commons/common-security')
+include 'common-test'
+project(':common-test').projectDir = new File('commons/common-test')
+include 'common-core'
+project(':common-core').projectDir = new File('commons/common-core')
 
 
 include 'user-impl'
@@ -28,7 +31,10 @@ project(':worker-impl').projectDir = new File('worker/worker-impl')
 
 include 'category-impl'
 project(':category-impl').projectDir = new File('category/category-impl')
-
+include 'category-contract'
+project(':category-contract').projectDir = new File('category/category-contract')
+include 'category-contract-test'
+project(':category-contract-test').projectDir = new File('category/category-contract-test')
 //include 'worker:worker-contract'
 //include 'worker:worker-contract-test'
 

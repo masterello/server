@@ -1,7 +1,7 @@
 
 dependencies {
-    implementation project(':commons:common-core')
-    implementation project(':commons:common-security')
+    implementation project(':common-core')
+    implementation project(':common-security')
     implementation project(':user-contract')
     implementation project(':auth-contract')
 
@@ -13,7 +13,7 @@ dependencies {
     implementation 'com.github.fge:json-patch:1.7'
 
     testImplementation  project(':auth-contract-test')
-    testImplementation  project(':commons:common-test')
+    testImplementation  project(':common-test')
     testImplementation 'org.projectlombok:lombok:1.18.28'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
