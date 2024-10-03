@@ -27,3 +27,7 @@ dependencies {
     testImplementation 'org.springframework:spring-test'
 
 }
+
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}

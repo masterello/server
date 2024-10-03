@@ -10,3 +10,7 @@ dependencies {
     implementation 'com.github.tomakehurst:wiremock:3.0.1'
     implementation 'org.springframework:spring-test'
 }
+
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}

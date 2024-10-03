@@ -7,3 +7,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'org.apache.commons:commons-collections4:4.5.0-M1'
 }
+
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}

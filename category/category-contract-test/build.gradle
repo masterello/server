@@ -5,3 +5,7 @@ plugins {
 dependencies {
     implementation project(":category-contract")
 }
+
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}
