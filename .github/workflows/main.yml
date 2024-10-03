@@ -10,5 +10,26 @@ jobs:
     name: "Build and Check"
     uses: ./.github/workflows/reusable-check.yml
     secrets: inherit
+  create-release:
+    name: "Create a GitHub release"
+    needs: build-and-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: zendesk/action-create-release@v1
+        with:
+          tag_schema: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    outputs:
+      version: ${{ steps.create_release.outputs.current_tag }}
+  build-and-push-image:
+    name: "Push Image"
+    needs: create-release
+    uses: ./.github/workflows/reusable-docker-image.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}
+    secrets: inherit
 
 
