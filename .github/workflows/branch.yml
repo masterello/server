@@ -1,0 +1,13 @@
+name: 'Branch check workflow'
+run-name: Branch ${{github.head_ref || github.ref_name}} by ${{github.actor}}
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  build-and-check:
+    name: "Build and Check"
+    uses: ./.github/workflows/reusable-check.yml
+    secrets: inherit
