@@ -1,6 +1,7 @@
 package com.masterello.user.service;
 
 
+import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.value.MasterelloUser;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -19,12 +20,7 @@ import java.io.UnsupportedEncodingException;
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService {
-    @Value("${masterello.email.from}")
-    private String from;
-    @Value("${masterello.email.sender}")
-    private String sender;
-    @Value("${masterello.email.subject}")
-    private String subject;
+    private final EmailConfigProperties emailConfigProperties;
     private static final String LINK = "/api/confirmationLink/verifyUserToken?code=";
     private static final String CONTENT = """
             Dear ${username},<br>
@@ -37,15 +33,19 @@ public class EmailService {
 
     //TODO: replace with AWS SES solution, when migrated to AWS acc
     public void sendEmail(@NonNull MasterelloUser user, @NonNull String verificationCode) throws MessagingException, UnsupportedEncodingException {
+        if(!emailConfigProperties.isEnabled()) {
+            log.info("Email sending is disabled");
+            return;
+        }
         String text = CONTENT.replace("${username}", buildUserName(user))
                 .replace("${verifyURL}", buildRequestUrl(verificationCode));
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message);
 
-        helper.setFrom(from, sender);
+        helper.setFrom(emailConfigProperties.getFrom(), emailConfigProperties.getSender());
         helper.setTo(user.getEmail());
-        helper.setSubject(subject);
+        helper.setSubject(emailConfigProperties.getSubject());
         helper.setText(text, true);
 
         mailSender.send(message);

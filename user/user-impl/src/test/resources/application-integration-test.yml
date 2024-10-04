@@ -14,8 +14,10 @@ spring:
   jpa.hibernate.ddl-auto: create
 
 masterello:
-  email:
-    from: masterello1234@gmail.com
-    subject: Please verify your registration
-    sender: Masterello
+  user:
+    email:
+      enabled: true
+      from: masterello1234@gmail.com
+      subject: Please verify your registration
+      sender: Masterello
 

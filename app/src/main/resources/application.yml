@@ -11,7 +11,9 @@ server:
       pattern: "[ACCESS] %h %t \"%r\" %s %b"
 
 masterello:
-  email:
-    from: masterello1234@gmail.com
-    subject: Please verify your registration
-    sender: Masterello
+  user:
+    email:
+      enabled: true
+      from: masterello1234@gmail.com
+      subject: Please verify your registration
+      sender: Masterello
