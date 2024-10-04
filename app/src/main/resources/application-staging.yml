@@ -11,6 +11,10 @@ spring:
               - authorization_code
               - refresh_token
               - password
+  datasource:
+    password: ${DB_USERNAME}
+    username: ${DB_PASSWORD}
+    url: ${DB_URL}
   jpa:
     properties:
       hibernate:
