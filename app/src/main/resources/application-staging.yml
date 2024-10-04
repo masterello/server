@@ -51,7 +51,14 @@ masterello:
       refresh-token-ttl: 1h
     google:
       verification-url: "https://oauth2.googleapis.com"
-  email:
-    from: masterello1234@gmail.com
-    subject: Please verify your registration
-    sender: Masterello
+  user:
+    email:
+      enabled: false
+      from: masterello1234@gmail.com
+      subject: Please verify your registration
+      sender: Masterello
+
+management:
+  health:
+    mail:
+      enabled: false

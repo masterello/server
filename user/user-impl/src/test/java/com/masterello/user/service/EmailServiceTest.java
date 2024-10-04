@@ -1,5 +1,6 @@
 package com.masterello.user.service;
 
+import com.masterello.user.config.EmailConfigProperties;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
@@ -28,6 +29,8 @@ public class EmailServiceTest {
 
     @Mock
     private JavaMailSender mailSender;
+    @Mock
+    private EmailConfigProperties emailConfigProperties;
 
     @InjectMocks
     private EmailService emailService;
@@ -38,10 +41,11 @@ public class EmailServiceTest {
         ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
         RequestContextHolder.setRequestAttributes(attrs);
 
-        ReflectionTestUtils.setField(emailService, "from", FROM);
-        ReflectionTestUtils.setField(emailService, "sender", SENDER);
-        ReflectionTestUtils.setField(emailService, "sender", SENDER);
-        ReflectionTestUtils.setField(emailService, "subject", SUBJECT);
+        when(emailConfigProperties.isEnabled()).thenReturn(true);
+        when(emailConfigProperties.getFrom()).thenReturn(FROM);
+        when(emailConfigProperties.getSender()).thenReturn(SENDER);
+        when(emailConfigProperties.getSubject()).thenReturn(SUBJECT);
+
     }
 
     @Test
