@@ -1,7 +1,7 @@
 package com.masterello.user.config;
 
 import com.masterello.commons.security.filter.AuthFilter;
-import com.masterello.user.security.SuperAdminFilter;
+import com.masterello.commons.security.filter.SuperAdminFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
