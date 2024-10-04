@@ -16,9 +16,7 @@ CREATE SEQUENCE IF NOT EXISTS category_code_seq
 
 SET search_path = public, pg_catalog;
 
-CREATE SCHEMA IF NOT EXISTS categories;
-
-CREATE TABLE IF NOT EXISTS categories.category(
+CREATE TABLE IF NOT EXISTS category(
                         uuid uuid NOT NULL PRIMARY KEY,
                         name character varying(255),
                         original_name character varying(255),
@@ -31,5 +29,5 @@ CREATE TABLE IF NOT EXISTS categories.category(
                         active boolean default false
 );
 
-CREATE INDEX IF NOT EXISTS category_name_idx ON categories.category USING btree(name);
-CREATE INDEX IF NOT EXISTS category_code_idx ON categories.category USING btree(category_code);
+CREATE INDEX IF NOT EXISTS category_name_idx ON category USING btree(name);
+CREATE INDEX IF NOT EXISTS category_code_idx ON category USING btree(category_code);

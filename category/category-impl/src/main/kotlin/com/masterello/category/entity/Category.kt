@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 @Entity
-@Table(name = "category", schema = "categories")
+@Table(name = "category")
 data class Category(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
