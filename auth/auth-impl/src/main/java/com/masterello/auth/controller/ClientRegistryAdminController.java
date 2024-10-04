@@ -22,9 +22,6 @@ public class ClientRegistryAdminController {
     private final ClientMapper clientMapper;
 
     @PostMapping()
-    @AuthZRules({
-            @AuthZRule(roles = {AuthZRole.ADMIN})
-    })
     public void registerClient(@RequestBody ClientDTO clientDTO) {
         MasterelloRegisteredClient client = clientMapper.mapToClientEntity(clientDTO);
         clientRepository.save(client);

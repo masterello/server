@@ -57,6 +57,7 @@ masterello:
       from: masterello1234@gmail.com
       subject: Please verify your registration
       sender: Masterello
+  security:
     admin:
       username: admin@masterello.com
       password: ${SUPER_ADMIN_PASS}

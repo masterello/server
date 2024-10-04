@@ -11,7 +11,7 @@ import com.masterello.auth.responsehandlers.Oauth2LogoutSuccessAuthHandler;
 import com.masterello.auth.responsehandlers.TokenAuthenticationFailureHandler;
 import com.masterello.auth.revocation.LogoutRevocationAuthenticationProvider;
 import com.masterello.auth.revocation.LogoutRevocationEndpointAuthenticationConverter;
-import com.masterello.commons.security.filter.AuthFilter;
+import com.masterello.commons.security.filter.SuperAdminFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +36,7 @@ public class SecurityConfig {
     private final LogoutRevocationAuthenticationProvider logoutRevocationAuthenticationProvider;
     private final Oauth2IntrospectSuccessAuthHandler introspectSuccessAuthHandler;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
-    private final AuthFilter authFilter;
+    private final SuperAdminFilter superAdminFilter;
 
     /**
      * Security config for token management endpoints:
@@ -108,17 +108,17 @@ public class SecurityConfig {
     }
 
     /**
-     * Security config for Google auth endpoints
+     * Security config for client registration
      */
     @Bean
     @Order(3)
     public SecurityFilterChain authApiFilter(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/auth/**")
+                .securityMatcher("/api/auth/client")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated())
-                .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
+                .addFilterBefore(superAdminFilter, AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
