@@ -26,24 +26,27 @@ public class SuperAdminFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Extract the Basic Auth header
-        String authHeader = request.getHeader("Authorization");
+        if(superAdminProperties.isEnabled()) {
+            // Extract the Basic Auth header
+            String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Basic ")) {
-            String[] credentials = extractCredentials(authHeader);
+            if (authHeader != null && authHeader.startsWith("Basic ")) {
+                String[] credentials = extractCredentials(authHeader);
 
-            if (credentials != null && validateCredentials(credentials[0], credentials[1])) {
-                // Create the Authentication object and set it in the security context
-                UserDetails userDetails = new User(superAdminProperties.getUsername(), superAdminProperties.getPassword(), Collections.emptyList());
-                Authentication auth = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                if (credentials != null && validateCredentials(credentials[0], credentials[1])) {
+                    // Create the Authentication object and set it in the security context
+                    UserDetails userDetails = new User(superAdminProperties.getUsername(), superAdminProperties.getPassword(), Collections.emptyList());
+                    Authentication auth = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
         }
 
         // Proceed with the filter chain
         filterChain.doFilter(request, response);
+
     }
 
     private String[] extractCredentials(String authHeader) {

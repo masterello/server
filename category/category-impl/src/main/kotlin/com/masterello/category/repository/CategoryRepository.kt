@@ -26,7 +26,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             WHERE
                 c.category_code = :categoryCode AND c.active = true
         UNION ALL
@@ -42,7 +42,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             INNER JOIN
                 category_parents ch ON c.category_code = ch.parent_code
         ) SELECT * FROM category_parents;
@@ -64,7 +64,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             WHERE
                 c.category_code = :categoryCode AND c.active = true
             UNION ALL
@@ -80,7 +80,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             INNER JOIN
                 category_children cc ON c.parent_code = cc.category_code
         )
@@ -104,7 +104,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             WHERE
                 c.category_code = :categoryCode AND c.active = true AND c.is_service = true
         UNION ALL
@@ -120,7 +120,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             INNER JOIN
                 category_parents ch ON c.category_code = ch.parent_code
         ) SELECT * FROM category_parents;
@@ -142,7 +142,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             WHERE
                 c.category_code = :categoryCode AND c.active = true AND c.is_service = true
             UNION ALL
@@ -158,7 +158,7 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.updated_date,
                 c.active
             FROM
-                categories.category c
+                category c
             INNER JOIN
                 category_children cc ON c.parent_code = cc.category_code
         )
