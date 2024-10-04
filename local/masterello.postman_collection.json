@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "5d420f96-55b3-4021-b718-1094ead521bd",
+		"_postman_id": "b14c6d3b-bda2-461f-b071-9d798949c024",
 		"name": "masterello",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "2632282"
 	},
 	"item": [
 		{
@@ -13,42 +14,28 @@
 					"request": {
 						"auth": {
 							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{clientSecret}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{clientId}}",
-									"type": "string"
-								}
-							]
+							"basic": {
+								"password": "{{clientSecret}}",
+								"username": "{{clientId}}"
+							}
 						},
 						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"username\": \"dmitry.borodin90+123@gmail.com\",\n\t\"password\": \"password\"\n}"
+							"raw": "{\n\t\"username\": \"dmitry.borodin90+admin@gmail.com\",\n\t\"password\": \"password\"\n}"
 						},
 						"url": {
-							"raw": "http://127.0.0.1:8100/oauth2/token?grant_type=password",
-							"protocol": "http",
+							"raw": "{{monolith_url}}/oauth2/token?grant_type=password",
 							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
+								"{{monolith_url}}"
 							],
-							"port": "8100",
 							"path": [
 								"oauth2",
 								"token"
@@ -68,47 +55,24 @@
 					"request": {
 						"auth": {
 							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{clientSecret}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{clientId}}",
-									"type": "string"
-								}
-							]
+							"basic": {
+								"password": "{{clientSecret}}",
+								"username": "{{clientId}}"
+							}
 						},
 						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
+								"value": "application/json",
+								"type": "text"
 							}
 						],
 						"body": {
 							"mode": "raw",
 							"raw": ""
 						},
-						"url": {
-							"raw": "http://127.0.0.1:8100/oauth2/logout",
-							"protocol": "http",
-							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
-							],
-							"port": "8100",
-							"path": [
-								"oauth2",
-								"logout"
-							]
-						}
+						"url": "http://127.0.0.1:8100/oauth2/logout"
 					},
 					"response": []
 				},
@@ -117,24 +81,15 @@
 					"request": {
 						"auth": {
 							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{clientSecret}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{clientId}}",
-									"type": "string"
-								}
-							]
+							"basic": {
+								"password": "{{clientSecret}}",
+								"username": "{{clientId}}"
+							}
 						},
 						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
 							}
@@ -144,7 +99,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://127.0.0.1:8100/oauth2/token?grant_type=google_oid&token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjkxNDEzY2Y0ZmEwY2I5MmEzYzNmNWEwNTQ1MDkxMzJjNDc2NjA5MzciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NjMwMDMyNTkyMzUzMjAxNTMiLCJlbWFpbCI6ImRtaXRyeS5ib3JvZGluOTBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiIyM280ektCSVFaV3JpQ3ZDWm1iLXR3Iiwibm9uY2UiOiJiS3J6eHBWamxNM1ZfbGtsNHpDRlhDa0Y1QS1JTXRxc1pKOFlyYVczMW1vIiwibmFtZSI6IkRtaXRyaWkgQm9yb2RpbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMZ3Z3RGNUREJZQ0w1eW5BQUl6ak1ZM1d1MTBBdUg4SGotbzc1aWh4M3I9czk2LWMiLCJnaXZlbl9uYW1lIjoiRG1pdHJpaSIsImZhbWlseV9uYW1lIjoiQm9yb2RpbiIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjoxNzA0NDYzNzY2LCJleHAiOjE3MDQ0NjczNjZ9.a4U27lKOHuGnPOoy546CD1OU584wxGubI83_zHuDJ3xOw4ncd-1wx2DJWqdwrLNAD_9QLgtFv4jUfd2Zjc1S9IpGz6wwXsCiZ1zxaY3aq7XDJWfkO6wgKn84eFsc3dbvXDdHn57G9ruOneaOx9XZ7Trnq7rVymyUZy3SFoJw7CIw5uq2p7tVOTVPlr00MZwZw_OeYiyGqr6Vux8YXs2CkO7OzfmLlwp2Af6Rf44HIyyQ8qTvGBltdz_F0rsNr5cOlBPlnZBqX40waKWuuEL6X1_ghtBIj3Xn8QDGCUuRbuyMsr1s4Fa6d7yylbECbLFA2i1M5eqZ8mgzHhsa2vVERg#",
+							"raw": "http://127.0.0.1:8100/oauth2/token?grant_type=google_oid&token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjkxNDEzY2Y0ZmEwY2I5MmEzYzNmNWEwNTQ1MDkxMzJjNDc2NjA5MzciLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3NzcxMzQxNDY4MTQtbjBqdGRjYmFoYzd0czVuMmdmbDVrdnBkbWY1dHNwZDEuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDU4NjMwMDMyNTkyMzUzMjAxNTMiLCJlbWFpbCI6ImRtaXRyeS5ib3JvZGluOTBAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiIyM280ektCSVFaV3JpQ3ZDWm1iLXR3Iiwibm9uY2UiOiJiS3J6eHBWamxNM1ZfbGtsNHpDRlhDa0Y1QS1JTXRxc1pKOFlyYVczMW1vIiwibmFtZSI6IkRtaXRyaWkgQm9yb2RpbiIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMZ3Z3RGNUREJZQ0w1eW5BQUl6ak1ZM1d1MTBBdUg4SGotbzc1aWh4M3I9czk2LWMiLCJnaXZlbl9uYW1lIjoiRG1pdHJpaSIsImZhbWlseV9uYW1lIjoiQm9yb2RpbiIsImxvY2FsZSI6ImVuLUdCIiwiaWF0IjoxNzA0NDYzNzY2LCJleHAiOjE3MDQ0NjczNjZ9.a4U27lKOHuGnPOoy546CD1OU584wxGubI83_zHuDJ3xOw4ncd-1wx2DJWqdwrLNAD_9QLgtFv4jUfd2Zjc1S9IpGz6wwXsCiZ1zxaY3aq7XDJWfkO6wgKn84eFsc3dbvXDdHn57G9ruOneaOx9XZ7Trnq7rVymyUZy3SFoJw7CIw5uq2p7tVOTVPlr00MZwZw_OeYiyGqr6Vux8YXs2CkO7OzfmLlwp2Af6Rf44HIyyQ8qTvGBltdz_F0rsNr5cOlBPlnZBqX40waKWuuEL6X1_ghtBIj3Xn8QDGCUuRbuyMsr1s4Fa6d7yylbECbLFA2i1M5eqZ8mgzHhsa2vVERg%23",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -176,24 +131,15 @@
 					"request": {
 						"auth": {
 							"type": "basic",
-							"basic": [
-								{
-									"key": "username",
-									"value": "{{clientId}}",
-									"type": "string"
-								},
-								{
-									"key": "password",
-									"value": "{{clientSecret}}",
-									"type": "string"
-								}
-							]
+							"basic": {
+								"username": "{{clientId}}",
+								"password": "{{clientSecret}}"
+							}
 						},
 						"method": "POST",
 						"header": [
 							{
 								"key": "Content-Type",
-								"name": "Content-Type",
 								"value": "application/json",
 								"type": "text"
 							}
@@ -235,18 +181,10 @@
 					"request": {
 						"auth": {
 							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{clientSecret}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{clientId}}",
-									"type": "string"
-								}
-							]
+							"basic": {
+								"password": "{{clientSecret}}",
+								"username": "{{clientId}}"
+							}
 						},
 						"method": "POST",
 						"header": [
@@ -282,121 +220,6 @@
 					"response": []
 				},
 				{
-					"name": "signup",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"email\": \"dmitry.borodin90+123@gmail.com\",\n\t\"password\": \"password\"\n}"
-						},
-						"url": {
-							"raw": "http://localhost:8100/api/signup",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8100",
-							"path": [
-								"api",
-								"signup"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add role",
-					"request": {
-						"auth": {
-							"type": "noauth"
-						},
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"value": "application/json",
-								"type": "text"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n\t\"userId\": \"2115bd5c-ad18-48ea-8a22-160469d55ff3\",\n\t\"role\": \"WORKER\"\n}"
-						},
-						"url": {
-							"raw": "http://localhost:8100/api/add-role",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8100",
-							"path": [
-								"api",
-								"add-role"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "get user",
-					"request": {
-						"auth": {
-							"type": "basic",
-							"basic": [
-								{
-									"key": "password",
-									"value": "{{clientSecret}}",
-									"type": "string"
-								},
-								{
-									"key": "username",
-									"value": "{{clientId}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "Content-Type",
-								"name": "Content-Type",
-								"type": "text",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": ""
-						},
-						"url": {
-							"raw": "http://localhost:8100/api/user/2115bd5c-ad18-48ea-8a22-160469d55ff3",
-							"protocol": "http",
-							"host": [
-								"localhost"
-							],
-							"port": "8100",
-							"path": [
-								"api",
-								"user",
-								"2115bd5c-ad18-48ea-8a22-160469d55ff3"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "verify Google oid",
 					"request": {
 						"auth": {
@@ -426,6 +249,248 @@
 								}
 							]
 						}
+					},
+					"response": []
+				},
+				{
+					"name": "reg-client",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": {
+								"username": "admin@masterello.com",
+								"password": "{{superAdminPass}}"
+							}
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "m_token=NRRI3pBLpe11Kv5S3UqWu-MO8jQPvUCkeLyIsRiuShES3J41Va9rqlpxiuOQZfUhGlxTSg5NcrsHn86QOmCe6F_xyiyPaGTYsTS4PW33uvI4DckLWIkRRp5jHV9nH_PN",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"30036f47-dcbd-40a1-abc4-6fb87ab3e4ae\",\n  \"clientId\": \"bff\",\n  \"clientIdIssuedAt\": \"2024-10-03T10:15:30Z\",  // Replace with the actual timestamp\n  \"clientSecret\": \"$2a$10$cf/V5zhVSP9H2tcghiqtqOoxxpM1QQatUB1wTci8QPUpXsTb18a1W\",\n  \"clientName\": \"bff\",\n  \"clientAuthenticationMethods\": \"client_secret_basic\",\n  \"authorizationGrantTypes\": \"google_oid,refresh_token,client_credentials,password\",\n  \"scopes\": \"WORKER,ADMIN,USER\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{monolith_url}}/api/auth/client"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "worker",
+			"item": [
+				{
+					"name": "search",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    // \"services\": [101],\n    \"languages\": [\"DE\"],\n    \"pageRequest\": {\n        \"page\": 1,\n        \"pageSize\": 1,\n        \"sort\": {\n            \"order\": \"ASC\",\n            \"fields\": [\"name\"]\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{monolith_url}}/api/worker/search"
+					},
+					"response": []
+				},
+				{
+					"name": "info",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "m_token=G3nIrfMBfibeuhScj2mvT4VtxW5EejxRQP2p80JjtHR6I50YjxOMzPjVIa8f3ruBKBqMqVPXZlWKOjh9PhzzFEQ28k7xzMmefGTN7rI7z0cSjVa4oQHzNd26JTyLtZ6v",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Experienced professional offering multiple services.\",\n  \"phone\": \"+123456789\",\n  \"telegram\": \"@workerTelegram\",\n  \"whatsapp\": \"+123456789\",\n  \"viber\": \"+123456789\",\n  \"services\": [\n    {\n      \"serviceId\": 101,\n      \"amount\": 150\n    },\n    {\n      \"serviceId\": 102,\n      \"amount\": 200\n    }\n  ]\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{monolith_url}}/api/worker/3bdae9eb-18c4-4225-8c03-b0dac95b7100/info"
+					},
+					"response": []
+				},
+				{
+					"name": "info Copy",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "m_token=G3nIrfMBfibeuhScj2mvT4VtxW5EejxRQP2p80JjtHR6I50YjxOMzPjVIa8f3ruBKBqMqVPXZlWKOjh9PhzzFEQ28k7xzMmefGTN7rI7z0cSjVa4oQHzNd26JTyLtZ6v",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"op\": \"replace\", \n        \"path\":\"/services\",\n        \"value\": [\n            {\n                \"serviceId\":10, \n                \"amount\": 250\n            }, \n            {\n                \"serviceId\":15, \n                \"amount\": 100\n            }\n        ]\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{monolith_url}}/api/worker/3bdae9eb-18c4-4225-8c03-b0dac95b7100/info"
+					},
+					"response": []
+				},
+				{
+					"name": "info",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Cookie",
+								"value": "m_token=G3nIrfMBfibeuhScj2mvT4VtxW5EejxRQP2p80JjtHR6I50YjxOMzPjVIa8f3ruBKBqMqVPXZlWKOjh9PhzzFEQ28k7xzMmefGTN7rI7z0cSjVa4oQHzNd26JTyLtZ6v",
+								"type": "text"
+							}
+						],
+						"url": "{{monolith_url}}/api/worker/3bdae9eb-18c4-4225-8c03-b0dac95b7100/info"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "signup",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"dmitry.borodin90+test@gmail.com\",\n\t\"password\": \"password\"\n}"
+						},
+						"url": "{{monolith_url}}/api/signup"
+					},
+					"response": []
+				},
+				{
+					"name": "get user",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "m_token=G3nIrfMBfibeuhScj2mvT4VtxW5EejxRQP2p80JjtHR6I50YjxOMzPjVIa8f3ruBKBqMqVPXZlWKOjh9PhzzFEQ28k7xzMmefGTN7rI7z0cSjVa4oQHzNd26JTyLtZ6v",
+								"type": "text"
+							}
+						],
+						"url": "{{monolith_url}}/api/user/3bdae9eb-18c4-4225-8c03-b0dac95b7100"
+					},
+					"response": []
+				},
+				{
+					"name": "Add role",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "m_token=G3nIrfMBfibeuhScj2mvT4VtxW5EejxRQP2p80JjtHR6I50YjxOMzPjVIa8f3ruBKBqMqVPXZlWKOjh9PhzzFEQ28k7xzMmefGTN7rI7z0cSjVa4oQHzNd26JTyLtZ6v",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"role\": \"WORKER\"\n}"
+						},
+						"url": "{{monolith_url}}/api/user/3bdae9eb-18c4-4225-8c03-b0dac95b7100/add-role"
+					},
+					"response": []
+				},
+				{
+					"name": "Patch user",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json",
+								"type": "text"
+							},
+							{
+								"key": "Cookie",
+								"value": "m_token=drmjhau4Pylzobj-qRHDtMO0hRqChTZGpM8M26gAuK0Sa-GfgRpX77kF4g780bKU0iAHH6NPdkF4Vl0LfbGARbZ9wjvEd5QYp_oYExptObMn2bB0xZTbCDxPYRL8zByJ",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"op\":\"replace\",\n        \"path\":\"/languages\",\n        \"value\": [\"EN\",  \"UA\"]\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{monolith_url}}/api/user/3bdae9eb-18c4-4225-8c03-b0dac95b7100"
+					},
+					"response": []
+				},
+				{
+					"name": "admin-role",
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": {
+								"password": "{{superAdminPass}}",
+								"username": "admin@masterello.com"
+							}
+						},
+						"method": "POST",
+						"header": [],
+						"url": "{{monolith_url}}/api/user/admin/3bdae9eb-18c4-4225-8c03-b0dac95b7100/add-role"
 					},
 					"response": []
 				}

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Data
 public class SuperAdminProperties {
+    private boolean enabled;
     private String username;
     private String password;
 }

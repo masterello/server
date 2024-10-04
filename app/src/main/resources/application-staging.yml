@@ -59,6 +59,7 @@ masterello:
       sender: Masterello
   security:
     admin:
+      enabled: true
       username: admin@masterello.com
       password: ${SUPER_ADMIN_PASS}
 
