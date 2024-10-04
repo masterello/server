@@ -1,9 +1,11 @@
 package com.masterello.user.config;
 
 import com.masterello.commons.security.filter.AuthFilter;
+import com.masterello.user.security.SuperAdminFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,8 +19,23 @@ import org.springframework.security.web.authentication.AnonymousAuthenticationFi
 public class UserApiSecurityConfig {
 
     private final AuthFilter authFilter;
+    private final SuperAdminFilter superAdminFilter;
 
     @Bean
+    @Order(1)  // Higher priority to match this first
+    public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/user/admin", "/api/user/admin/**")  // Apply only to /api/user/admin
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().authenticated())  // Require authentication for /api/user/admin
+                .addFilterBefore(superAdminFilter, AnonymousAuthenticationFilter.class)
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));  // Stateless session management
+
+        return http.build();
+    }
+    @Bean
+    @Order(2)
     public SecurityFilterChain apiUserFilter(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/user/**")

@@ -11,6 +11,7 @@ import com.masterello.auth.responsehandlers.Oauth2LogoutSuccessAuthHandler;
 import com.masterello.auth.responsehandlers.TokenAuthenticationFailureHandler;
 import com.masterello.auth.revocation.LogoutRevocationAuthenticationProvider;
 import com.masterello.auth.revocation.LogoutRevocationEndpointAuthenticationConverter;
+import com.masterello.commons.security.filter.AuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +22,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
@@ -34,6 +36,7 @@ public class SecurityConfig {
     private final LogoutRevocationAuthenticationProvider logoutRevocationAuthenticationProvider;
     private final Oauth2IntrospectSuccessAuthHandler introspectSuccessAuthHandler;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
+    private final AuthFilter authFilter;
 
     /**
      * Security config for token management endpoints:
@@ -99,6 +102,23 @@ public class SecurityConfig {
                             subconfig.authorizationRequestRepository(this.authorizationRequestRepository);
                         })
                 )
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        return http.build();
+    }
+
+    /**
+     * Security config for Google auth endpoints
+     */
+    @Bean
+    @Order(3)
+    public SecurityFilterChain authApiFilter(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/auth/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().authenticated())
+                .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();

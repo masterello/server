@@ -54,3 +54,6 @@ masterello:
       from: masterello1234@gmail.com
       subject: Please verify your registration
       sender: Masterello
+    admin:
+      username: admin@masterello.com
+      password: 123qwe123
