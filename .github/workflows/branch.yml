@@ -5,6 +5,13 @@ on:
   push:
     branches-ignore:
       - main
+    paths-ignore:
+      - 'README.md'
+      - 'local/**'
+      - '.gitignore'
+      - '.gitattributes'
+      - '.github/**'
+
 
 jobs:
   build-and-check:
