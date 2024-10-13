@@ -3,6 +3,8 @@ plugins {
 }
 dependencies {
     implementation project(":file-contract")
+    implementation project(":auth-contract")
+    implementation project(':common-security')
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.springframework.boot:spring-boot-starter-web"
