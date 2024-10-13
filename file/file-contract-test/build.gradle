@@ -1,0 +1,11 @@
+plugins {
+    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+}
+
+dependencies {
+    implementation project(":file-contract")
+}
+
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}
