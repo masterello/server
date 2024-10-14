@@ -2,16 +2,21 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
 }
 dependencies {
-    implementation project(":category-contract")
+    implementation project(":file-contract")
+    implementation project(":auth-contract")
+    implementation project(':common-security')
     implementation "org.springframework.boot:spring-boot-starter-actuator"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
     implementation "org.springframework.boot:spring-boot-starter-web"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
+    implementation("software.amazon.awssdk:s3:2.28.1")
+    implementation("software.amazon.awssdk:netty-nio-client:2.28.1")
+
+    implementation("net.coobird:thumbnailator:0.4.14")
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
-    implementation "com.github.java-json-tools:json-patch:1.13"
     implementation "io.github.oshai:kotlin-logging-jvm:5.1.4"
     developmentOnly "org.springframework.boot:spring-boot-devtools"
     testImplementation "org.springframework.boot:spring-boot-starter-test"

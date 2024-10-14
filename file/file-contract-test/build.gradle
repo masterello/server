@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(":category-contract")
+    implementation project(":file-contract")
 }
 
 bootJar {
