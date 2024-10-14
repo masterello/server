@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 import java.util.*
 
 @Entity
-@Table(name = "files", schema = "files")
+@Table(name = "files", schema = "public")
 data class File(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
