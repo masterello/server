@@ -19,6 +19,10 @@ jobs:
           distribution: 'temurin'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
+        run: |
+          echo "DO_SPACES_ACCESS_KEY=${{ secrets.DO_SPACES_ACCESS_KEY }}" >> $GITHUB_ENV
+          echo "DO_SPACES_SECRET_KEY=${{ secrets.DO_SPACES_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "DO_SPACES_ENDPOINT=${{ secrets.DO_SPACES_ENDPOINT }}" >> $GITHUB_ENV
       - name: Test
         run: ./gradlew test -i
         env:
