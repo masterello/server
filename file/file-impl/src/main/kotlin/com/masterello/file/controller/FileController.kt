@@ -3,6 +3,7 @@ package com.masterello.file.controller
 import com.masterello.auth.data.AuthZRole
 import com.masterello.commons.security.validation.AuthZRule
 import com.masterello.commons.security.validation.AuthZRules
+import com.masterello.commons.security.validation.OwnerId
 import com.masterello.file.dto.FileDto
 import com.masterello.file.service.FileService
 import com.masterello.file.util.FileUtil
@@ -31,13 +32,13 @@ class FileController {
     @GetMapping("/{userUuid}")
     @Operation(summary = "Get all files by user UUID", description = "Retrieve all files for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved files")
-    fun getAllFilesByUserUuid(@PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
+    fun getAllFilesByUserUuid(@OwnerId @PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
         val files = fileService.findAllFilesByUserUuid(userUuid)
         return ResponseEntity.ok(files)
     }
 
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
         AuthZRule(roles = [AuthZRole.ADMIN])
     )
     @Operation(summary = "Upload user file", description = "Upload user file")
@@ -56,7 +57,7 @@ class FileController {
     @Operation(summary = "Delete user file", description = "Delete user file")
     @ApiResponse(responseCode = "204", description = "Deletes user file and removes it from the server")
     @DeleteMapping("/{userUuid}/{fileUuid}")
-    fun removeFile(@PathVariable userUuid: UUID, @PathVariable fileUuid: UUID): ResponseEntity<Void> {
+    fun removeFile(@OwnerId @PathVariable userUuid: UUID, @PathVariable fileUuid: UUID): ResponseEntity<Void> {
         val result = fileService.removeFile(userUuid, fileUuid)
         return if (result) {
             ResponseEntity.noContent().build()
@@ -72,7 +73,7 @@ class FileController {
     @GetMapping("/{userUuid}/{fileUuid}")
     @Operation(summary = "Download file by user UUID and file uuid", description = "Download file or user by file uuid")
     @ApiResponse(responseCode = "200", description = "Successfully downloads file")
-    fun downloadFile(@PathVariable userUuid: UUID, @PathVariable fileUuid: UUID) : ResponseEntity<ByteArray> {
+    fun downloadFile(@OwnerId @PathVariable userUuid: UUID, @PathVariable fileUuid: UUID) : ResponseEntity<ByteArray> {
         val fileData = fileService.downloadUserFile(userUuid, fileUuid)
 
         return if (fileData != null) {
