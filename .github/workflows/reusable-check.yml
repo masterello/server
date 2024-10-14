@@ -19,7 +19,7 @@ jobs:
           distribution: 'temurin'
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
-      - name: Set Gradle credentials from organization secrets
+      - name: Set Gradle credentials from secrets
         run: |
           echo "DO_SPACES_ACCESS_KEY=${{ secrets.DO_SPACES_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "DO_SPACES_SECRET_KEY=${{ secrets.DO_SPACES_SECRET_KEY }}" >> $GITHUB_ENV
