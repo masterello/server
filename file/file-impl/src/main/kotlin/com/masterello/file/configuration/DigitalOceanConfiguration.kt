@@ -10,13 +10,13 @@ import software.amazon.awssdk.services.s3.S3Configuration
 import java.net.URI
 
 @Configuration
-class DigitalOceanConfiguration(
+open class DigitalOceanConfiguration(
     @Value("\${DO_SPACES_ACCESS_KEY}") private val accessKey: String,
     @Value("\${DO_SPACES_SECRET_KEY}") private val secretKey: String,
     @Value("\${DO_SPACES_ENDPOINT}") private val endpoint: String
 ) {
     @Bean
-    fun s3Client(): S3Client {
+    open fun s3Client(): S3Client {
         val credentials = AwsBasicCredentials.create(accessKey, secretKey)
         val s3Config = S3Configuration.builder()
             .pathStyleAccessEnabled(true)

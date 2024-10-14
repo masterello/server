@@ -4,6 +4,7 @@ dependencies {
     implementation project(':user-impl')
     implementation project(':worker-impl')
     implementation project(':category-impl')
+    implementation project(':file-impl')
     implementation project(':db')
 
     testImplementation  project(':common-test')
