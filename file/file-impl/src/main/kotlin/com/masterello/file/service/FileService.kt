@@ -18,7 +18,7 @@ import java.io.IOException
 import java.util.*
 
 @Service
-class FileService(private val fileRepository: FileRepository,
+open class FileService(private val fileRepository: FileRepository,
                   private val fileMapper: FileMapper,
                   private val imageService: ImageService,
                   private val fileProperties: FileProperties,

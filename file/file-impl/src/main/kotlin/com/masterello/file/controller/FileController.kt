@@ -20,7 +20,7 @@ import java.util.*
 @RestController
 @RequestMapping("/api/files")
 @Tag(name = "Files", description = "API for managing user images and documents")
-class FileController {
+open class FileController {
 
     @Autowired
     private lateinit var fileService: FileService
