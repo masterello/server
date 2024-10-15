@@ -24,7 +24,7 @@ public class WorkerApiSecurityConfig {
                 .securityMatcher("/api/worker/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/worker/search").permitAll()
+                        .requestMatchers("/api/worker/search", "/api/worker/*/full-info").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

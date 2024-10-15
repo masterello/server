@@ -6,6 +6,7 @@ import com.masterello.commons.security.validation.AuthZRule;
 import com.masterello.commons.security.validation.AuthZRules;
 import com.masterello.commons.security.validation.OwnerId;
 import com.masterello.worker.domain.FullWorkerPage;
+import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.WorkerInfo;
 import com.masterello.worker.dto.FullWorkerDTO;
 import com.masterello.worker.dto.WorkerInfoDTO;
@@ -78,5 +79,12 @@ public class WorkerController {
                 .map(fullWorkerMapper::mapToDto)
                 .toList();
         return new WorkerSearchResponse(workers, page.total());
+    }
+
+    @GetMapping(value = "/{worker_uuid}/full-info")
+    @ResponseStatus(HttpStatus.OK)
+    public FullWorkerDTO searchWorkers(@PathVariable("worker_uuid") @Parameter(required = true) UUID workerId) {
+        FullWorkerProjection fullWorkerInfo = workerService.getFullWorkerInfo(workerId);
+        return fullWorkerMapper.mapToDto(fullWorkerInfo);
     }
 }

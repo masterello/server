@@ -4,7 +4,9 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.category.dto.CategoryBulkRequest;
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
+import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.Language;
+import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.WorkerInfo;
@@ -39,6 +41,7 @@ public class WorkerService {
     private final PatchService patchService;
     private final SearchWorkerRepository searchWorkerRepository;
     private final ReadOnlyCategoryService categoryService;
+    private final MasterelloUserService masterelloUserService;
 
     public WorkerInfo storeWorkerInfo(WorkerInfo workerInfo) {
         return workerInfoRepository.save(workerInfo);
@@ -80,6 +83,22 @@ public class WorkerService {
             return FullWorkerPage.emptyPage(total);
         }
     }
+
+    public FullWorkerProjection getFullWorkerInfo(UUID workerId) {
+        WorkerInfo workerInfo = getWorkerInfoOrThrow(workerId);
+        MasterelloUser masterelloUser = masterelloUserService.findById(workerId)
+                .orElseThrow(() -> new WorkerInfoNotFoundException("User data not found for worker"));
+        return FullWorkerProjection.builder()
+                .uuid(masterelloUser.getUuid())
+                .name(masterelloUser.getName())
+                .lastname(masterelloUser.getLastname())
+                .title(masterelloUser.getTitle())
+                .city(masterelloUser.getCity())
+                .languages(masterelloUser.getLanguages())
+                .workerInfo(workerInfo)
+                .build();
+    }
+
 
     @NotNull
     private List<Integer> getCategories(List<Integer> serviceIds) {
