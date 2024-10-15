@@ -1,6 +1,5 @@
 package com.masterello.user.service;
 
-
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.value.MasterelloUser;
 import jakarta.mail.MessagingException;
@@ -8,7 +7,6 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -31,7 +29,6 @@ public class EmailService {
             """;
     private final JavaMailSender mailSender;
 
-    //TODO: replace with AWS SES solution, when migrated to AWS acc
     public void sendEmail(@NonNull MasterelloUser user, @NonNull String verificationCode) throws MessagingException, UnsupportedEncodingException {
         if(!emailConfigProperties.isEnabled()) {
             log.info("Email sending is disabled");

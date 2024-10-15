@@ -30,9 +30,9 @@ spring:
     init:
       mode: always
   mail:
-    host: email-smtp.eu-west-1.amazonaws.com
-    username: ${SES_USERNAME}
-    password: ${SES_PASSWORD}
+    host: smtp-relay.brevo.com
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
     properties:
       mail:
         transport:
@@ -53,7 +53,7 @@ masterello:
       verification-url: "https://oauth2.googleapis.com"
   user:
     email:
-      enabled: false
+      enabled: true
       from: masterello1234@gmail.com
       subject: Please verify your registration
       sender: Masterello
