@@ -62,6 +62,12 @@ masterello:
       enabled: true
       username: admin@masterello.com
       password: ${SUPER_ADMIN_PASS}
+  file:
+    spaces:
+      accessKey: ${DO_SPACES_ACCESS_KEY}
+      secretKey: ${DO_SPACES_SECRET_KEY}
+      endpoint: ${DO_SPACES_ENDPOINT}
+      region: ${DO_SPACES_REGION}
 
 management:
   health:
