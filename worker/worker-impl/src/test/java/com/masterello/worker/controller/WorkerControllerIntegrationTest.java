@@ -1,8 +1,6 @@
 package com.masterello.worker.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-
 import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
 import com.masterello.auth.service.AuthService;
@@ -10,7 +8,9 @@ import com.masterello.category.dto.CategoryBulkRequest;
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
+import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.Language;
+import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.worker.WorkerTestConfiguration;
 import com.masterello.worker.dto.*;
 import io.restassured.RestAssured;
@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-
 import static com.masterello.worker.util.WorkerTestDataProvider.*;
 import static org.hamcrest.Matchers.*;
 import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
@@ -50,6 +49,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     private AuthService authService;
     @Autowired
     private ReadOnlyCategoryService categoryService;
+    @Autowired
+    private MasterelloUserService userService;
 
     @Test
     void storeWorkerInfo() {
@@ -211,6 +212,48 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("phone", is("+49111111111"))
                     .body("services", hasSize(1))
                     .body("services",hasItem(
+                            allOf(
+                                    hasEntry("serviceId", 10),
+                                    hasEntry("amount", 100)
+                            ))
+                    );
+        //@formatter:on
+    }
+
+    @Test
+    void getFullWorkerInfo() {
+        when(userService.findById(WORKER_1))
+                .thenReturn(Optional.of(MasterelloTestUser.builder()
+                        .uuid(WORKER_1)
+                        .title("Herr.")
+                        .name("Plumber")
+                        .lastname("Plumberson")
+                        .city("Berlin")
+                        .languages(List.of(Language.EN, Language.DE))
+                        .build()));
+        //@formatter:off
+        RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                .when()
+                    .get("/api/worker/{uuid}/full-info", WORKER_1.toString())
+                .then()
+                    .statusCode(200)
+                    .body("uuid", is(WORKER_1.toString()))
+                    .body("title", is("Herr."))
+                    .body("name", is("Plumber"))
+                    .body("lastname", is("Plumberson"))
+                    .body("city", is("Berlin"))
+                    .body("languages", hasSize(2))
+                    .body("languages",hasItems(Language.EN.name(), Language.DE.name()))
+                    .body("workerInfo.description", is("best plumber"))
+                    .body("workerInfo.whatsapp", is("plumber-w"))
+                    .body("workerInfo.telegram", is("plumber-t"))
+                    .body("workerInfo.viber", is("plumber-v"))
+                    .body("workerInfo.phone", is("+49111111111"))
+                    .body("workerInfo.services", hasSize(1))
+                    .body("workerInfo.services",hasItem(
                             allOf(
                                     hasEntry("serviceId", 10),
                                     hasEntry("amount", 100)
