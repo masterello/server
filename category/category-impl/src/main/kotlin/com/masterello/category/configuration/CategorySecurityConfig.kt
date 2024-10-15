@@ -1,29 +1,29 @@
-package com.masterello.category.configuration;
+package com.masterello.category.configuration
 
-import lombok.RequiredArgsConstructor;
+import kotlin.jvm.Throws;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 
 @Configuration
-@RequiredArgsConstructor
 @EnableWebSecurity
-public class CategorySecurityConfig {
-
+open class CategorySecurityConfig {
 
     @Bean
-    public SecurityFilterChain apiAuthFilter(HttpSecurity http) throws Exception {
+    @Throws(Exception::class)
+    open fun apiCategoryAuthFilter(http: HttpSecurity): SecurityFilterChain {
         http
-                .securityMatcher("/api/categories", "/api/categories/**")
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
-                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+            .securityMatcher(AntPathRequestMatcher("/api/categories/**"))
+            .csrf { it.disable() }
+            .authorizeHttpRequests { auth -> auth
+                .anyRequest().permitAll() }
+            .sessionManagement { session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
 
-        return http.build();
+        return http.build()
     }
 }
