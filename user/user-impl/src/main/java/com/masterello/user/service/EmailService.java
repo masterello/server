@@ -19,9 +19,9 @@ import java.io.UnsupportedEncodingException;
 @RequiredArgsConstructor
 public class EmailService {
     private final EmailConfigProperties emailConfigProperties;
-    private static final String LINK = "/api/confirmationLink/verifyUserToken?code=";
+    private static final String LINK = "/api/user/confirmationLink/verifyUserToken?code=";
     private static final String CONTENT = """
-            Dear ${username},<br>
+            Dear user,<br>
             Please click the link below to verify your registration:<br>
             <h3><a href="${verifyURL}">VERIFY</a></h3>
             Thank you,<br>
@@ -34,8 +34,7 @@ public class EmailService {
             log.info("Email sending is disabled");
             return;
         }
-        String text = CONTENT.replace("${username}", buildUserName(user))
-                .replace("${verifyURL}", buildRequestUrl(verificationCode));
+        String text = CONTENT.replace("${verifyURL}", buildRequestUrl(verificationCode));
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message);
@@ -51,9 +50,5 @@ public class EmailService {
     private String buildRequestUrl(String verificationCode) {
         final String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
         return baseUrl + LINK + verificationCode;
-    }
-
-    private String buildUserName(MasterelloUser user) {
-        return user.getName() + " " + user.getLastname();
     }
 }
