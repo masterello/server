@@ -51,7 +51,7 @@ class StorageService(private val s3Client: S3Client,
     }
 
     fun downloadFile(entity: File): ByteArray? {
-        val objectKey = entity.userUuid.toString() + "/" + entity.uuid.toString() + ".${entity.fileExtension}"
+        val objectKey = "${entity.userUuid}/${entity.uuid}.${entity.fileExtension}"
 
         val getObjectRequest = GetObjectRequest.builder()
             .bucket(fileProperties.bucketName)
