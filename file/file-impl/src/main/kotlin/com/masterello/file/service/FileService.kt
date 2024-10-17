@@ -35,6 +35,7 @@ open class FileService(private val fileRepository: FileRepository,
         }
     }
 
+    @Transactional
     override fun removeFile(userUuid: UUID, fileUUID: UUID): Boolean {
         val file = fileRepository.findFileByUuidAndUserUuid(fileUUID, userUuid)
             ?: throw NotFoundException("File for user $userUuid with uuid $fileUUID is not found")
@@ -85,7 +86,6 @@ open class FileService(private val fileRepository: FileRepository,
         }
     }
 
-    @Transactional
     private fun createThumbnailsAndUploadImage(payload: FileDto) {
         return try {
             val file = payload.file
