@@ -194,6 +194,25 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    public void retrieveCurrentUser() {
+        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                .when()
+                    .get("/api/user/")
+                .then()
+                    .statusCode(200)
+                    .body("uuid", is(VERIFIED_USER.toString()))
+                    .body("email", is(VERIFIED_USER_EMAIL))
+                    .body("name", is("test1"))
+                    .body("lastname", is("user1"));
+        //@formatter:on
+    }
+
+    @Test
     public void retrieveUserByAdmin() {
         mockAuth(UUID.randomUUID(), List.of(AuthZRole.ADMIN), false);
 
