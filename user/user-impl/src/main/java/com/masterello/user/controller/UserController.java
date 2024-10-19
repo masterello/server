@@ -1,7 +1,9 @@
 package com.masterello.user.controller;
 
 import com.github.fge.jsonpatch.JsonPatch;
+import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
+import com.masterello.commons.security.data.MasterelloAuthentication;
 import com.masterello.user.dto.AddRoleRequest;
 import com.masterello.user.dto.SignUpRequest;
 import com.masterello.user.dto.UserDTO;
@@ -22,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -54,6 +58,14 @@ public class UserController {
         return userMapper.mapUserToDto(user);
     }
 
+    @Operation(method = "retrieveCurrentUser", tags = "user", responses = {@ApiResponse(responseCode = "200", description = "Returns user"), @ApiResponse(responseCode = "404", description = "User is not in the system"), @ApiResponse(responseCode = "500", description = "Error(s) while retrieving user"),})
+    @GetMapping(value = "/")
+    public UserDTO getCurrentUserData() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        AuthData tokenData = ((MasterelloAuthentication) securityContext.getAuthentication()).getDetails();
+        MasterelloUser user = userService.retrieveUserByUuid(tokenData.getUserId());
+        return userMapper.mapUserToDto(user);
+    }
     @AuthZRules({
             @AuthZRule(roles = {AuthZRole.USER, AuthZRole.WORKER}, isOwner = true),
             @AuthZRule(roles = {AuthZRole.ADMIN})
