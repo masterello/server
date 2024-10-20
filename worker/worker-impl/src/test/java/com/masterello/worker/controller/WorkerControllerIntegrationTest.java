@@ -359,16 +359,16 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
             "ASC, workers_search_lang_and_services_asc.json",
             "DESC, workers_search_lang_and_services_desc.json"
     })
-    void searchWorkers_by_lang_and_service(PageRequest.SortOrder order, String expectedResponseFileName) {
+    void searchWorkers_by_lang_and_service(PageRequestDTO.SortOrder order, String expectedResponseFileName) {
         mockCategories(listOf(), Map.of());
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .languages(listOf(Language.DE, Language.EN))
                 .services(listOf(10))
-                .pageRequest(PageRequest.builder()
+                .pageRequest(PageRequestDTO.builder()
                         .page(1)
                         .pageSize(10)
-                        .sort(PageRequest.Sort.builder()
+                        .sort(PageRequestDTO.Sort.builder()
                                 .order(order)
                                 .fields(List.of("name"))
                                 .build())
@@ -408,11 +408,11 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .languages(listOf(Language.DE, Language.EN))
-                .pageRequest(PageRequest.builder()
+                .pageRequest(PageRequestDTO.builder()
                         .page(page)
                         .pageSize(pageSize)
-                        .sort(PageRequest.Sort.builder()
-                                .order(PageRequest.SortOrder.DESC)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.DESC)
                                 .fields(List.of("name"))
                                 .build())
                         .build())
@@ -452,11 +452,11 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .services(listOf(10))
-                .pageRequest(PageRequest.builder()
+                .pageRequest(PageRequestDTO.builder()
                         .page(page)
                         .pageSize(pageSize)
-                        .sort(PageRequest.Sort.builder()
-                                .order(PageRequest.SortOrder.ASC)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
                                 .fields(List.of("name"))
                                 .build())
                         .build())
@@ -483,16 +483,51 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    void searchWorkers_by_city() {
+
+        WorkerSearchRequest request = WorkerSearchRequest.builder()
+                .cities(List.of("münchen", "köln"))
+                .pageRequest(PageRequestDTO.builder()
+                        .page(1)
+                        .pageSize(10)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
+                                .fields(List.of("city"))
+                                .build())
+                        .build())
+                .build();
+
+        // Construct the path to the expected response file
+        WorkerSearchResponse expectedResponse = readWorkerFromFile("src/test/resources/responses/workers_search_city_asc.json");
+
+        //@formatter:off
+        ValidatableResponse validatableResponse = RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/worker/search")
+                .then()
+                    .statusCode(HttpStatus.OK.value());
+        //@formatter:on
+
+        WorkerSearchResponse actualResponse = validatableResponse.extract().body().as(WorkerSearchResponse.class);
+        assertEquals(expectedResponse, actualResponse);
+    }
+
+
+    @Test
     void searchWorkers_noRecords() {
         mockCategories(listOf(99), Map.of());
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .services(listOf(99))
-                .pageRequest(PageRequest.builder()
+                .pageRequest(PageRequestDTO.builder()
                         .page(1)
                         .pageSize(20)
-                        .sort(PageRequest.Sort.builder()
-                                .order(PageRequest.SortOrder.ASC)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
                                 .fields(List.of("name"))
                                 .build())
                         .build())
@@ -521,11 +556,11 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         mockCategories(listOf(10), Map.of());
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .services(listOf(10))
-                .pageRequest(PageRequest.builder()
+                .pageRequest(PageRequestDTO.builder()
                         .page(1)
                         .pageSize(1)
-                        .sort(PageRequest.Sort.builder()
-                                .order(PageRequest.SortOrder.ASC)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
                                 .fields(List.of("workerInfo.services.amount"))
                                 .build())
                         .build())
@@ -549,11 +584,11 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         mockCategories(listOf(10), Map.of());
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .services(listOf(10))
-                .pageRequest(PageRequest.builder()
+                .pageRequest(PageRequestDTO.builder()
                         .page(0)
                         .pageSize(10)
-                        .sort(PageRequest.Sort.builder()
-                                .order(PageRequest.SortOrder.ASC)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
                                 .fields(List.of("name"))
                                 .build())
                         .build())

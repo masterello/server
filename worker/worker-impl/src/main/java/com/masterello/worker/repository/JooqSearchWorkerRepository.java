@@ -4,7 +4,6 @@ import com.masterello.user.value.Language;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.WorkerInfo;
 import com.masterello.worker.domain.WorkerServiceEntity;
-import com.masterello.worker.dto.PageRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.jooq.DSLContext;
@@ -12,6 +11,8 @@ import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -28,7 +29,8 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
     private final DSLContext dsl;
 
     @Override
-    public long getTotalCount(List<Language> languages, List<Integer> serviceIds) {
+    public long getTotalCount(WorkerSearchFilters filters) {
+
         val count = dsl.with("distinct_workers")
                 .as(dsl.selectDistinct(field("uuid"))
                         .from(DSL.table("users").as("u"))
@@ -36,8 +38,9 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         .leftJoin(DSL.table("user_languages").as("ul")).on(field("u.uuid").eq(field("ul.user_id")))
                         .leftJoin(DSL.table("worker_services").as("ws")).on(field("u.uuid").eq(field("ws.worker_id")))
                         .where(field("ur.role").eq("WORKER")
-                                .and(hasLanguageFilter(languages) ? field("ul.language").in(languages.stream().map(Language::name).toArray()) : DSL.noCondition())
-                                .and(hasServiceFilter(serviceIds) ? field("ws.service_id").in(serviceIds) : DSL.noCondition())
+                                .and(filters.hasLanguageFilter()? field("ul.language").in(filters.getLanguageFilter()) : DSL.noCondition())
+                                .and(filters.hasServiceFilter() ? field("ws.service_id").in(filters.getServices()) : DSL.noCondition())
+                                .and(filters.hasCityFilter() ? field("u.city").in(filters.getCities()) : DSL.noCondition())
                         )
                 )
                 .selectCount()
@@ -47,11 +50,10 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
     }
 
     @Override
-    public Set<UUID> findWorkersIds(List<Language> languages, List<Integer> serviceIds, int page, int size, PageRequest.Sort sort) {
+    public Set<UUID> findWorkersIds(WorkerSearchFilters filters, PageRequest pageRequest) {
         // Collect the fields to be included in the distinct select clause
-        List<String> sortFields = sort.getFields();
-
-        List<Field<?>> distinctFields = sortFields.stream()
+        List<Field<?>> distinctFields = pageRequest.getSort().stream().sorted()
+                .map(Sort.Order::getProperty)
                 .map(sortField -> DSL.field(sortField).as(sortField.replace(".", "_")))
                 .collect(Collectors.toList());
 
@@ -66,35 +68,36 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         .leftJoin(DSL.table("worker_info").as("wi")).on(field("u.uuid").eq(field("wi.worker_id")))
                         .leftJoin(DSL.table("worker_services").as("ws")).on(field("u.uuid").eq(field("ws.worker_id")))
                         .where(field("ur.role").eq("WORKER")
-                                .and(hasLanguageFilter(languages) ? field("ul.language").in(languages.stream().map(Language::name).toArray()) : DSL.noCondition())
-                                .and(hasServiceFilter(serviceIds) ? field("ws.service_id").in(serviceIds) : DSL.noCondition())
+                                .and(filters.hasLanguageFilter()? field("ul.language").in(filters.getLanguageFilter()) : DSL.noCondition())
+                                .and(filters.hasServiceFilter() ? field("ws.service_id").in(filters.getServices()) : DSL.noCondition())
+                                .and(filters.hasCityFilter() ? field("u.city").in(filters.getCities()) : DSL.noCondition())
                         )
                 )
                 .select(field("uuid"))
                 .from(DSL.table("distinct_workers"))
-                .orderBy(sortFields(sort, f -> f.replace(".", "_")))
-                .limit(size)
-                .offset(page * size);
+                .orderBy(sortFields(pageRequest.getSort(), f -> f.replace(".", "_")))
+                .limit(pageRequest.getPageSize())
+                .offset(pageRequest.getOffset());
 
         // Execute the query and get results
         List<UUID> ids = query.fetch(field("uuid"), UUID.class);
         return new HashSet<>(ids); // Use HashSet to ensure uniqueness
     }
 
-    private List<org.jooq.SortField<?>> sortFields(PageRequest.Sort sort) {
+    private List<org.jooq.SortField<?>> sortFields(Sort sort) {
         return sortFields(sort, s -> s);
     }
 
-    private List<org.jooq.SortField<?>> sortFields(PageRequest.Sort sort, Function<String, String> columnNameMapper) {
-        return sort.getFields().stream()
-                .map(sortField -> sort.getOrder() == PageRequest.SortOrder.ASC
-                        ? DSL.field(columnNameMapper.apply(sortField)).asc()
-                        : DSL.field(columnNameMapper.apply(sortField)).desc())
+    private List<org.jooq.SortField<?>> sortFields(Sort sort, Function<String, String> columnNameMapper) {
+        return sort.stream()
+                .map(sortField -> sortField.getDirection() == Sort.Direction.ASC
+                        ? DSL.field(columnNameMapper.apply(sortField.getProperty())).asc()
+                        : DSL.field(columnNameMapper.apply(sortField.getProperty())).desc())
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<FullWorkerProjection> findWorkers(Set<UUID> ids, PageRequest.Sort sort) {
+    public List<FullWorkerProjection> findWorkers(Set<UUID> ids, Sort sort) {
         // Building the query
         var query = dsl.select(
                         DSL.field("u.uuid"),
@@ -186,13 +189,4 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         .collect(Collectors.toList()))
                 .orElse(List.of());
     }
-
-    private boolean hasLanguageFilter(List<Language> languages) {
-        return languages != null && !languages.isEmpty();
-    }
-
-    private boolean hasServiceFilter(List<Integer> serviceIds) {
-        return serviceIds != null && !serviceIds.isEmpty();
-    }
-
 }

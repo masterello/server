@@ -1,8 +1,8 @@
 package com.masterello.worker.repository;
 
-import com.masterello.user.value.Language;
 import com.masterello.worker.domain.FullWorkerProjection;
-import com.masterello.worker.dto.PageRequest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Set;
@@ -11,9 +11,9 @@ import java.util.UUID;
 
 public interface SearchWorkerRepository {
 
-    long getTotalCount(List<Language> languages, List<Integer> serviceIds);
+    long getTotalCount(WorkerSearchFilters filters);
 
-    Set<UUID> findWorkersIds(List<Language> languages, List<Integer> serviceIds, int page, int size, PageRequest.Sort sort);
+    Set<UUID> findWorkersIds(WorkerSearchFilters filters, PageRequest page);
 
-    List<FullWorkerProjection> findWorkers(Set<UUID> ids, PageRequest.Sort sort);
+    List<FullWorkerProjection> findWorkers(Set<UUID> ids, Sort sort);
 }
