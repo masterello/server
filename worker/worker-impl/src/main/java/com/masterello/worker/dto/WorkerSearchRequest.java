@@ -16,7 +16,9 @@ public class WorkerSearchRequest {
     private List<Language> languages;
     @Nullable
     private List<Integer> services;
+    @Nullable
+    private List<String> cities;
     @NotNull
     @Valid
-    private PageRequest pageRequest;
+    private PageRequestDTO pageRequest;
 }

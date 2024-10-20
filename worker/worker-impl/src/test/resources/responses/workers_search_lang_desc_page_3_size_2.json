@@ -5,7 +5,7 @@
       "title": "Mr.",
       "name": "worker1",
       "lastname": "workerson",
-      "city": "berlin",
+      "city": "köln",
       "languages": ["DE", "RU"],
       "workerInfo": {
         "description": "best plumber",

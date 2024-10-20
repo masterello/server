@@ -74,7 +74,11 @@ public class WorkerController {
     @RequestMapping(value = "/search", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.OK)
     public WorkerSearchResponse searchWorkers(@Valid @RequestBody WorkerSearchRequest request) {
-        FullWorkerPage page = workerService.searchWorkers(request.getLanguages(), request.getServices(), request.getPageRequest());
+        FullWorkerPage page = workerService.searchWorkers(
+                request.getLanguages(),
+                request.getServices(),
+                request.getCities(),
+                request.getPageRequest());
         List<FullWorkerDTO> workers = page.items().stream()
                 .map(fullWorkerMapper::mapToDto)
                 .toList();
@@ -83,7 +87,7 @@ public class WorkerController {
 
     @GetMapping(value = "/{worker_uuid}/full-info")
     @ResponseStatus(HttpStatus.OK)
-    public FullWorkerDTO searchWorkers(@PathVariable("worker_uuid") @Parameter(required = true) UUID workerId) {
+    public FullWorkerDTO getWorkerFullInfo(@PathVariable("worker_uuid") @Parameter(required = true) UUID workerId) {
         FullWorkerProjection fullWorkerInfo = workerService.getFullWorkerInfo(workerId);
         return fullWorkerMapper.mapToDto(fullWorkerInfo);
     }

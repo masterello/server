@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class PageRequest {
+public class PageRequestDTO {
     @Min(1)
     private int page;
     private int pageSize;

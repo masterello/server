@@ -10,7 +10,7 @@ import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.WorkerInfo;
-import com.masterello.worker.dto.PageRequest;
+import com.masterello.worker.dto.PageRequestDTO;
 import com.masterello.worker.exception.InvalidSearchRequestException;
 import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
@@ -18,10 +18,13 @@ import com.masterello.worker.repository.SearchWorkerRepository;
 import com.masterello.worker.repository.WorkerInfoRepository;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.commons.core.sort.util.SortUtil;
+import com.masterello.worker.repository.WorkerSearchFilters;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -68,17 +71,19 @@ public class WorkerService {
                 .orElseThrow(() -> new WorkerInfoNotFoundException("Worker info not found for worker " + workerId));
     }
 
-    public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, PageRequest pageRequest) {
+    public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<String> cities, PageRequestDTO pageRequestDTO) {
 
         final List<Integer> categoriesWithChildren = getCategories(serviceIds);
-        PageRequest.Sort sort = validateAndGetSort(pageRequest);
-        val total = searchWorkerRepository.getTotalCount(languages, categoriesWithChildren);
+        val filters = WorkerSearchFilters.builder()
+                .services(categoriesWithChildren)
+                .languages(languages)
+                .cities(cities).build();
+        val total = searchWorkerRepository.getTotalCount(filters);
         if( total > 0 ) {
-            int page = pageRequest.getPage() - 1;
-            val workersIds = searchWorkerRepository.findWorkersIds(languages, categoriesWithChildren,
-                    page, pageRequest.getPageSize(), sort);
+            PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
+            val workersIds = searchWorkerRepository.findWorkersIds(filters, pageRequest);
             return workersIds.isEmpty() ? FullWorkerPage.emptyPage(total) :
-                    new FullWorkerPage(searchWorkerRepository.findWorkers(workersIds, sort), total);
+                    new FullWorkerPage(searchWorkerRepository.findWorkers(workersIds, pageRequest.getSort()), total);
         } else {
             return FullWorkerPage.emptyPage(total);
         }
@@ -115,13 +120,15 @@ public class WorkerService {
                 .collect(Collectors.toList());
     }
 
-    private static PageRequest.Sort validateAndGetSort(PageRequest pageRequest) {
+    private static PageRequest validateAndPreparePageRequest(PageRequestDTO pageRequestDTO) {
         try {
-            val mappedSortingFields = SortUtil.mapSortingFields(pageRequest.getSort().getFields(), FullWorkerProjection.class);
-            return PageRequest.Sort.builder()
-                    .fields(mappedSortingFields)
-                    .order(pageRequest.getSort().getOrder())
-                    .build();
+            val mappedSortingFields = SortUtil.mapSortingFields(pageRequestDTO.getSort().getFields(), FullWorkerProjection.class);
+            return PageRequest.of(
+                    pageRequestDTO.getPage() - 1,
+                    pageRequestDTO.getPageSize(),
+                    pageRequestDTO.getSort().getOrder() == PageRequestDTO.SortOrder.DESC ? Sort.Direction.DESC : Sort.Direction.ASC,
+                    mappedSortingFields.toArray(new String[0])
+            );
         } catch (Exception ex) {
             log.error("Sorting validation failed: {}", ex.getMessage());
             throw new InvalidSearchRequestException("Search failed", ex);

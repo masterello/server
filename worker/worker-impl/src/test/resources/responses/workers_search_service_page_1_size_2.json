@@ -5,7 +5,7 @@
       "title": "Mr.",
       "name": "worker1",
       "lastname": "workerson",
-      "city": "berlin",
+      "city": "köln",
       "languages": [
         "DE",
         "RU"
@@ -29,7 +29,7 @@
       "title": "Herr",
       "name": "worker2",
       "lastname": "workerson",
-      "city": "berlin",
+      "city": "münchen",
       "languages": ["EN", "UA"],
       "workerInfo": {
         "description": "best electrician",

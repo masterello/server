@@ -1,9 +1,9 @@
 insert into public.users (uuid, name, lastname, title, email, phone, password, city, status, email_verified)
 values
     ('bb2c6e16-2228-4ac1-8482-1f3548672b43', 'user', 'userson', 'Mr.', 'user@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('455aee9c-9629-466f-bfc5-8d956da74769', 'admin', 'adminson', 'Mr.', 'admin@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'worker1', 'workerson', 'Mr.', 'worker1@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'worker2', 'workerson', 'Herr', 'worker2@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
+    ('455aee9c-9629-466f-bfc5-8d956da74769', 'admin', 'adminson', 'Mr.', 'admin@gmail.com', '1234567', 'aaabbb123', 'köln', 0, true),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'worker1', 'workerson', 'Mr.', 'worker1@gmail.com', '1234567', 'aaabbb123', 'köln', 0, true),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'worker2', 'workerson', 'Herr', 'worker2@gmail.com', '1234567', 'aaabbb123', 'münchen', 0, true),
     ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'worker3', 'workerson', 'Ms.', 'worker3@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
     ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'worker4', 'workerson', 'Frau', 'worker4@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
     ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'worker5', 'workerson', null, 'worker5@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
