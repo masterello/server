@@ -1,0 +1,1 @@
+TRUNCATE oauth2_authorization;

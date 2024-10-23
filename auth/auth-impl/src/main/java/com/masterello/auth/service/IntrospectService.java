@@ -1,9 +1,9 @@
 package com.masterello.auth.service;
 
 import com.masterello.auth.config.TokenProperties;
+import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
 import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
-import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
@@ -30,7 +29,7 @@ public class IntrospectService implements AuthService {
     public Optional<AuthData> validateToken(String token) {
         OAuth2Authorization auth = authorizationService.findByToken(token, OAuth2TokenType.ACCESS_TOKEN);
 
-        if(auth == null) {
+        if (auth == null) {
             return Optional.empty();
         }
 
@@ -62,18 +61,17 @@ public class IntrospectService implements AuthService {
 
         authorizationService.save(updatedAuth);
 
-        val principal = (OAuth2ClientAuthenticationToken)updatedAuth.getAttributes().get(Principal.class.getName());
-        val user = (MasterelloUser)principal.getDetails();
+        val principalToken = (MasterelloAuthenticationToken) updatedAuth.getAttributes().get(Principal.class.getName());
+        val user = principalToken.getPrincipal();
 
         return Optional.ofNullable(AuthData.builder()
-                        .username(user.getUsername())
-                        .emailVerified(user.isEmailVerified())
-                        .userRoles(toAuthZRoles(user.getRoles()))
-                        .userId(user.getUuid())
+                .username(user.getUsername())
+                .emailVerified(user.isEmailVerified())
+                .userRoles(toAuthZRoles(user.getRoles()))
+                .userId(user.getUuid())
                 .build());
 
     }
-
 
 
     private List<AuthZRole> toAuthZRoles(Set<Role> roles) {

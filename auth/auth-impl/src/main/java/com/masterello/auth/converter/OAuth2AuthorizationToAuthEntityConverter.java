@@ -1,14 +1,12 @@
 package com.masterello.auth.converter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+ import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
 import com.masterello.auth.domain.Authorization;
-import com.masterello.auth.domain.SerializablePrincipal;
-import com.masterello.auth.mapper.PrincipalMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -21,7 +19,6 @@ import java.util.function.Supplier;
 public class OAuth2AuthorizationToAuthEntityConverter {
 
     private final Supplier<ObjectMapper> authServiceObjectMapper;
-    private final PrincipalMapper principalMapper;
 
     public Authorization toEntity(OAuth2Authorization authorization) {
         Authorization entity = new Authorization();
@@ -62,8 +59,8 @@ public class OAuth2AuthorizationToAuthEntityConverter {
     }
 
     private String getPrincipal(Object principal) {
-        SerializablePrincipal serializablePrincipal = principalMapper.mapToSerializablePrincipal((OAuth2ClientAuthenticationToken) principal);
-        return writeObject(serializablePrincipal);
+        MasterelloAuthenticationToken token = (MasterelloAuthenticationToken) principal;
+        return token.getName();
     }
 
     private String writeObject(Object data) {

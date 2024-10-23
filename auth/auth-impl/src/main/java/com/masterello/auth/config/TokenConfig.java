@@ -1,12 +1,11 @@
 package com.masterello.auth.config;
 
+import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
 import com.masterello.auth.helper.UserClaimsHelper;
-import com.masterello.user.value.MasterelloUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.OAuth2Token;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.*;
@@ -40,11 +39,10 @@ public class TokenConfig {
     @Bean
     public OAuth2TokenCustomizer<OAuth2TokenClaimsContext> accessTokenCustomizer() {
         return context -> {
-            OAuth2ClientAuthenticationToken principal = context.getPrincipal();
-            MasterelloUser user = (MasterelloUser) principal.getDetails();
+            MasterelloAuthenticationToken authToken = context.getPrincipal();
             if (context.getTokenType().getValue().equals("access_token")) {
 
-                Map<String, Object> userClaims = UserClaimsHelper.getUserClaims(user);
+                Map<String, Object> userClaims = UserClaimsHelper.getUserClaims(authToken.getPrincipal());
                 context.getClaims().claims(claims -> claims.putAll(userClaims));
             }
         };

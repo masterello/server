@@ -1,12 +1,13 @@
 package com.masterello.auth.customgrants.passwordgrant;
 
 import com.masterello.auth.customgrants.AbstractAuthenticationProvider;
+import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
+import com.masterello.auth.domain.SecurityUserDetails;
 import com.masterello.auth.service.SecurityUserDetailsService;
-import com.masterello.user.value.MasterelloUser;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 import static com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationConverter.PASSWORD_GRANT_TYPE;
 
 @Component
-public class CustomPasswordAuthenticationProvider extends AbstractAuthenticationProvider implements AuthenticationProvider {
+public class CustomPasswordAuthenticationProvider extends AbstractAuthenticationProvider {
 
     private final PasswordEncoder passwordEncoder;
 
@@ -29,18 +30,27 @@ public class CustomPasswordAuthenticationProvider extends AbstractAuthentication
     }
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
+    protected MasterelloAuthenticationToken getPrincipal(Authentication authentication) {
         CustomPasswordAuthenticationToken customPasswordAuthenticationToken = (CustomPasswordAuthenticationToken) authentication;
         String username = customPasswordAuthenticationToken.getUsername();
         String password = customPasswordAuthenticationToken.getPassword();
-        MasterelloUser user = fetchUser(username);
+        SecurityUserDetails user = fetchUser(username);
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
         }
 
-        return authenticate(user, customPasswordAuthenticationToken);
+        return new MasterelloAuthenticationToken(user);
+    }
+
+    private SecurityUserDetails fetchUser(String username) {
+        SecurityUserDetails user;
+        try {
+            user = userDetailsService.loadUserByUsername(username);
+        } catch (UsernameNotFoundException e) {
+            throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
+        }
+        return user;
     }
 
     @Override
@@ -49,7 +59,7 @@ public class CustomPasswordAuthenticationProvider extends AbstractAuthentication
     }
 
     @Override
-    protected String getGrantType() {
-        return PASSWORD_GRANT_TYPE;
+    protected AuthorizationGrantType getGrantType() {
+        return new AuthorizationGrantType(PASSWORD_GRANT_TYPE);
     }
 }

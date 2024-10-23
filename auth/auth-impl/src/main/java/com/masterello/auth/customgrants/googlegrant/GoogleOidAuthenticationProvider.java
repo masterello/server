@@ -1,6 +1,8 @@
 package com.masterello.auth.customgrants.googlegrant;
 
 import com.masterello.auth.customgrants.AbstractAuthenticationProvider;
+import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
+import com.masterello.auth.domain.SecurityUserDetails;
 import com.masterello.auth.dto.GoogleTokenInfo;
 import com.masterello.auth.service.GoogleVerificationService;
 
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -36,22 +39,21 @@ public class GoogleOidAuthenticationProvider extends AbstractAuthenticationProvi
     }
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
+    protected MasterelloAuthenticationToken getPrincipal(Authentication authentication) {
         GoogleOidAuthenticationToken googleAuthToken = (GoogleOidAuthenticationToken) authentication;
 
         GoogleTokenInfo tokenInfo = googleVerificationService.verify(googleAuthToken.getToken())
                 .orElseThrow(() -> new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED));
         String email = tokenInfo.getEmail();
-        MasterelloUser user = fetchOrCreateUser(email);
-        return authenticate(user, googleAuthToken);
+        SecurityUserDetails user = fetchOrCreateUser(email);
+        return new MasterelloAuthenticationToken(user);
     }
 
-    private MasterelloUser fetchOrCreateUser(String email) {
+    private SecurityUserDetails fetchOrCreateUser(String email) {
         if (userDetailsService.existsByEmail(email)) {
-            return userDetailsService.loadUserByUsername(email).toMasterelloUser();
+            return userDetailsService.loadUserByUsername(email);
         } else {
-            return authNService.googleSignup(email);
+            return new SecurityUserDetails(authNService.googleSignup(email));
         }
     }
 
@@ -61,8 +63,8 @@ public class GoogleOidAuthenticationProvider extends AbstractAuthenticationProvi
     }
 
     @Override
-    protected String getGrantType() {
-        return GoogleOidAuthenticationConverter.GOOGLE_OID_GRANT_TYPE;
+    protected AuthorizationGrantType getGrantType() {
+        return new AuthorizationGrantType(GoogleOidAuthenticationConverter.GOOGLE_OID_GRANT_TYPE);
     }
 }
 
