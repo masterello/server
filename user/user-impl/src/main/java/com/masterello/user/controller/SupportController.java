@@ -1,5 +1,8 @@
 package com.masterello.user.controller;
 
+import com.masterello.auth.data.AuthZRole;
+import com.masterello.commons.security.validation.AuthZRule;
+import com.masterello.commons.security.validation.AuthZRules;
 import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.service.SupportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +41,9 @@ public class SupportController {
         return ResponseEntity.ok().build();
     }
 
+    @AuthZRules({
+            @AuthZRule(roles = {AuthZRole.ADMIN})
+    })
     @Operation(method = "completeRequest", tags = "Contact Us", responses = {
             @ApiResponse(responseCode = "200", description = "Support is marked as processed"),
             @ApiResponse(responseCode = "500", description = "Error(s) while updating support request"),
@@ -48,6 +54,9 @@ public class SupportController {
         return ResponseEntity.ok().build();
     }
 
+    @AuthZRules({
+            @AuthZRule(roles = {AuthZRole.ADMIN})
+    })
     @Operation(method = "getAllRequests", tags = "Contact Us", responses = {
             @ApiResponse(responseCode = "200", description = "Receives all support requests"),
             @ApiResponse(responseCode = "500", description = "Error(s) while receiving support requests"),
@@ -57,6 +66,9 @@ public class SupportController {
         return supportService.receiveAllSupportRequests();
     }
 
+    @AuthZRules({
+            @AuthZRule(roles = {AuthZRole.ADMIN})
+    })
     @Operation(method = "getAllUnprocessedRequests", tags = "Contact Us", responses = {
             @ApiResponse(responseCode = "200", description = "Receives all unprocessed support requests"),
             @ApiResponse(responseCode = "500", description = "Error(s) while receiving unprocessed support requests"),
