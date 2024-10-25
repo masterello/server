@@ -1,10 +1,11 @@
 package com.masterello.auth.utils;
 
+import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
 import com.masterello.auth.domain.Authorization;
-import com.masterello.auth.domain.SerializablePrincipal;
+import com.masterello.auth.domain.SecurityUserDetails;
 import com.masterello.auth.helper.UserClaimsHelper;
-import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.MasterelloTestUser;
+import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
 import com.nimbusds.oauth2.sdk.token.AccessTokenType;
@@ -25,6 +26,8 @@ import java.security.Principal;
 import java.time.OffsetDateTime;
 import java.util.*;
 
+import static com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationConverter.GOOGLE_OID_GRANT_TYPE;
+import static com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationConverter.PASSWORD_GRANT_TYPE;
 import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,7 +68,6 @@ public class AuthTestDataProvider {
         OAuth2ClientAuthenticationToken clientToken = mock(OAuth2ClientAuthenticationToken.class);
         when(clientToken.getRegisteredClient()).thenReturn(client);
         when(clientToken.getClientAuthenticationMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
-        when(clientToken.getName()).thenReturn(PRINCIPAL_NAME);
         when(clientToken.isAuthenticated()).thenReturn(true);
 
         SecurityContextHolder.getContext().setAuthentication(clientToken);
@@ -79,7 +81,7 @@ public class AuthTestDataProvider {
                 .principalName(PRINCIPAL_NAME)
                 .registeredClientId(CLIENT_ID.toString())
                 .authorizationGrantType(GRANT_TYPE)
-                .principal(SERIALIZED_PRINCIPAL)
+                .principal(USER_ID.toString())
                 .accessTokenType(AccessTokenType.BEARER.getValue())
                 .accessTokenValue(ACCESS_TOKEN)
                 .accessTokenIssuedAt(ACCESS_TOKEN_ISSUED_AT)
@@ -98,7 +100,7 @@ public class AuthTestDataProvider {
         Map<String, Object> accessTokenMetadata = getAccessTokenMetadata(user);
         OAuth2RefreshToken refreshToken = getRefreshToken();
 
-        OAuth2ClientAuthenticationToken principal = getPrincipalToken(user, client);
+        MasterelloAuthenticationToken principal = getPrincipalToken(user);
         return OAuth2Authorization.withRegisteredClient(client)
                 .id(AUTH_ID.toString())
                 .principalName(PRINCIPAL_NAME)
@@ -110,19 +112,8 @@ public class AuthTestDataProvider {
     }
 
     @NotNull
-    public static OAuth2ClientAuthenticationToken getPrincipalToken(MasterelloUser user, RegisteredClient client) {
-        OAuth2ClientAuthenticationToken principal = new OAuth2ClientAuthenticationToken(client, ClientAuthenticationMethod.CLIENT_SECRET_BASIC, null);
-        principal.setDetails(user);
-        return principal;
-    }
-
-    public static SerializablePrincipal getSerializablePrincipal(String userId, String registeredClientId) {
-        return SerializablePrincipal.builder()
-                .userId(userId)
-                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
-                .registeredClientId(registeredClientId)
-                .authenticated(true)
-                .build();
+    public static MasterelloAuthenticationToken getPrincipalToken(MasterelloUser user) {
+        return new MasterelloAuthenticationToken(new SecurityUserDetails(user));
     }
 
     public static OAuth2RefreshToken getRefreshToken() {
@@ -136,7 +127,8 @@ public class AuthTestDataProvider {
     public static RegisteredClient getClient() {
         return RegisteredClient.withId(CLIENT_ID.toString())
                 .clientId(REDISTERED_CLIENT_ID)
-                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+                .authorizationGrantType(new AuthorizationGrantType(PASSWORD_GRANT_TYPE))
+                .authorizationGrantType(new AuthorizationGrantType(GOOGLE_OID_GRANT_TYPE))
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .build();
     }

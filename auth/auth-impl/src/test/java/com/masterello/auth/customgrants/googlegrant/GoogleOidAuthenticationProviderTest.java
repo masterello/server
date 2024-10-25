@@ -24,12 +24,15 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+import static com.masterello.auth.utils.AuthTestDataProvider.getClient;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -115,8 +118,13 @@ class GoogleOidAuthenticationProviderTest {
     void authenticate_Fails_whenGoogleVerificationFails() {
         when(googleVerificationService.verify(GOOGLE_TOKEN)).thenReturn(Optional.empty());
 
+        RegisteredClient client = getClient();
+        OAuth2ClientAuthenticationToken clientToken = mock(OAuth2ClientAuthenticationToken.class);
+        when(clientToken.getRegisteredClient()).thenReturn(client);
+        when(clientToken.isAuthenticated()).thenReturn(true);
+
         GoogleOidAuthenticationToken authenticationToken =
-                new GoogleOidAuthenticationToken(mock(Authentication.class),
+                new GoogleOidAuthenticationToken(clientToken,
                         Map.of(OAuth2ParameterNames.TOKEN, GOOGLE_TOKEN));
 
         // Act
@@ -125,6 +133,7 @@ class GoogleOidAuthenticationProviderTest {
 
     private MasterelloUser getUser() {
         return MasterelloTestUser.builder()
+                .uuid(UUID.randomUUID())
                 .email(USER_EMAIL)
                 .roles(Set.of(Role.USER))
                 .build();

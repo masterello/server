@@ -1,12 +1,11 @@
 package com.masterello.auth.customgrants;
 
 
-import com.masterello.auth.domain.SecurityUserDetails;
 import com.masterello.auth.service.SecurityUserDetailsService;
-import com.masterello.user.value.MasterelloUser;
+import lombok.val;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
@@ -23,7 +22,7 @@ import org.springframework.util.Assert;
 import java.security.Principal;
 import java.util.Map;
 
-public abstract class AbstractAuthenticationProvider {
+public abstract class AbstractAuthenticationProvider implements AuthenticationProvider  {
 
     private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
     private final OAuth2AuthorizationService authorizationService;
@@ -42,16 +41,18 @@ public abstract class AbstractAuthenticationProvider {
         this.userDetailsService = userDetailsService;
     }
 
-    protected Authentication authenticate(MasterelloUser user, Authentication authenticationToken) {
-        OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(authenticationToken);
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        OAuth2ClientAuthenticationToken clientPrincipal = getAuthenticatedClientElseThrowInvalidClient(authentication);
         RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
+        if (registeredClient == null || !registeredClient.getAuthorizationGrantTypes().contains(getGrantType())) {
+            throw new OAuth2AuthenticationException(OAuth2ErrorCodes.UNAUTHORIZED_CLIENT);
+        }
 
-        //-----------Create a new Security Context Holder Context----------
-        updateSecurityContext(user);
-
+        val principal = getPrincipal(authentication);
         //-----------TOKEN BUILDERS----------
-        DefaultOAuth2TokenContext.Builder tokenContextBuilder = getTokenContextBuilder(authenticationToken, registeredClient, clientPrincipal);
-        OAuth2Authorization.Builder authorizationBuilder = getAuthorizationBuilder(registeredClient, clientPrincipal);
+        DefaultOAuth2TokenContext.Builder tokenContextBuilder = getTokenContextBuilder(authentication, registeredClient, principal);
+        OAuth2Authorization.Builder authorizationBuilder = getAuthorizationBuilder(registeredClient, principal);
 
         //-----------ACCESS TOKEN----------
         OAuth2AccessToken accessToken = getAccessToken(tokenContextBuilder, authorizationBuilder);
@@ -62,7 +63,7 @@ public abstract class AbstractAuthenticationProvider {
         OAuth2Authorization authorization = authorizationBuilder.build();
         this.authorizationService.save(authorization);
 
-        Map<String, Object> additionalParameters = Map.of("roles", user.getRoles());
+        Map<String, Object> additionalParameters = Map.of("roles", principal.getPrincipal().getRoles());
 
         return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
     }
@@ -106,39 +107,20 @@ public abstract class AbstractAuthenticationProvider {
         return accessToken;
     }
 
-    private OAuth2Authorization.Builder getAuthorizationBuilder(RegisteredClient registeredClient, OAuth2ClientAuthenticationToken clientPrincipal) {
+    private OAuth2Authorization.Builder getAuthorizationBuilder(RegisteredClient registeredClient, Authentication principal) {
         return OAuth2Authorization.withRegisteredClient(registeredClient)
-                .attribute(Principal.class.getName(), clientPrincipal)
-                .principalName(clientPrincipal.getName())
-                .authorizationGrantType(new AuthorizationGrantType(getGrantType()));
+                .attribute(Principal.class.getName(), principal)
+                .principalName(principal.getName())
+                .authorizationGrantType(getGrantType());
     }
 
-    private DefaultOAuth2TokenContext.Builder getTokenContextBuilder(Authentication authenticationToken, RegisteredClient registeredClient, OAuth2ClientAuthenticationToken clientPrincipal) {
+    private DefaultOAuth2TokenContext.Builder getTokenContextBuilder(Authentication authenticationToken, RegisteredClient registeredClient, Authentication principal) {
         return DefaultOAuth2TokenContext.builder()
                 .registeredClient(registeredClient)
-                .principal(clientPrincipal)
+                .principal(principal)
                 .authorizationServerContext(AuthorizationServerContextHolder.getContext())
-                .authorizationGrantType(new AuthorizationGrantType(getGrantType()))
+                .authorizationGrantType(getGrantType())
                 .authorizationGrant(authenticationToken);
-    }
-
-    private static void updateSecurityContext(MasterelloUser user) {
-        OAuth2ClientAuthenticationToken oAuth2ClientAuthenticationToken = (OAuth2ClientAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        oAuth2ClientAuthenticationToken.setDetails(user);
-
-        var newContext = SecurityContextHolder.createEmptyContext();
-        newContext.setAuthentication(oAuth2ClientAuthenticationToken);
-        SecurityContextHolder.setContext(newContext);
-    }
-
-    protected MasterelloUser fetchUser(String login) {
-        SecurityUserDetails user;
-        try {
-            user = userDetailsService.loadUserByUsername(login);
-        } catch (UsernameNotFoundException e) {
-            throw new OAuth2AuthenticationException(OAuth2ErrorCodes.ACCESS_DENIED);
-        }
-        return user.toMasterelloUser();
     }
 
     private static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(Authentication authentication) {
@@ -152,5 +134,7 @@ public abstract class AbstractAuthenticationProvider {
         throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
     }
 
-    protected abstract String getGrantType();
+    protected abstract MasterelloAuthenticationToken getPrincipal(Authentication authentication);
+
+    protected abstract AuthorizationGrantType getGrantType();
 }

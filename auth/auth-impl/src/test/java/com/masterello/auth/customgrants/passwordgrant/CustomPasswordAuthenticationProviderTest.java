@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Token;
@@ -20,11 +21,14 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AccessTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
+import static com.masterello.auth.utils.AuthTestDataProvider.getClient;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -82,12 +86,18 @@ class CustomPasswordAuthenticationProviderTest {
         // Arrange
         String username = "nonexistentUser";
         String password = "testPassword";
+
+        RegisteredClient client = getClient();
+        OAuth2ClientAuthenticationToken clientToken = mock(OAuth2ClientAuthenticationToken.class);
+        when(clientToken.getRegisteredClient()).thenReturn(client);
+        when(clientToken.isAuthenticated()).thenReturn(true);
+
         CustomPasswordAuthenticationToken authenticationToken =
-                new CustomPasswordAuthenticationToken(mock(Authentication.class),
+                new CustomPasswordAuthenticationToken(clientToken,
                         Map.of(OAuth2ParameterNames.USERNAME, username,
                                 OAuth2ParameterNames.PASSWORD, password));
 
-        when(userDetailsService.loadUserByUsername(username)).thenReturn(createTestUser(username, password));
+        when(userDetailsService.loadUserByUsername(username)).thenThrow(new UsernameNotFoundException("User not found"));
 
         // Act & Assert
         assertThrows(OAuth2AuthenticationException.class, () -> authenticationProvider.authenticate(authenticationToken));
@@ -100,8 +110,13 @@ class CustomPasswordAuthenticationProviderTest {
         String wrongPassword = "wrongPassword";
         String password = "password";
 
+        RegisteredClient client = getClient();
+        OAuth2ClientAuthenticationToken clientToken = mock(OAuth2ClientAuthenticationToken.class);
+        when(clientToken.getRegisteredClient()).thenReturn(client);
+        when(clientToken.isAuthenticated()).thenReturn(true);
+
         CustomPasswordAuthenticationToken authenticationToken =
-                new CustomPasswordAuthenticationToken(mock(Authentication.class),
+                new CustomPasswordAuthenticationToken(clientToken,
                         Map.of(OAuth2ParameterNames.USERNAME, username,
                                 OAuth2ParameterNames.PASSWORD, wrongPassword));
 
@@ -138,6 +153,7 @@ class CustomPasswordAuthenticationProviderTest {
 
     private SecurityUserDetails createTestUser(String username, String password) {
         return new SecurityUserDetails(MasterelloTestUser.builder()
+                .uuid(UUID.randomUUID())
                 .email(username)
                 .password(password)
                 .roles(Set.of(Role.USER))

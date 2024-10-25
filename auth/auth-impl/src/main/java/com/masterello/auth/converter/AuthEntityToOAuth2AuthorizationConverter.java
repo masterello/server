@@ -2,19 +2,17 @@ package com.masterello.auth.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
 import com.masterello.auth.domain.Authorization;
-import com.masterello.auth.domain.SerializablePrincipal;
+import com.masterello.auth.domain.SecurityUserDetails;
 import com.masterello.auth.helper.UserClaimsHelper;
-
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.stereotype.Component;
@@ -38,10 +36,10 @@ public class AuthEntityToOAuth2AuthorizationConverter {
 
     public OAuth2Authorization toOAuth2Authorization(Authorization authorization) {
         RegisteredClient client = registeredClientRepository.findById(authorization.getRegisteredClientId());
-        OAuth2ClientAuthenticationToken principal = toPrincipal(authorization.getPrincipal(), client);
+        MasterelloAuthenticationToken principal = toPrincipal(authorization.getPrincipal());
 
         OAuth2AccessToken accessToken = getAccessToken(authorization);
-        Map<String, Object> accessTokenMetadata = getAccessTokenMetadata(authorization, (MasterelloUser) principal.getDetails());
+        Map<String, Object> accessTokenMetadata = getAccessTokenMetadata(authorization, principal.getPrincipal());
         OAuth2RefreshToken refreshToken = getRefreshToken(authorization);
         Map<String, Object> refreshTokenMetadata = getRefreshTokenMetadata(authorization);
 
@@ -89,25 +87,10 @@ public class AuthEntityToOAuth2AuthorizationConverter {
         return metadata;
     }
 
-    private OAuth2ClientAuthenticationToken toPrincipal(String principal, RegisteredClient client) {
-        SerializablePrincipal serializablePrincipal = parseObject(principal, SerializablePrincipal.class);
-        ClientAuthenticationMethod clientAuthenticationMethod = new ClientAuthenticationMethod(serializablePrincipal.getClientAuthenticationMethod());
-        MasterelloUser user = userRepository.findById(UUID.fromString(serializablePrincipal.getUserId()))
-                .orElse(null);
-
-        OAuth2ClientAuthenticationToken token = new OAuth2ClientAuthenticationToken(client, clientAuthenticationMethod, null);
-        token.setDetails(user);
-        token.setAuthenticated(serializablePrincipal.isAuthenticated());
-        return token;
-
-    }
-
-    private <T> T parseObject(String object, Class<T> type) {
-        try {
-            return authServiceObjectMapper.get().readValue(object, type);
-        } catch (IOException ex) {
-            throw new IllegalArgumentException(ex.getMessage(), ex);
-        }
+    private MasterelloAuthenticationToken toPrincipal(String principal) {
+        MasterelloUser user = userRepository.findById(UUID.fromString(principal))
+                .orElseThrow(() -> new IllegalArgumentException("Deserialization of principal failed"));
+        return new MasterelloAuthenticationToken(new SecurityUserDetails(user));
     }
 
     private <T> T parseObject(String object, TypeReference<T> type) {
