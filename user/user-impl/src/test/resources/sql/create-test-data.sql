@@ -22,4 +22,9 @@ values
     ('7a321348-387a-11ee-be56-0242ac120004', 'e8b0639f-148c-4f74-b834-bbe04072a999', '84e9798e-387a-11ee-be56-0242ac120099', NOW() - INTERVAL '1 DAY'),
     ('7a321348-387a-11ee-be56-0242ac120009', 'e8b0639f-148c-4f74-b834-aaaaaaaaa000', '84e9798e-387a-11ee-be56-000000000002', NOW() - INTERVAL '1 DAY');
 
+insert into public.support (uuid, title, email, phone, message, processed, creation_date)
+values
+    ('2d3c2abe-af52-4008-b147-6c816dbaba04', 'Support 1', 'test@test.com', '91213', 'Login is not working', true, NOW() - INTERVAL '1 DAY'),
+    ('2d3c2abe-af52-4008-b147-6c816dbaba05', 'Support 2', 'test@test.com', '91213', 'Login is not working!!', true, NOW() - INTERVAL '1 DAY'),
+    ('2d3c2abe-af52-4008-b147-6c816dbaba06', 'Support 3', 'test@test.com', '91213', 'Login is still not working!!!', false, NOW());
 
