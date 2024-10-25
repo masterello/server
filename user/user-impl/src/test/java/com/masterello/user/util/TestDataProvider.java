@@ -2,6 +2,8 @@ package com.masterello.user.util;
 
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.domain.SupportRequest;
+import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.dto.UserDTO;
 import io.restassured.http.Cookie;
 
@@ -73,4 +75,23 @@ public final class TestDataProvider {
         return new Cookie.Builder(M_TOKEN_COOKIE, ACCESS_TOKEN).build();
     }
 
+    public static SupportRequest buildSupportRequest() {
+        return SupportRequest.builder()
+                .title("Support 1")
+                .email("test@test.com")
+                .phone("91231")
+                .message("Login is not working")
+                .processed(false)
+                .build();
+    }
+
+    public static SupportRequestDTO buildSupportRequestDto() {
+
+        SupportRequestDTO dto = new SupportRequestDTO();
+        dto.setTitle("Support 1");
+        dto.setEmail("test@test.com");
+        dto.setPhone("91231");
+        dto.setMessage("Login is not working");
+        return dto;
+    }
 }

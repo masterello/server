@@ -48,4 +48,18 @@ public class UserApiSecurityConfig {
 
         return http.build();
     }
+    @Bean
+    @Order(3)
+    public SecurityFilterChain apiSupportFilter(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/support/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/support/contact").permitAll()
+                        .anyRequest().authenticated())
+                .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
+                .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        return http.build();
+    }
 }
