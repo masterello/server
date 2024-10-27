@@ -4,12 +4,11 @@ spring:
       client:
         registration:
           google:
-            clientId: 777134146814-n0jtdcbahc7ts5n2gfl5kvpdmf5tspd1.apps.googleusercontent.com
-            clientSecret: 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
-            redirectUri: https://masterello.com/{action}/oauth2/code/{registrationId}
+            clientId: ${GOOGLE_CLIENT_ID}
+            clientSecret: ${GOOGLE_CLIENT_SECRET}
+            redirectUri: https://api.masterello.com/{action}/oauth2/code/{registrationId}
             authorizationGrantType:
               - authorization_code
-              - refresh_token
               - password
   datasource:
     password: ${DB_USERNAME}
