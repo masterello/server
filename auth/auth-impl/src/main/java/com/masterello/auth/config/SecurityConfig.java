@@ -36,6 +36,7 @@ public class SecurityConfig {
     private final LogoutRevocationAuthenticationProvider logoutRevocationAuthenticationProvider;
     private final Oauth2IntrospectSuccessAuthHandler introspectSuccessAuthHandler;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
+    private final GoogleSuccessAuthHandler googleSuccessAuthHandler;
     private final SuperAdminFilter superAdminFilter;
 
     /**
@@ -97,7 +98,7 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/login/google**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2Login -> oauth2Login
-                        .successHandler(new GoogleSuccessAuthHandler(this.authorizationRequestRepository))
+                        .successHandler(googleSuccessAuthHandler)
                         .authorizationEndpoint(subconfig -> {
                             subconfig.authorizationRequestRepository(this.authorizationRequestRepository);
                         })

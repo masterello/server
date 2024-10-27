@@ -48,6 +48,7 @@ masterello:
       refresh-token-ttl: 1h
     google:
       verification-url: "https://oauth2.googleapis.com"
+      success-redirect-url: "http://localhost/login/google"
   user:
     email:
       enabled: true
