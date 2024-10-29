@@ -1,5 +1,6 @@
 package com.masterello.auth.helper;
 
+import jakarta.annotation.Nullable;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
@@ -27,7 +28,7 @@ public class CookieHelper {
         return Optional.empty();
     }
 
-    public static Cookie generateCookie(@NonNull HttpServletRequest request, @NonNull String name, @NonNull String value, @NonNull Duration maxAge) {
+    public static Cookie generateCookie(@NonNull HttpServletRequest request, @NonNull String name, @NonNull String value, @Nullable Duration maxAge) {
         // Build cookie instance
         Cookie cookie = new Cookie(name, value);
         if (!COOKIE_DOMAIN.equals(request.getServerName())) { // https://stackoverflow.com/a/1188145
@@ -35,7 +36,9 @@ public class CookieHelper {
         }
         cookie.setHttpOnly(HTTP_ONLY);
         cookie.setSecure(SECURE);
-        cookie.setMaxAge((int) maxAge.toSeconds());
+        if(maxAge != null) {
+            cookie.setMaxAge((int) maxAge.toSeconds());
+        }
         cookie.setPath("/");
         return cookie;
     }

@@ -68,6 +68,9 @@ masterello:
       secretKey: ${DO_SPACES_SECRET_KEY}
       endpoint: ${DO_SPACES_ENDPOINT}
       region: ${DO_SPACES_REGION}
+  openapi:
+    oAuthFlow:
+      tokenUrl: https:/api.masterello.com/oauth2/token
 
 management:
   health:
