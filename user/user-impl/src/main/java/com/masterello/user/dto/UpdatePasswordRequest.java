@@ -1,17 +1,20 @@
 package com.masterello.user.dto;
 
 import com.masterello.commons.core.validation.validator.Password;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class SignUpRequest {
-    @Email
-    private String email;
+public class UpdatePasswordRequest {
+    @NotEmpty
+    private String oldPassword;
     @NotEmpty
     @Password
-    private String password;
+    private String newPassword;
 }
