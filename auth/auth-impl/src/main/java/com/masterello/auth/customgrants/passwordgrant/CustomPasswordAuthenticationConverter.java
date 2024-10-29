@@ -3,6 +3,8 @@ package com.masterello.auth.customgrants.passwordgrant;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,6 +12,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.web.server.UnsupportedMediaTypeStatusException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,6 +33,31 @@ public class CustomPasswordAuthenticationConverter implements AuthenticationConv
             return null;
         }
 
+        Credentials result = getCredentials(request);
+
+        Map<String, Object> additionalParameters = new HashMap<>();
+        additionalParameters.put(OAuth2ParameterNames.USERNAME, result.username());
+        additionalParameters.put(OAuth2ParameterNames.PASSWORD, result.password());
+        Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+        return new CustomPasswordAuthenticationToken(clientPrincipal, additionalParameters);
+    }
+
+    private static Credentials getCredentials(HttpServletRequest request) {
+        if(request.getHeader(HttpHeaders.CONTENT_TYPE).equals(MediaType.APPLICATION_FORM_URLENCODED_VALUE))  {
+            return getCredentialsFromForm(request);
+        } else if (request.getHeader(HttpHeaders.CONTENT_TYPE).equals(MediaType.APPLICATION_JSON_VALUE)) {
+            return getCredentialsFromBody(request);
+        } else {
+            throw new UnsupportedMediaTypeStatusException("Token request supports only json and encoded form");
+        }
+    }
+
+    private static Credentials getCredentialsFromForm(HttpServletRequest request) {
+        return new Credentials(request.getParameter(OAuth2ParameterNames.USERNAME),
+                request.getParameter(OAuth2ParameterNames.PASSWORD));
+    }
+
+    private static Credentials getCredentialsFromBody(HttpServletRequest request) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode jsonNode;
         try {
@@ -49,11 +77,12 @@ public class CustomPasswordAuthenticationConverter implements AuthenticationConv
                 .map(JsonNode::asText)
                 .filter(text -> !text.isBlank())
                 .orElseThrow(() -> new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST));
+        Credentials result = new Credentials(username, password);
+        return result;
+    }
 
-        Map<String, Object> additionalParameters = new HashMap<>();
-        additionalParameters.put(OAuth2ParameterNames.USERNAME, username);
-        additionalParameters.put(OAuth2ParameterNames.PASSWORD, password);
-        Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
-        return new CustomPasswordAuthenticationToken(clientPrincipal, additionalParameters);
+
+
+    private record Credentials(String username, String password) {
     }
 }

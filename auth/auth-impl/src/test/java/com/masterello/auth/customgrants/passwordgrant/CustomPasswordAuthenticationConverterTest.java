@@ -3,6 +3,8 @@ package com.masterello.auth.customgrants.passwordgrant;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.DelegatingServletInputStream;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,6 +29,7 @@ class CustomPasswordAuthenticationConverterTest {
     void convert_WithValidPasswordGrantType_ReturnsCustomPasswordAuthenticationToken() {
         // Arrange
         HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeader(HttpHeaders.CONTENT_TYPE)).thenReturn(MediaType.APPLICATION_JSON_VALUE);
         when(request.getParameter(OAuth2ParameterNames.GRANT_TYPE)).thenReturn(CustomPasswordAuthenticationConverter.PASSWORD_GRANT_TYPE);
 
         String requestBody = "{\"username\":\"user\",\"password\":\"password\"}";
@@ -67,6 +70,7 @@ class CustomPasswordAuthenticationConverterTest {
     void convert_WithMissingUsername_ThrowsOAuth2AuthenticationException() {
         // Arrange
         HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeader(HttpHeaders.CONTENT_TYPE)).thenReturn(MediaType.APPLICATION_JSON_VALUE);
         when(request.getParameter(OAuth2ParameterNames.GRANT_TYPE)).thenReturn(CustomPasswordAuthenticationConverter.PASSWORD_GRANT_TYPE);
 
         String requestBody = "{\"password\":\"password\"}";
@@ -82,6 +86,7 @@ class CustomPasswordAuthenticationConverterTest {
     void convert_WithMissingPassword_ThrowsOAuth2AuthenticationException() {
         // Arrange
         HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getHeader(HttpHeaders.CONTENT_TYPE)).thenReturn(MediaType.APPLICATION_JSON_VALUE);
         when(request.getParameter(OAuth2ParameterNames.GRANT_TYPE)).thenReturn(CustomPasswordAuthenticationConverter.PASSWORD_GRANT_TYPE);
 
         String requestBody = "{\"username\":\"user\"}";

@@ -18,10 +18,11 @@ import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
 
+import static com.masterello.auth.config.AuthConstants.M_TOKEN_COOKIE;
+
 @Component
 @RequiredArgsConstructor
 public class AuthFilter extends OncePerRequestFilter {
-    private static final String M_TOKEN_COOKIE = "m_token";
     private final AuthService authService;
 
     @Override
