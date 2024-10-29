@@ -9,26 +9,28 @@ import com.masterello.user.UserTestConfiguration;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.dto.AddRoleRequest;
 import com.masterello.user.dto.SignUpRequest;
+import com.masterello.user.dto.UpdatePasswordRequest;
 import com.masterello.user.repository.UserRepository;
 import com.masterello.user.value.Language;
 import com.masterello.user.value.Role;
 import io.restassured.RestAssured;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 
 import static com.masterello.user.util.TestDataProvider.*;
 import static com.masterello.user.value.Role.USER;
 import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -47,6 +49,9 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     public void signUp_successful() {
@@ -132,6 +137,65 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    public void updatePassword_successful() {
+         String newPassword = "newPassword123!";
+         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword(VERIFIED_USER_PASS)
+                .newPassword(newPassword)
+                .build();
+
+         mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+
+         //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/user/{uuid}/password", VERIFIED_USER.toString())
+                .then()
+                    .statusCode(200);
+
+        //@formatter:on
+
+         val masterelloUserEntity = userRepository.findById(VERIFIED_USER).get();
+         assertTrue(passwordEncoder.matches(newPassword, masterelloUserEntity.getPassword()));
+     }
+
+     @Test
+    public void updatePassword_invalid() {
+         String newPassword = "newPassword";
+         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("")
+                .newPassword(newPassword)
+                .build();
+
+         mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+
+         //@formatter:off
+         RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/user/{uuid}/password", VERIFIED_USER.toString())
+                .then()
+                    .statusCode(400)
+                         .body("errors", hasSize(3))
+                         .body("errors", containsInAnyOrder(
+                                 Map.of("field", "oldPassword", "message", "must not be empty"),
+                                 Map.of("field", "newPassword", "message", "Password must contain at least one special character"),
+                                 Map.of("field", "newPassword", "message", "Password must contain at least one digit")
+                    ));
+
+        //@formatter:on
+     }
+
+    @Test
     public void addRole_existing_role() {
         AddRoleRequest request = AddRoleRequest.builder()
                 .role(USER).build();
@@ -202,7 +266,7 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .given()
                     .cookie(tokenCookie())
                 .when()
-                    .get("/api/user/")
+                    .get("/api/user")
                 .then()
                     .statusCode(200)
                     .body("uuid", is(VERIFIED_USER.toString()))

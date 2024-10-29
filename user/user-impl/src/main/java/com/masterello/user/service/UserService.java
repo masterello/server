@@ -13,6 +13,7 @@ import com.masterello.user.value.Role;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -28,6 +29,7 @@ public class UserService implements MasterelloUserService  {
 
     private final UserRepository userRepository;
     private final PatchService patchService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public MasterelloUser createUser(MasterelloUserEntity user) {
@@ -50,8 +52,15 @@ public class UserService implements MasterelloUserService  {
         return userRepository.save(user);
     }
 
-    public boolean userExist(String email) {
-        return userRepository.existsByEmail(email);
+    public void updatePassword(UUID userId, String oldPassword, String newPassword) {
+        MasterelloUserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found by id"));
+
+        if(!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Old password is not correct");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 
     public MasterelloUser retrieveUserByUuid(UUID userUuid) {

@@ -3,9 +3,11 @@ package com.masterello.user.controller;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
+import com.masterello.commons.core.validation.dto.ValidationErrorsDTO;
 import com.masterello.commons.security.data.MasterelloAuthentication;
 import com.masterello.user.dto.AddRoleRequest;
 import com.masterello.user.dto.SignUpRequest;
+import com.masterello.user.dto.UpdatePasswordRequest;
 import com.masterello.user.dto.UserDTO;
 import com.masterello.user.exception.InvalidUserUpdateException;
 import com.masterello.user.mapper.UserMapper;
@@ -19,16 +21,23 @@ import com.masterello.commons.security.validation.OwnerId;
 import com.masterello.user.value.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
 @Slf4j
@@ -59,7 +68,7 @@ public class UserController {
     }
 
     @Operation(method = "retrieveCurrentUser", tags = "user", responses = {@ApiResponse(responseCode = "200", description = "Returns user"), @ApiResponse(responseCode = "404", description = "User is not in the system"), @ApiResponse(responseCode = "500", description = "Error(s) while retrieving user"),})
-    @GetMapping(value = "/")
+    @GetMapping
     public UserDTO getCurrentUserData() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         AuthData tokenData = ((MasterelloAuthentication) securityContext.getAuthentication()).getDetails();
@@ -81,6 +90,7 @@ public class UserController {
             @AuthZRule(roles = {AuthZRole.USER, AuthZRole.WORKER}, isOwner = true),
             @AuthZRule(roles = {AuthZRole.ADMIN})
     })
+    @Operation(method = "addRole", tags = "user", responses = {@ApiResponse(responseCode = "200", description = "Roles updated"), @ApiResponse(responseCode = "404", description = "User is not in the system"), @ApiResponse(responseCode = "500", description = "Error(s) while retrieving user and updating"),})
     @RequestMapping(value = "/{uuid}/add-role", method = RequestMethod.POST)
     public UserDTO addRole(@OwnerId @PathVariable("uuid") @Parameter(required = true) UUID userId, @RequestBody AddRoleRequest request) {
         if(request.getRole() == Role.ADMIN) {
@@ -90,5 +100,22 @@ public class UserController {
         }
         MasterelloUser user = userService.addRole(userId, request.getRole());
         return userMapper.mapUserToDto(user);
+    }
+
+    @AuthZRules({
+            @AuthZRule(roles = {AuthZRole.USER, AuthZRole.WORKER}, isOwner = true),
+            @AuthZRule(roles = {AuthZRole.ADMIN})
+    })
+    @Operation(method = "updatePassword", tags = "user", responses = {
+            @ApiResponse(responseCode = "200", description = "Password successfully updated"),
+            @ApiResponse(responseCode = "404", description = "User is not in the system"),
+            @ApiResponse(responseCode = "400", description = "Error(s) while validation the request", content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ValidationErrorsDTO.class)
+            )),
+            @ApiResponse(responseCode = "500", description = "Error(s) while retrieving user and updating")})
+    @RequestMapping(value = "/{uuid}/password", method = RequestMethod.POST, consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+    public void updatePassword(@OwnerId @PathVariable("uuid") @Parameter(required = true) UUID userId, @Validated @RequestBody UpdatePasswordRequest request) {
+        userService.updatePassword(userId, request.getOldPassword(), request.getNewPassword());
     }
 }
