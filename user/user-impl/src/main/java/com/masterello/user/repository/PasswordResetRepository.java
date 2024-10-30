@@ -23,11 +23,6 @@ public interface PasswordResetRepository extends JpaRepository<PasswordReset, UU
     Integer findResetCountsByUserUuid(@Param("userUuid") UUID userUuid);
 
     @Modifying
-    @Query(nativeQuery = true, value =
-            """
-            DELETE from password_reset pr
-            where pr.user_uuid = :userUuid
-            """)
-    void deleteAllByUserUuid(@Param("userUuid") UUID userUuid);
+    void deleteAllByUserUuid(UUID userUuid);
 }
 
