@@ -1,0 +1,76 @@
+package com.masterello.user.controller;
+
+import com.masterello.commons.core.validation.validator.Password;
+import com.masterello.user.dto.PasswordResetDTO;
+import com.masterello.user.service.PasswordResetService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.io.UnsupportedEncodingException;
+import java.util.UUID;
+
+@Validated
+@Slf4j
+@RestController
+@Tag(name = "password reset")
+@RequestMapping(value = "/api/passwordReset")
+@RequiredArgsConstructor
+public class PasswordResetController {
+
+    private final PasswordResetService passwordResetService;
+
+    @Operation(method = "resetUserPassword", tags = "password reset", responses = {
+            @ApiResponse(responseCode = "201", description = "Password reset link is sent"),
+            @ApiResponse(responseCode = "500", description = "Error(s) while sending password reset email"),
+    })
+    @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<Void> resetPassword(@RequestParam @Parameter(required = true) String userEmail)
+            throws MessagingException, UnsupportedEncodingException {
+        passwordResetService.sentPasswordResetLink(userEmail);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(method = "checkPasswordLink", tags = "password reset", responses = {
+            @ApiResponse(responseCode = "200", description = "Password reset link is ok"),
+            @ApiResponse(responseCode = "400", description = "Password reset link is expired"),
+            @ApiResponse(responseCode = "404", description = "Password reset link is not found"),
+            @ApiResponse(responseCode = "500", description = "Error(s) while checking password reset link"),
+    })
+    @GetMapping(value = "/checkLink", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<PasswordResetDTO> checkPasswordLink(@RequestParam @Parameter(required = true) String passwordLink) {
+        var dto = passwordResetService.checkPasswordResetToken(passwordLink);
+        return ResponseEntity.ok().body(dto);
+    }
+
+    @Operation(method = "changeUserPassword", tags = "password reset", responses = {
+            @ApiResponse(responseCode = "200", description = "Password is reset"),
+            @ApiResponse(responseCode = "404", description = "User is not found"),
+            @ApiResponse(responseCode = "500", description = "Error(s) while resetting password"),
+    })
+    @PostMapping(value = "/{userUuid}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<Void> changeUserPassword(@PathVariable(name = "userUuid")
+                                                   @Parameter(required = true) UUID userUuid,
+                                                   @RequestParam @Parameter(required = true)
+                                                   @Valid @Password String password) {
+        passwordResetService.resetPassword(userUuid, password);
+        return ResponseEntity.ok().build();
+    }
+}

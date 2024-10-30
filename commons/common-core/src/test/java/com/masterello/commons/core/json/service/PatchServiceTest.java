@@ -44,9 +44,8 @@ class PatchServiceTest {
         JsonPatch patch = JsonPatch.fromJson(patchNode);
         TestClass testObject = new TestClass("value A", "value B", "value C", null);
 
-        PatchFailedException patchFailedException = assertThrows(PatchFailedException.class, () -> {
-            patchService.applyPatch(patch, testObject, TestClass.class);
-        });
+        PatchFailedException patchFailedException = assertThrows(PatchFailedException.class, () ->
+                patchService.applyPatch(patch, testObject, TestClass.class));
 
         assertEquals("Fields are not supported for patching: [fieldA]", patchFailedException.getMessage());
     }

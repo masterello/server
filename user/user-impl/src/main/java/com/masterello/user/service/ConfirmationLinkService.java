@@ -36,7 +36,7 @@ public class ConfirmationLinkService {
 
         var confirmationLink = confirmationLinkRepository.findByToken(token).orElseThrow(() -> {
             log.info("Confirmation link by token {} is not found", token);
-            throw new ConfirmationLinkNotFoundException("Confirmation link is not found");
+            return new ConfirmationLinkNotFoundException("Confirmation link is not found");
         });
 
         var user = userRepository.findById(confirmationLink.getUserUuid())
@@ -61,7 +61,7 @@ public class ConfirmationLinkService {
     public void sendConfirmationLink(@NonNull MasterelloUser user) throws MessagingException, UnsupportedEncodingException {
         log.info("Sending confirmation link for user {}", user);
         String verificationCode = checkConfirmationLinkRecord(user);
-        emailService.sendEmail(user, verificationCode);
+        emailService.sendConfirmationEmail(user, verificationCode);
     }
 
     public void resendConfirmationLink(UUID userUuid) throws MessagingException, UnsupportedEncodingException {

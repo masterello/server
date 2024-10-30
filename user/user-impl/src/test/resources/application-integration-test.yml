@@ -18,6 +18,8 @@ masterello:
     email:
       enabled: true
       from: masterello1234@gmail.com
-      subject: Please verify your registration
+      registrationSubject: Please verify your registration
+      resetPassSubject: Reset password email
       sender: Masterello
+      dailyAttempts: 3
 

@@ -16,11 +16,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.masterello.user.util.TestDataProvider.VERIFIED_USER;
 import static com.masterello.user.util.TestDataProvider.buildCompleteUser;
 import static com.masterello.user.util.TestDataProvider.buildUser;
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +34,8 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
     @Spy
     private PatchService patchService = new PatchService(new ObjectMapper());
     @InjectMocks
@@ -213,5 +217,34 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findById(any());
 
         verifyNoMoreInteractions(userRepository);
+    }
+
+    @Test
+    public void resetPassword_noUser() {
+        //GIVEN
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.empty());
+
+        //WHEN
+        //THEN
+        assertThrows(UserNotFoundException.class, () ->
+                userService.resetPassword(VERIFIED_USER, "test"));
+    }
+
+    @Test
+    public void resetPassword() {
+        //GIVEN
+        var user = buildUser();
+
+        when(userRepository.findById(any()))
+                .thenReturn(Optional.of(user));
+        when(passwordEncoder.encode(any())).thenReturn("password");
+
+        //WHEN
+        userService.resetPassword(VERIFIED_USER, "password");
+        //THEN
+        verify(userRepository, times(1)).findById(VERIFIED_USER);
+        verify(passwordEncoder, times(1)).encode("password");
+        verify(userRepository, times(1)).save(any());
     }
 }

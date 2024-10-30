@@ -1,6 +1,5 @@
 package com.masterello.user.controller;
 
-
 import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
 import com.masterello.auth.service.AuthService;
@@ -16,7 +15,6 @@ import com.masterello.user.value.Role;
 import io.restassured.RestAssured;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +55,7 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     public void signUp_successful() {
         SignUpRequest signUpRequest = SignUpRequest.builder()
                 .email("test_user@gmail.com")
-                .password("password123")
+                .password("Password123!")
                 .build();
 
         var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
@@ -85,10 +83,37 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    public void signUp_password_validation_failed() {
+        SignUpRequest signUpRequest = SignUpRequest.builder()
+                .email("test_user@gmail.com")
+                .password("password123")
+                .build();
+
+        var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
+
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(eq(mimeMessage));
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(signUpRequest)
+                .when()
+                    .post("/api/user/signup")
+                .then()
+                    .statusCode(400);
+
+        //@formatter:on
+    }
+
+
+    @Test
     public void signUp_user_already_exists() {
         SignUpRequest signUpRequest = SignUpRequest.builder()
                 .email("verified@gmail.com")
-                .password("password123")
+                .password("Password123!")
                 .build();
 
         //@formatter:off
@@ -160,9 +185,37 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
 
         //@formatter:on
 
-         val masterelloUserEntity = userRepository.findById(VERIFIED_USER).get();
+         val masterelloUserEntity = userRepository.findById(VERIFIED_USER).orElse(new MasterelloUserEntity());
          assertTrue(passwordEncoder.matches(newPassword, masterelloUserEntity.getPassword()));
      }
+
+    @Test
+    public void updatePassword_same_password_failed() {
+        String newPassword = "Qwerty123!";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword(newPassword)
+                .newPassword(newPassword)
+                .build();
+
+        mockAuth(VERIFIED_USER_2, List.of(AuthZRole.USER), true);
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/user/{uuid}/password", VERIFIED_USER_2.toString())
+                .then()
+                    .statusCode(400);
+
+        //@formatter:on
+
+        val masterelloUserEntity = userRepository.findById(VERIFIED_USER_2).orElse(new MasterelloUserEntity());
+        assertTrue(passwordEncoder.matches(newPassword, masterelloUserEntity.getPassword()));
+    }
 
      @Test
     public void updatePassword_invalid() {

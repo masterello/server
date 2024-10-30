@@ -10,9 +10,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -25,6 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EmailServiceTest {
 
     @Mock
@@ -44,12 +46,13 @@ public class EmailServiceTest {
         when(emailConfigProperties.isEnabled()).thenReturn(true);
         when(emailConfigProperties.getFrom()).thenReturn(FROM);
         when(emailConfigProperties.getSender()).thenReturn(SENDER);
-        when(emailConfigProperties.getSubject()).thenReturn(SUBJECT);
+        when(emailConfigProperties.getRegistrationSubject()).thenReturn(SUBJECT);
+        when(emailConfigProperties.getResetPassSubject()).thenReturn(RESET_SUBJECT);
 
     }
 
     @Test
-    public void sendEmail() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationEmail() throws MessagingException, UnsupportedEncodingException {
         //GIVEN
         var user = buildUser();
         var token = UUID.randomUUID().toString();
@@ -59,7 +62,25 @@ public class EmailServiceTest {
         doNothing().when(mailSender).send(eq(mimeMessage));
 
         //WHEN
-        emailService.sendEmail(user, token);
+        emailService.sendConfirmationEmail(user, token);
+
+        //THEN
+        verify(mailSender, times(1)).createMimeMessage();
+        verify(mailSender, times(1)).send(eq(mimeMessage));
+    }
+
+    @Test
+    public void sendResetPasswordLink() throws MessagingException, UnsupportedEncodingException {
+        //GIVEN
+        var user = buildUser();
+        var token = UUID.randomUUID().toString();
+        var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
+
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(eq(mimeMessage));
+
+        //WHEN
+        emailService.sendResetPasswordLink(user, token);
 
         //THEN
         verify(mailSender, times(1)).createMimeMessage();

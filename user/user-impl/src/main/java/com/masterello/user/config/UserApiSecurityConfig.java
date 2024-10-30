@@ -41,7 +41,7 @@ public class UserApiSecurityConfig {
                 .securityMatcher("/api/user/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/user/signup", "/api/user/confirmationLink/**", "/api/user/supported-languages").permitAll()
+                        .requestMatchers("/api/user/signup", "/api/user/confirmationLink/**", "/api/user/resetPassword/**", "/api/user/supported-languages").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
