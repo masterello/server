@@ -81,11 +81,7 @@ class EncryptionServiceTest {
     @Test
     void encryptAndDecrypt_LongText_ReturnsOriginalData() {
         // Arrange
-        StringBuilder originalTextBuilder = new StringBuilder();
-        for (int i = 0; i < 1000; i++) {
-            originalTextBuilder.append("a");
-        }
-        String originalText = originalTextBuilder.toString();
+        String originalText = "a" .repeat(1000);
 
         // Act
         String encryptedText = encryptionService.encrypt(originalText);

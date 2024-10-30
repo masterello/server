@@ -97,9 +97,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2Login -> oauth2Login
                         .successHandler(googleSuccessAuthHandler)
-                        .authorizationEndpoint(subconfig -> {
-                            subconfig.authorizationRequestRepository(this.authorizationRequestRepository);
-                        })
+                        .authorizationEndpoint(subconfig ->
+                                subconfig.authorizationRequestRepository(this.authorizationRequestRepository))
                 )
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

@@ -2,6 +2,7 @@ package com.masterello.user.util;
 
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.domain.PasswordReset;
 import com.masterello.user.domain.SupportRequest;
 import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.dto.UserDTO;
@@ -18,10 +19,12 @@ public final class TestDataProvider {
     public static final String FROM = "masterello1234@gmail.com";
     public static final String SENDER = "Masterello";
     public static final String SUBJECT = "Please verify your registration";
+    public static final String RESET_SUBJECT = "Reset password";
 
     public static final String CLIENT_BEARER = "Basic Z3c6M1RaLCZdL0VyQHRicCZQQmRofDtScHNvY2tQdygo";
 
     public static final UUID VERIFIED_USER = UUID.fromString("49200ea0-3879-11ee-be56-0242ac120002");
+    public static final UUID VERIFIED_USER_2 = UUID.fromString("ba7bb05a-80b3-41be-8182-66608aba2a31");
     public static final String VERIFIED_USER_EMAIL = "verified@gmail.com";
     public static final String VERIFIED_USER_PASS = "password";
     public static final UUID NOT_VERIFIED_LINK_EXPIRED_USER = UUID.fromString("e8b0639f-148c-4f74-b834-bbe04072a999");
@@ -93,5 +96,15 @@ public final class TestDataProvider {
         dto.setPhone("91231");
         dto.setMessage("Login is not working");
         return dto;
+    }
+
+    public static PasswordReset buildPasswordResetEntity() {
+        PasswordReset passwordReset = new PasswordReset();
+        passwordReset.setUuid(UUID.randomUUID());
+        passwordReset.setToken("test");
+        passwordReset.setCreationDate(OffsetDateTime.now());
+        passwordReset.setUserUuid(VERIFIED_USER);
+        passwordReset.setExpiresAt(OffsetDateTime.now().plusHours(1));
+        return passwordReset;
     }
 }

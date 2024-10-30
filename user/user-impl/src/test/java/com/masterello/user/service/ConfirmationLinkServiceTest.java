@@ -145,7 +145,7 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
@@ -154,7 +154,7 @@ public class ConfirmationLinkServiceTest {
         verify(userRepository, times(1)).findById(any());
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -167,7 +167,7 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
@@ -176,7 +176,7 @@ public class ConfirmationLinkServiceTest {
         verify(userRepository, times(1)).findById(any());
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -203,7 +203,7 @@ public class ConfirmationLinkServiceTest {
         //WHEN
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
@@ -211,7 +211,7 @@ public class ConfirmationLinkServiceTest {
         //THEN
         verify(userRepository, times(1)).findById(any());
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -220,7 +220,7 @@ public class ConfirmationLinkServiceTest {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.sendConfirmationLink(buildUser());
@@ -228,7 +228,7 @@ public class ConfirmationLinkServiceTest {
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -240,7 +240,7 @@ public class ConfirmationLinkServiceTest {
 
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.sendConfirmationLink(buildUser());
@@ -248,7 +248,7 @@ public class ConfirmationLinkServiceTest {
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -256,14 +256,14 @@ public class ConfirmationLinkServiceTest {
     public void sendConfirmationLink() throws MessagingException, UnsupportedEncodingException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.sendConfirmationLink(buildUser());
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(confirmationLinkRepository, emailService);
     }
 
@@ -272,7 +272,7 @@ public class ConfirmationLinkServiceTest {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.sendConfirmationLinkSafe(buildUser());
@@ -280,7 +280,7 @@ public class ConfirmationLinkServiceTest {
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -292,7 +292,7 @@ public class ConfirmationLinkServiceTest {
 
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.sendConfirmationLinkSafe(buildUser());
@@ -300,7 +300,7 @@ public class ConfirmationLinkServiceTest {
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -308,14 +308,14 @@ public class ConfirmationLinkServiceTest {
     public void sendConfirmationLinkSafe() throws MessagingException, UnsupportedEncodingException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
-        doNothing().when(emailService).sendEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any());
 
         //WHEN
         confirmationLinkService.sendConfirmationLinkSafe(buildUser());
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
         verifyNoMoreInteractions(confirmationLinkRepository, emailService);
     }
 }

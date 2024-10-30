@@ -15,8 +15,12 @@ masterello:
     email:
       enabled: true
       from: masterello1234@gmail.com
-      subject: Please verify your registration
+      registrationSubject: Please verify your registration
+      resetPassSubject: Reset password email
+      resetExpirationMinutes: 60
+      serviceUrl: masterello.com
       sender: Masterello
+      dailyAttempts: 3
   file:
     max-width: 4000
     max-height: 4000

@@ -4,6 +4,7 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.exception.InvalidUserUpdateException;
+import com.masterello.user.exception.SamePasswordException;
 import com.masterello.user.exception.UserAlreadyExistsException;
 import com.masterello.user.exception.UserHasRequestedRoleException;
 import com.masterello.user.exception.UserNotFoundException;
@@ -59,6 +60,10 @@ public class UserService implements MasterelloUserService  {
         if(!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new IllegalArgumentException("Old password is not correct");
         }
+        if(passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new SamePasswordException("New password is same");
+        }
+
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
@@ -87,6 +92,14 @@ public class UserService implements MasterelloUserService  {
             throw new InvalidUserUpdateException("Error when applying update to user", ex);
         }
         return userRepository.saveAndFlush(patchedUser);
+    }
+
+    public void resetPassword(UUID userUuid, String password) {
+        MasterelloUserEntity user = userRepository.findById(userUuid)
+                .orElseThrow(() -> new UserNotFoundException("User not found by id"));
+
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
     }
 
     @Override
