@@ -5,7 +5,10 @@ import com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationProvi
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationConverter;
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationProvider;
 import com.masterello.auth.repository.CustomStatelessAuthorizationRequestRepository;
-import com.masterello.auth.responsehandlers.*;
+import com.masterello.auth.responsehandlers.GoogleSuccessAuthHandler;
+import com.masterello.auth.responsehandlers.Oauth2LogoutSuccessAuthHandler;
+import com.masterello.auth.responsehandlers.Oauth2SuccessAuthHandler;
+import com.masterello.auth.responsehandlers.TokenAuthenticationFailureHandler;
 import com.masterello.auth.revocation.LogoutRevocationAuthenticationProvider;
 import com.masterello.auth.revocation.LogoutRevocationEndpointAuthenticationConverter;
 import com.masterello.commons.security.filter.SuperAdminFilter;
@@ -31,7 +34,6 @@ public class SecurityConfig {
     private final CustomPasswordAuthenticationProvider customPassordAuthenticationProvider;
     private final GoogleOidAuthenticationProvider googleOidAuthenticationProvider;
     private final LogoutRevocationAuthenticationProvider logoutRevocationAuthenticationProvider;
-    private final Oauth2IntrospectSuccessAuthHandler introspectSuccessAuthHandler;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
     private final GoogleSuccessAuthHandler googleSuccessAuthHandler;
     private final SuperAdminFilter superAdminFilter;
@@ -61,10 +63,7 @@ public class SecurityConfig {
                         revocationEndpoint
                                 .revocationResponseHandler(new Oauth2LogoutSuccessAuthHandler())
                                 .revocationRequestConverter(new LogoutRevocationEndpointAuthenticationConverter())
-                                .authenticationProvider(logoutRevocationAuthenticationProvider))
-                .tokenIntrospectionEndpoint(introspectEndpoint ->
-                        introspectEndpoint.introspectionResponseHandler(introspectSuccessAuthHandler)
-                );
+                                .authenticationProvider(logoutRevocationAuthenticationProvider));
 
         RequestMatcher endpointsMatcher = authorizationServerConfigurer.getEndpointsMatcher();
 

@@ -23,6 +23,7 @@ public class TokenConfig {
         return TokenSettings.builder()
                 // While changing token format make sure jwtGenerator has appropriate token customizer
                 .accessTokenFormat(OAuth2TokenFormat.REFERENCE)
+                .reuseRefreshTokens(false)
                 .accessTokenTimeToLive(tokenProperties.getAccessTokenTtl())
                 .refreshTokenTimeToLive(tokenProperties.getRefreshTokenTtl())
                 .build();
