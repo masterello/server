@@ -50,6 +50,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         RestAssured
                 .given()
                     .queryParam("userEmail", "unknown@email.com")
+                    .queryParam("locale", "en")
                 .when()
                     .post(BASE_URL)
                 .then()
@@ -63,6 +64,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         RestAssured
                 .given()
                     .queryParam("userEmail", "not_verified_link_valid@gmail.com")
+                    .queryParam("locale", "en")
                 .when()
                     .post(BASE_URL)
                 .then()
@@ -76,6 +78,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         RestAssured
                 .given()
                     .queryParam("userEmail", "oauth@gmail.com")
+                    .queryParam("locale", "en")
                 .when()
                     .post(BASE_URL)
                 .then()
@@ -89,6 +92,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         RestAssured
                 .given()
                     .queryParam("userEmail", "verified2@gmail.com")
+                    .queryParam("locale", "en")
                 .when()
                     .post(BASE_URL)
                 .then()
@@ -108,6 +112,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         RestAssured
                 .given()
                     .queryParam("userEmail", "verified@gmail.com")
+                    .queryParam("locale", "en")
                 .when()
                     .post(BASE_URL)
                 .then()

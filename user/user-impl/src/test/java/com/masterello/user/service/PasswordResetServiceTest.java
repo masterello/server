@@ -19,6 +19,7 @@ import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
+import static com.masterello.user.util.TestDataProvider.LOCALE;
 import static com.masterello.user.util.TestDataProvider.VERIFIED_USER;
 import static com.masterello.user.util.TestDataProvider.buildCompleteUser;
 import static com.masterello.user.util.TestDataProvider.buildPasswordResetEntity;
@@ -53,7 +54,7 @@ public class PasswordResetServiceTest {
 
         //WHEN
         //THEN
-        assertThrows(UserNotFoundException.class,() -> service.sentPasswordResetLink("test@email.com"));
+        assertThrows(UserNotFoundException.class,() -> service.sentPasswordResetLink("test@email.com", LOCALE));
         verify(userService, times(1)).findByEmail("test@email.com");
     }
 
@@ -65,7 +66,7 @@ public class PasswordResetServiceTest {
 
         //WHEN
         //THEN
-        assertThrows(UserNotActivatedException.class,() -> service.sentPasswordResetLink("test@email.com"));
+        assertThrows(UserNotActivatedException.class,() -> service.sentPasswordResetLink("test@email.com", LOCALE));
         verify(userService, times(1)).findByEmail("test@email.com");
     }
 
@@ -79,7 +80,7 @@ public class PasswordResetServiceTest {
 
         //WHEN
         //THEN
-        assertThrows(OAuthRegistrationException.class,() -> service.sentPasswordResetLink("test@email.com"));
+        assertThrows(OAuthRegistrationException.class,() -> service.sentPasswordResetLink("test@email.com", LOCALE));
         verify(userService, times(1)).findByEmail("test@email.com");
     }
 
@@ -96,7 +97,7 @@ public class PasswordResetServiceTest {
         //WHEN
         //THEN
         assertThrows(DailyAttemptsExceededException.class,() ->
-                service.sentPasswordResetLink("test@email.com"));
+                service.sentPasswordResetLink("test@email.com", LOCALE));
         verify(userService, times(1)).findByEmail("test@email.com");
         verify(emailConfigProperties, times(1)).getDailyAttempts();
         verify(passwordResetRepository, times(1)).findResetCountsByUserUuid(any());
@@ -113,14 +114,14 @@ public class PasswordResetServiceTest {
         when(passwordResetRepository.findResetCountsByUserUuid(any())).thenReturn(1);
 
         //WHEN
-        service.sentPasswordResetLink("test@email.com");
+        service.sentPasswordResetLink("test@email.com", LOCALE);
 
         //THEN
         verify(userService, times(1)).findByEmail("test@email.com");
         verify(emailConfigProperties, times(1)).getDailyAttempts();
         verify(passwordResetRepository, times(1)).findResetCountsByUserUuid(any());
         verify(passwordResetRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendResetPasswordLink(any(), any());
+        verify(emailService, times(1)).sendResetPasswordLink(any(), any(), any());
     }
 
 

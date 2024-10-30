@@ -20,7 +20,8 @@ import java.io.UnsupportedEncodingException;
 public class EmailService {
     private final EmailConfigProperties emailConfigProperties;
     private static final String CONFIRMATION_LINK = "/api/user/confirmationLink/verifyUserToken?code=";
-    private static final String RESET_PASSWORD_LINK = "/reset-password?token=";
+    private static final String RESET_PASSWORD_LINK = "/reset-password/";
+    private static final String TOKEN = "?token=";
     private static final String CONTENT = """
             Dear user,<br>
             Please click the link below to verify your registration:<br>
@@ -42,10 +43,11 @@ public class EmailService {
     private final JavaMailSender mailSender;
 
     public void sendResetPasswordLink(@NonNull MasterelloUser user,
-                                      @NonNull String resetLink)
+                                      @NonNull String resetLink,
+                                      @NonNull String locale)
             throws MessagingException, UnsupportedEncodingException {
         String text = RESET_PASSWORD_CONTENT
-                .replace("${resetURL}", buildPasswordResetRequestUrl(resetLink));
+                .replace("${resetURL}", buildPasswordResetRequestUrl(resetLink, locale));
         sendMessage(user, text, emailConfigProperties.getResetPassSubject());
     }
 
@@ -59,8 +61,8 @@ public class EmailService {
         return baseUrl + CONFIRMATION_LINK + verificationCode;
     }
 
-    private String buildPasswordResetRequestUrl(String resetLinkToken) {
-        return emailConfigProperties.getServiceUrl() + RESET_PASSWORD_LINK + resetLinkToken;
+    private String buildPasswordResetRequestUrl(String resetLinkToken, String locale) {
+        return emailConfigProperties.getServiceUrl() + RESET_PASSWORD_LINK  + locale + TOKEN + resetLinkToken;
     }
 
     private void sendMessage(@NonNull MasterelloUser user,
