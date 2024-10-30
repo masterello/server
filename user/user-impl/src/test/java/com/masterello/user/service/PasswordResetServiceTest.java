@@ -73,6 +73,7 @@ public class PasswordResetServiceTest {
     public void sentPasswordResetLink_user_with_oauth() {
         //GIVEN
         var user = buildCompleteUser();
+        user.setEmailVerified(true);
         user.setPassword(null);
         when(userService.findByEmail(any())).thenReturn(Optional.of(user));
 
