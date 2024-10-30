@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 public class EmailService {
     private final EmailConfigProperties emailConfigProperties;
     private static final String CONFIRMATION_LINK = "/api/user/confirmationLink/verifyUserToken?code=";
-    private static final String RESET_PASSWORD_LINK = "/api/passwordReset/checkLink?passwordLink=";
+    private static final String RESET_PASSWORD_LINK = "/reset-password?token=";
     private static final String CONTENT = """
             Dear user,<br>
             Please click the link below to verify your registration:<br>
@@ -60,8 +60,7 @@ public class EmailService {
     }
 
     private String buildPasswordResetRequestUrl(String resetLinkToken) {
-        final String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        return baseUrl + RESET_PASSWORD_LINK + resetLinkToken;
+        return emailConfigProperties.getServiceUrl() + RESET_PASSWORD_LINK + resetLinkToken;
     }
 
     private void sendMessage(@NonNull MasterelloUser user,

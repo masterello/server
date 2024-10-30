@@ -2,6 +2,7 @@ package com.masterello.user.service;
 
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.exception.DailyAttemptsExceededException;
+import com.masterello.user.exception.OAuthRegistrationException;
 import com.masterello.user.exception.PasswordResetNotFoundException;
 import com.masterello.user.exception.TokenExpiredException;
 import com.masterello.user.exception.UserNotActivatedException;
@@ -21,7 +22,6 @@ import java.util.Optional;
 import static com.masterello.user.util.TestDataProvider.VERIFIED_USER;
 import static com.masterello.user.util.TestDataProvider.buildCompleteUser;
 import static com.masterello.user.util.TestDataProvider.buildPasswordResetEntity;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -70,6 +70,19 @@ public class PasswordResetServiceTest {
     }
 
     @Test
+    public void sentPasswordResetLink_user_with_oauth() {
+        //GIVEN
+        var user = buildCompleteUser();
+        user.setPassword(null);
+        when(userService.findByEmail(any())).thenReturn(Optional.of(user));
+
+        //WHEN
+        //THEN
+        assertThrows(OAuthRegistrationException.class,() -> service.sentPasswordResetLink("test@email.com"));
+        verify(userService, times(1)).findByEmail("test@email.com");
+    }
+
+    @Test
     public void sentPasswordResetLink_rate_limit() {
         //GIVEN
         var user = buildCompleteUser();
@@ -111,18 +124,18 @@ public class PasswordResetServiceTest {
 
 
     @Test
-    public void checkPasswordResetToken_no_token() {
+    public void resetPassword_no_token() {
         //GIVEN
         when(passwordResetRepository.findByToken(any())).thenReturn(Optional.empty());
 
         //WHEN
         //THEN
-        assertThrows(PasswordResetNotFoundException.class,() -> service.checkPasswordResetToken("test"));
+        assertThrows(PasswordResetNotFoundException.class,() -> service.resetPassword("test", "password"));
         verify(passwordResetRepository, times(1)).findByToken("test");
     }
 
     @Test
-    public void checkPasswordResetToken_token_expired() {
+    public void resetPassword_token_expired() {
         //GIVEN
         var passwordToken = buildPasswordResetEntity();
         passwordToken.setExpiresAt(OffsetDateTime.now().minusHours(1));
@@ -131,30 +144,22 @@ public class PasswordResetServiceTest {
 
         //WHEN
         //THEN
-        assertThrows(TokenExpiredException.class,() -> service.checkPasswordResetToken("test"));
+        assertThrows(TokenExpiredException.class,() -> service.resetPassword("test", "password"));
         verify(passwordResetRepository, times(1)).findByToken("test");
     }
 
-    @Test
-    public void checkPasswordResetToken() {
-        //GIVEN
-        var passwordToken = buildPasswordResetEntity();
-        when(passwordResetRepository.findByToken(any())).thenReturn(Optional.of(passwordToken));
-
-        //WHEN
-        var dto = service.checkPasswordResetToken("test");
-        assertEquals(dto.getUserUuid(), VERIFIED_USER.toString());
-
-        verify(passwordResetRepository, times(1)).findByToken("test");
-    }
 
     @Test
     public void resetPassword() {
         //GIVEN
+        var passwordToken = buildPasswordResetEntity();
+
+        when(passwordResetRepository.findByToken(any())).thenReturn(Optional.of(passwordToken));
         //WHEN
-        service.resetPassword(VERIFIED_USER,"password");
+        service.resetPassword("test", "password");
 
         //THEN
+        verify(passwordResetRepository, times(1)).findByToken("test");
         verify(passwordResetRepository, times(1)).deleteAllByUserUuid(VERIFIED_USER);
         verify(userService, times(1)).resetPassword(VERIFIED_USER,"password");
     }

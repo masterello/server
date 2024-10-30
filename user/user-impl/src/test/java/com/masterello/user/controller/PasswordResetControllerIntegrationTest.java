@@ -18,7 +18,6 @@ import org.springframework.test.context.jdbc.SqlGroup;
 import java.util.Properties;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -72,6 +71,19 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
     }
 
     @Test
+    public void resetPassword_user_with_oauth() {
+        //@formatter:off
+        RestAssured
+                .given()
+                    .queryParam("userEmail", "oauth@gmail.com")
+                .when()
+                    .post(BASE_URL)
+                .then()
+                    .statusCode(406);
+        //@formatter:on
+    }
+
+    @Test
     public void resetPassword_rate_limit() {
         //@formatter:off
         RestAssured
@@ -107,43 +119,28 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
     }
 
     @Test
-    public void checkLink_not_found() {
+    public void changeUserPassword_not_found() {
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("passwordLink", "not_found_link")
+                    .queryParam("password", "StrongPass123!")
                 .when()
-                    .get(BASE_URL + "/checkLink")
+                    .post(BASE_URL + "/test54")
                 .then()
                     .statusCode(404);
         //@formatter:on
     }
 
     @Test
-    public void checkLink_link_expired() {
+    public void changeUserPassword_link_expired() {
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("passwordLink", "test1")
+                    .queryParam("password", "StrongPass123!")
                 .when()
-                    .get(BASE_URL + "/checkLink")
+                    .post(BASE_URL + "/test1")
                 .then()
                     .statusCode(400);
-        //@formatter:on
-    }
-
-    @Test
-    public void checkLink() {
-        //@formatter:off
-        RestAssured
-                .given()
-                    .queryParam("passwordLink", "test2")
-                .when()
-                    .get(BASE_URL + "/checkLink")
-                .then()
-                    .statusCode(200)
-                    .body("userUuid", is("ba7bb05a-80b3-41be-8182-66608aba2a31"));
-
         //@formatter:on
     }
 
@@ -154,7 +151,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                 .given()
                     .queryParam("password", "invalid")
                 .when()
-                    .post(BASE_URL + "/ba7bb05a-80b3-41be-8182-66608aba2a31")
+                    .post(BASE_URL + "/test2")
                 .then()
                     .statusCode(400);
         //@formatter:on
@@ -169,7 +166,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                 .given()
                     .queryParam("password", password)
                 .when()
-                    .post(BASE_URL + "/ba7bb05a-80b3-41be-8182-66608aba2a31")
+                    .post(BASE_URL + "/test2")
                 .then()
                     .statusCode(200);
         //@formatter:on

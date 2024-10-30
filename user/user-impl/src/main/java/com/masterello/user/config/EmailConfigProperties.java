@@ -14,5 +14,7 @@ public class EmailConfigProperties {
     private String sender;
     private String registrationSubject;
     private String resetPassSubject;
+    private Integer resetExpirationMinutes;
+    private String serviceUrl;
     private Integer dailyAttempts;
 }

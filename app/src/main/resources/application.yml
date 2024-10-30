@@ -17,6 +17,8 @@ masterello:
       from: masterello1234@gmail.com
       registrationSubject: Please verify your registration
       resetPassSubject: Reset password email
+      resetExpirationMinutes: 60
+      serviceUrl: masterello.com
       sender: Masterello
       dailyAttempts: 3
   file:

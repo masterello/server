@@ -2,8 +2,8 @@ package com.masterello.user.service;
 
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.domain.PasswordReset;
-import com.masterello.user.dto.PasswordResetDTO;
 import com.masterello.user.exception.DailyAttemptsExceededException;
+import com.masterello.user.exception.OAuthRegistrationException;
 import com.masterello.user.exception.PasswordResetNotFoundException;
 import com.masterello.user.exception.TokenExpiredException;
 import com.masterello.user.exception.UserNotActivatedException;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -38,6 +39,9 @@ public class PasswordResetService {
         if(!user.isEmailVerified()) {
             throw new UserNotActivatedException("User is not yet activated, please verify email first");
         }
+        if(Objects.isNull(user.getPassword())) {
+            throw new OAuthRegistrationException("User was registered using OAuth, no need to reset password");
+        }
 
         var passwordResetAttempts =
                 passwordResetRepository.findResetCountsByUserUuid(user.getUuid());
@@ -48,7 +52,7 @@ public class PasswordResetService {
 
         PasswordReset passwordReset = PasswordReset.builder()
                 .token(UUID.randomUUID().toString())
-                .expiresAt(OffsetDateTime.now().plusHours(1))
+                .expiresAt(OffsetDateTime.now().plusMinutes(emailConfigProperties.getResetExpirationMinutes()))
                 .userUuid(user.getUuid())
                 .build();
 
@@ -57,24 +61,18 @@ public class PasswordResetService {
         emailService.sendResetPasswordLink(user, passwordReset.getToken());
     }
 
-    public PasswordResetDTO checkPasswordResetToken(String link) {
+    @Transactional
+    public void resetPassword(String token, String password) {
         log.info("checking reset password link");
-        var passwordResetLink = passwordResetRepository.findByToken(link).orElseThrow(
+        var passwordResetLink = passwordResetRepository.findByToken(token).orElseThrow(
                 () -> new PasswordResetNotFoundException("password reset link not found"));
 
         if (OffsetDateTime.now().isAfter(passwordResetLink.getExpiresAt())) {
             throw new TokenExpiredException("Token reset link is expired");
         }
-        log.info("reset password link found");
-        return PasswordResetDTO.builder()
-                .userUuid(passwordResetLink.getUserUuid().toString())
-                .build();
-    }
+        log.info("reset password link found, removing all reset pass records and reset password");
 
-    @Transactional
-    public void resetPassword(UUID userUuid, String password) {
-        log.info("removing all reset pass records and reset password");
-        passwordResetRepository.deleteAllByUserUuid(userUuid);
-        userService.resetPassword(userUuid, password);
+        passwordResetRepository.deleteAllByUserUuid(passwordResetLink.getUserUuid());
+        userService.resetPassword(passwordResetLink.getUserUuid(), password);
     }
 }
