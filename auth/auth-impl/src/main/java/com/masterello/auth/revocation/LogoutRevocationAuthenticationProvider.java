@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
+import static com.masterello.auth.util.AuthenticationUtil.getAuthenticatedClientElseThrowInvalidClient;
+
 @Slf4j
 @RequiredArgsConstructor
 @Component
@@ -59,17 +61,6 @@ public class LogoutRevocationAuthenticationProvider implements AuthenticationPro
 
         log.trace("Revoked tokens");
         return new OAuth2TokenRevocationAuthenticationToken(token.getToken(), clientPrincipal);
-    }
-
-    private static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(Authentication authentication) {
-        OAuth2ClientAuthenticationToken clientPrincipal = null;
-        if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication.getPrincipal().getClass())) {
-            clientPrincipal = (OAuth2ClientAuthenticationToken) authentication.getPrincipal();
-        }
-        if (clientPrincipal != null && clientPrincipal.isAuthenticated()) {
-            return clientPrincipal;
-        }
-        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
     }
 
     @Override

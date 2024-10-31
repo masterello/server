@@ -3,12 +3,14 @@ package com.masterello.auth.utils;
 import com.masterello.auth.customgrants.MasterelloAuthenticationToken;
 import com.masterello.auth.domain.Authorization;
 import com.masterello.auth.domain.SecurityUserDetails;
+import com.masterello.auth.domain.TokenPair;
 import com.masterello.auth.helper.UserClaimsHelper;
 import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
 import com.nimbusds.oauth2.sdk.token.AccessTokenType;
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.io.UrlResource;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +33,7 @@ import static com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthe
 import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.server.authorization.OAuth2Authorization.Token.INVALIDATED_METADATA_NAME;
 
 public class AuthTestDataProvider {
 
@@ -53,14 +56,13 @@ public class AuthTestDataProvider {
     public static final String REFRESH_TOKEN = "Yfi7Jn2sjCLP_0deGYXJxvUferMbfpzpKMq3VeJsTz7QvI7i4RtV-wQTRQp5CwZxDpc5Ecs0m7b_hlJYxnnWn1O54Ti_dxuvpkzi2CxKwDZOt7T9KG6MTGEwiYkbTFhb";
     public static final String EMAIL = "test@gmail.com";
     public static final UUID USER_ID = UUID.fromString("9305a7c9-f696-4076-a7ff-61d4dfe2d66e");
-    public static final OffsetDateTime ACCESS_TOKEN_ISSUED_AT = OffsetDateTime.parse("2024-01-14T09:15:30.123123200Z");
     public static final OffsetDateTime ACCESS_TOKEN_EXPIRES_AT = OffsetDateTime.parse("2024-01-14T10:16:30.999988800Z");
-    public static final OffsetDateTime REFRESH_TOKEN_ISSUED_AT = OffsetDateTime.parse("2024-01-13T10:15:30.123123200Z");
     public static final OffsetDateTime REFRESH_TOKEN_EXPIRES_AT = OffsetDateTime.parse("2024-01-15T10:15:30.123123200Z");
-    public static final String SERIALIZED_PRINCIPAL = "{\"@class\":\"com.masterello.auth.domain.SerializablePrincipal\",\"registeredClientId\":\"1205a7c9-f696-4076-a7ff-61d4dfe2d66e\",\"clientAuthenticationMethod\":\"client_secret_basic\",\"userId\":\"9305a7c9-f696-4076-a7ff-61d4dfe2d66e\",\"authenticated\":true}";
     public static final String SEIRIALIZED_ACCESS_TOKEN_METADATA = "{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"metadata.token.claims\":{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"nbf\":[\"java.time.Instant\",1705223730.123123200],\"sub\":\"gw\",\"iat\":[\"java.time.Instant\",1705223730.123123200],\"exp\":[\"java.time.Instant\",1705227390.999988800],\"aud\":[\"java.util.Collections$SingletonList\",[\"gw\"]],\"jti\":\"25f1af65-1144-4802-a7eb-7adad126663b\",\"iss\":[\"java.net.URL\",\"http://127.0.0.1:8100\"],\"username\":\"test@gmail.com\",\"roles\":[\"java.util.HashSet\",[\"ADMIN\",\"WORKER\",\"USER\"]],\"emailVerified\":false,\"userStatus\":\"BANNED\",\"userId\":\"9305a7c9-f696-4076-a7ff-61d4dfe2d66e\"},\"metadata.token.invalidated\":false}";
     public static final String SERIALIZED_REFRESH_TOKEN_METADATA = "{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"metadata.token.invalidated\":false}";
     public static final String JTI = "25f1af65-1144-4802-a7eb-7adad126663b";
+    private static final UUID TOKEN_PAIR_ID = UUID.randomUUID();
+    public static final OffsetDateTime TOKEN_PAIR_ISSUED_AT = OffsetDateTime.parse("2024-01-14T09:15:30.123123200Z");
 
     public static OAuth2ClientAuthenticationToken prepareClientAuthData() {
         RegisteredClient client = getClient();
@@ -75,6 +77,22 @@ public class AuthTestDataProvider {
         return clientToken;
     }
 
+
+    public static TokenPair getTokenPair() {
+        return TokenPair.builder()
+                .id(TOKEN_PAIR_ID)
+                .authorization(getAuthorization())
+                .accessTokenType(AccessTokenType.BEARER.getValue())
+                .accessTokenValue(ACCESS_TOKEN)
+                .accessTokenExpiresAt(ACCESS_TOKEN_EXPIRES_AT)
+                .accessTokenMetadata(SEIRIALIZED_ACCESS_TOKEN_METADATA)
+                .refreshTokenValue(REFRESH_TOKEN)
+                .refreshTokenExpiresAt(REFRESH_TOKEN_EXPIRES_AT)
+                .refreshTokenMetadata(SERIALIZED_REFRESH_TOKEN_METADATA)
+                .issuedAt(TOKEN_PAIR_ISSUED_AT)
+                .build();
+    }
+
     public static Authorization getAuthorization() {
         return Authorization.builder()
                 .id(AUTH_ID.toString())
@@ -82,15 +100,7 @@ public class AuthTestDataProvider {
                 .registeredClientId(CLIENT_ID.toString())
                 .authorizationGrantType(GRANT_TYPE)
                 .principal(USER_ID.toString())
-                .accessTokenType(AccessTokenType.BEARER.getValue())
-                .accessTokenValue(ACCESS_TOKEN)
-                .accessTokenIssuedAt(ACCESS_TOKEN_ISSUED_AT)
-                .accessTokenExpiresAt(ACCESS_TOKEN_EXPIRES_AT)
-                .accessTokenMetadata(SEIRIALIZED_ACCESS_TOKEN_METADATA)
-                .refreshTokenValue(REFRESH_TOKEN)
-                .refreshTokenIssuedAt(REFRESH_TOKEN_ISSUED_AT)
-                .refreshTokenExpiresAt(REFRESH_TOKEN_EXPIRES_AT)
-                .refreshTokenMetadata(SERIALIZED_REFRESH_TOKEN_METADATA)
+
                 .build();
     }
 
@@ -111,17 +121,34 @@ public class AuthTestDataProvider {
                 .build();
     }
 
+    public static OAuth2Authorization getRevokedOAuthAuthorization(MasterelloUser user) {
+        RegisteredClient client = getClient();
+        OAuth2AccessToken accessToken = getAccessToken();
+        Map<String, Object> accessTokenMetadata = getRevokedAccessTokenMetadata(user);
+        OAuth2RefreshToken refreshToken = getRefreshToken();
+
+        MasterelloAuthenticationToken principal = getPrincipalToken(user);
+        return OAuth2Authorization.withRegisteredClient(client)
+                .id(AUTH_ID.toString())
+                .principalName(PRINCIPAL_NAME)
+                .authorizationGrantType(new AuthorizationGrantType(GRANT_TYPE))
+                .token(accessToken, md -> md.putAll(accessTokenMetadata))
+                .token(refreshToken, md -> md.put(INVALIDATED_METADATA_NAME, true))
+                .attribute(Principal.class.getName(), principal)
+                .build();
+    }
+
     @NotNull
     public static MasterelloAuthenticationToken getPrincipalToken(MasterelloUser user) {
         return new MasterelloAuthenticationToken(new SecurityUserDetails(user));
     }
 
     public static OAuth2RefreshToken getRefreshToken() {
-        return new OAuth2RefreshToken(REFRESH_TOKEN, REFRESH_TOKEN_ISSUED_AT.toInstant(), REFRESH_TOKEN_EXPIRES_AT.toInstant());
+        return new OAuth2RefreshToken(REFRESH_TOKEN, TOKEN_PAIR_ISSUED_AT.toInstant(), REFRESH_TOKEN_EXPIRES_AT.toInstant());
     }
 
     public static OAuth2AccessToken getAccessToken() {
-        return new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, ACCESS_TOKEN, ACCESS_TOKEN_ISSUED_AT.toInstant(), ACCESS_TOKEN_EXPIRES_AT.toInstant());
+        return new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER, ACCESS_TOKEN, TOKEN_PAIR_ISSUED_AT.toInstant(), ACCESS_TOKEN_EXPIRES_AT.toInstant());
     }
 
     public static RegisteredClient getClient() {
@@ -138,15 +165,22 @@ public class AuthTestDataProvider {
         Map<String, Object> claims = new LinkedHashMap<>(Map.of(
                 "aud", singletonList(REDISTERED_CLIENT_ID),
                 "sub", REDISTERED_CLIENT_ID,
-                "nbf", ACCESS_TOKEN_ISSUED_AT.toInstant(),
+                "nbf", TOKEN_PAIR_ISSUED_AT.toInstant(),
                 "exp", ACCESS_TOKEN_EXPIRES_AT.toInstant(),
-                "iat", ACCESS_TOKEN_ISSUED_AT.toInstant(),
+                "iat", TOKEN_PAIR_ISSUED_AT.toInstant(),
                 "jti", JTI,
                 "iss", UrlResource.from("http://127.0.0.1:8100").getURL()
         ));
         Map<String, Object> userClaims = UserClaimsHelper.getUserClaims(user);
         claims.putAll(userClaims);
         return Map.of(OAuth2Authorization.Token.CLAIMS_METADATA_NAME, Collections.unmodifiableMap(claims));
+    }
+
+    @NotNull
+    public static Map<String, Object> getRevokedAccessTokenMetadata(MasterelloUser user) {
+        val metadata = new HashMap<>(getAccessTokenMetadata(user));
+        metadata.put(INVALIDATED_METADATA_NAME, true);
+        return Map.copyOf(metadata);
     }
 
     public static MasterelloTestUser getUser(UUID id, String email, String ePassword, boolean verified) {

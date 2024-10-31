@@ -3,7 +3,7 @@ package com.masterello.auth.converter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.masterello.auth.config.AuthorisationServerConfig;
-import com.masterello.auth.domain.Authorization;
+import com.masterello.auth.domain.TokenPair;
 import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
@@ -22,15 +22,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-class OAuth2AuthorizationToAuthEntityConverterTest {
+class OAuth2AuthorizationToTokenPairConverterTest {
 
     private final Supplier<ObjectMapper> authServiceObjectMapper = new AuthorisationServerConfig().authServiceObjectMapper();
 
-    private OAuth2AuthorizationToAuthEntityConverter converter;
+    private OAuth2AuthorizationToTokenPairConverter converter;
 
     @BeforeEach
     void setUp() {
-        converter = new OAuth2AuthorizationToAuthEntityConverter(authServiceObjectMapper);
+        converter = new OAuth2AuthorizationToTokenPairConverter(authServiceObjectMapper);
     }
 
     @SneakyThrows
@@ -41,9 +41,9 @@ class OAuth2AuthorizationToAuthEntityConverterTest {
         user.setStatus(UserStatus.BANNED);
         user.setRoles(Set.of(Role.USER, Role.WORKER, Role.ADMIN));
 
-        Authorization entity = converter.toEntity(getOAuthAuthorization(user));
-        Authorization expectedEntity = getAuthorization();
-        assertThat(entity).usingRecursiveComparison().ignoringFields("accessTokenMetadata")
+        TokenPair entity = converter.toEntity(getOAuthAuthorization(user));
+        TokenPair expectedEntity = getTokenPair();
+        assertThat(entity).usingRecursiveComparison().ignoringFields("id","accessTokenMetadata", "issuedAt")
                 .isEqualTo(expectedEntity);
 
         assertEquals(

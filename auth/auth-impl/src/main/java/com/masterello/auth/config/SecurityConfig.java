@@ -4,6 +4,7 @@ import com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationConve
 import com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationProvider;
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationConverter;
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationProvider;
+import com.masterello.auth.refresh.CustomOauth2RefreshTokenAuthenticationProvider;
 import com.masterello.auth.repository.CustomStatelessAuthorizationRequestRepository;
 import com.masterello.auth.responsehandlers.GoogleSuccessAuthHandler;
 import com.masterello.auth.responsehandlers.Oauth2LogoutSuccessAuthHandler;
@@ -34,6 +35,7 @@ public class SecurityConfig {
     private final CustomPasswordAuthenticationProvider customPassordAuthenticationProvider;
     private final GoogleOidAuthenticationProvider googleOidAuthenticationProvider;
     private final LogoutRevocationAuthenticationProvider logoutRevocationAuthenticationProvider;
+    private final CustomOauth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
     private final GoogleSuccessAuthHandler googleSuccessAuthHandler;
     private final SuperAdminFilter superAdminFilter;
@@ -58,6 +60,7 @@ public class SecurityConfig {
                                 .accessTokenRequestConverter(new GoogleOidAuthenticationConverter())
                                 .authenticationProvider(googleOidAuthenticationProvider)
                                 .authenticationProvider(customPassordAuthenticationProvider)
+                                .authenticationProvider(refreshTokenAuthenticationProvider)
                                 .errorResponseHandler(tokenAuthenticationFailureHandler))
                 .tokenRevocationEndpoint(revocationEndpoint ->
                         revocationEndpoint

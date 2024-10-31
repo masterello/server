@@ -1,9 +1,11 @@
 package com.masterello.auth.service;
 
-import com.masterello.auth.converter.AuthEntityToOAuth2AuthorizationConverter;
-import com.masterello.auth.converter.OAuth2AuthorizationToAuthEntityConverter;
+import com.masterello.auth.converter.OAuth2AuthorizationToTokenPairConverter;
+import com.masterello.auth.converter.TokenPairEntityToOAuth2AuthorizationConverter;
 import com.masterello.auth.domain.Authorization;
+import com.masterello.auth.domain.TokenPair;
 import com.masterello.auth.repository.AuthorizationRepository;
+import com.masterello.auth.repository.TokenPairRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,13 +24,16 @@ import static org.mockito.Mockito.*;
 class JpaOAuth2AuthorizationServiceTest {
 
     @Mock
-    private OAuth2AuthorizationToAuthEntityConverter authorizationToEntityConverter;
+    private OAuth2AuthorizationToTokenPairConverter authorizationToEntityConverter;
 
     @Mock
-    private AuthEntityToOAuth2AuthorizationConverter entityToAuthorisationConverter;
+    private TokenPairEntityToOAuth2AuthorizationConverter entityToAuthorisationConverter;
 
     @Mock
     private AuthorizationRepository authorizationRepository;
+
+    @Mock
+    private TokenPairRepository tokenPairRepository;
 
     @InjectMocks
     private JpaOAuth2AuthorizationService authorizationService;
@@ -37,14 +42,21 @@ class JpaOAuth2AuthorizationServiceTest {
     void save_ShouldSaveAuthorizationEntity() {
         // Arrange
         OAuth2Authorization authorization = mock(OAuth2Authorization.class);
-        Authorization authEntity = mock(Authorization.class);
-        when(authorizationToEntityConverter.toEntity(authorization)).thenReturn(authEntity);
+
+        Authorization authorizationEntity = mock(Authorization.class);
+        String authId = UUID.randomUUID().toString();
+        when(authorizationEntity.getId()).thenReturn(authId);
+        TokenPair tokenPairEntity = mock(TokenPair.class);
+        when(tokenPairEntity.getAuthorization()).thenReturn(authorizationEntity);
+        when(authorizationToEntityConverter.toEntity(authorization)).thenReturn(tokenPairEntity);
 
         // Act
         authorizationService.save(authorization);
 
         // Assert
-        verify(authorizationRepository).save(authEntity);
+        verify(tokenPairRepository).revokeAllTokensByAuthorizationId(authId);
+        verify(authorizationRepository).saveAndFlush(authorizationEntity);
+        verify(tokenPairRepository).save(tokenPairEntity);
     }
 
     @Test
@@ -57,6 +69,7 @@ class JpaOAuth2AuthorizationServiceTest {
         authorizationService.remove(authorization);
 
         // Assert
+        verify(tokenPairRepository).deleteAllTokensByAuthorizationId(id);
         verify(authorizationRepository).deleteById(id);
     }
 
@@ -64,10 +77,10 @@ class JpaOAuth2AuthorizationServiceTest {
     void findById_WithValidId_ShouldReturnOAuth2Authorization() {
         // Arrange
         String validId = "validId";
-        Authorization authorizationEntity = mock(Authorization.class);
+        TokenPair tokenPairEntity = mock(TokenPair.class);
         OAuth2Authorization expectedAuthorization = mock(OAuth2Authorization.class);
-        when(authorizationRepository.findById(validId)).thenReturn(Optional.ofNullable(authorizationEntity));
-        when(entityToAuthorisationConverter.toOAuth2Authorization(authorizationEntity)).thenReturn(expectedAuthorization);
+        when(tokenPairRepository.findByAuthorizationIdAndRevokedFalse(validId)).thenReturn(Optional.of(tokenPairEntity));
+        when(entityToAuthorisationConverter.toOAuth2Authorization(tokenPairEntity)).thenReturn(expectedAuthorization);
 
         // Act
         OAuth2Authorization result = authorizationService.findById(validId);
@@ -80,7 +93,7 @@ class JpaOAuth2AuthorizationServiceTest {
     void findById_WithInvalidId_ShouldReturnNull() {
         // Arrange
         String invalidId = "invalidId";
-        when(authorizationRepository.findById(invalidId)).thenReturn(Optional.empty());
+        when(tokenPairRepository.findByAuthorizationIdAndRevokedFalse(invalidId)).thenReturn(Optional.empty());
 
         // Act
         OAuth2Authorization result = authorizationService.findById(invalidId);
@@ -93,10 +106,10 @@ class JpaOAuth2AuthorizationServiceTest {
     void findByToken_WithAccessToken_ShouldReturnOAuth2Authorization() {
         // Arrange
         String accessToken = "accessToken";
-        Authorization authorizationEntity = mock(Authorization.class);
+        TokenPair tokenPairEntity = mock(TokenPair.class);
         OAuth2Authorization expectedAuthorization = mock(OAuth2Authorization.class);
-        when(authorizationRepository.findByAccessTokenValue(accessToken)).thenReturn(Optional.ofNullable(authorizationEntity));
-        when(entityToAuthorisationConverter.toOAuth2Authorization(authorizationEntity)).thenReturn(expectedAuthorization);
+        when(tokenPairRepository.findByAccessTokenValue(accessToken)).thenReturn(Optional.of(tokenPairEntity));
+        when(entityToAuthorisationConverter.toOAuth2Authorization(tokenPairEntity)).thenReturn(expectedAuthorization);
 
         // Act
         OAuth2Authorization result = authorizationService.findByToken(accessToken, OAuth2TokenType.ACCESS_TOKEN);
@@ -109,10 +122,10 @@ class JpaOAuth2AuthorizationServiceTest {
     void findByToken_WithRefreshToken_ShouldReturnOAuth2Authorization() {
         // Arrange
         String refreshToken = "refreshToken";
-        Authorization authorizationEntity = mock(Authorization.class);
+        TokenPair tokenPairEntity = mock(TokenPair.class);
         OAuth2Authorization expectedAuthorization = mock(OAuth2Authorization.class);
-        when(authorizationRepository.findByRefreshTokenValue(refreshToken)).thenReturn(Optional.ofNullable(authorizationEntity));
-        when(entityToAuthorisationConverter.toOAuth2Authorization(authorizationEntity)).thenReturn(expectedAuthorization);
+        when(tokenPairRepository.findByRefreshTokenValue(refreshToken)).thenReturn(Optional.of(tokenPairEntity));
+        when(entityToAuthorisationConverter.toOAuth2Authorization(tokenPairEntity)).thenReturn(expectedAuthorization);
 
         // Act
         OAuth2Authorization result = authorizationService.findByToken(refreshToken, OAuth2TokenType.REFRESH_TOKEN);
@@ -125,10 +138,10 @@ class JpaOAuth2AuthorizationServiceTest {
     void findByToken_WithUnknownTokenType_ShouldReturnOAuth2Authorization() {
         // Arrange
         String token = "token";
-        Authorization authorizationEntity = mock(Authorization.class);
+        TokenPair tokenPairEntity = mock(TokenPair.class);
         OAuth2Authorization expectedAuthorization = mock(OAuth2Authorization.class);
-        when(authorizationRepository.findByAccessTokenValueOrRefreshTokenValue(token, token)).thenReturn(Optional.ofNullable(authorizationEntity));
-        when(entityToAuthorisationConverter.toOAuth2Authorization(authorizationEntity)).thenReturn(expectedAuthorization);
+        when(tokenPairRepository.findByAccessTokenValueOrRefreshTokenValue(token, token)).thenReturn(Optional.of(tokenPairEntity));
+        when(entityToAuthorisationConverter.toOAuth2Authorization(tokenPairEntity)).thenReturn(expectedAuthorization);
 
         // Act
         OAuth2Authorization result = authorizationService.findByToken(token, null);
