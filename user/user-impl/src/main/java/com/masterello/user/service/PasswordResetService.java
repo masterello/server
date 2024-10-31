@@ -31,7 +31,8 @@ public class PasswordResetService {
     private final PasswordResetRepository passwordResetRepository;
 
     @Transactional
-    public void sentPasswordResetLink(String userEmail) throws MessagingException, UnsupportedEncodingException {
+    public void sentPasswordResetLink(String userEmail, String locale)
+            throws MessagingException, UnsupportedEncodingException {
         log.info("resetting password for user");
         var user = userService.findByEmail(userEmail).orElseThrow(
                 () -> new UserNotFoundException("user is not found"));
@@ -58,7 +59,7 @@ public class PasswordResetService {
 
         passwordResetRepository.saveAndFlush(passwordReset);
         log.info("saved password reset entity for user");
-        emailService.sendResetPasswordLink(user, passwordReset.getToken());
+        emailService.sendResetPasswordLink(user, passwordReset.getToken(), locale);
     }
 
     @Transactional

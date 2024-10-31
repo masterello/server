@@ -43,9 +43,10 @@ public class PasswordResetController {
     })
     @PostMapping(produces = {MediaType.APPLICATION_JSON_VALUE})
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<Void> resetPassword(@RequestParam @Parameter(required = true) String userEmail)
+    public ResponseEntity<Void> resetPassword(@RequestParam @Parameter(required = true) String userEmail,
+                                              @RequestParam @Parameter(required = true) String locale)
             throws MessagingException, UnsupportedEncodingException {
-        passwordResetService.sentPasswordResetLink(userEmail);
+        passwordResetService.sentPasswordResetLink(userEmail, locale);
         return ResponseEntity.ok().build();
     }
 

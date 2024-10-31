@@ -80,7 +80,7 @@ public class EmailServiceTest {
         doNothing().when(mailSender).send(eq(mimeMessage));
 
         //WHEN
-        emailService.sendResetPasswordLink(user, token);
+        emailService.sendResetPasswordLink(user, token, LOCALE);
 
         //THEN
         verify(mailSender, times(1)).createMimeMessage();
