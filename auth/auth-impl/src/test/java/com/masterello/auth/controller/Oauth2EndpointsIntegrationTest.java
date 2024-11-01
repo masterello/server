@@ -284,7 +284,104 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
                 .body("active", is(false));
     }
 
-     private static ValidatableResponse login(LoginRequest request) {
+    @Test
+    void refreshToken_invalidatesOldAccessToken() {
+        // Step 1: Generate initial token pair
+        LoginRequest request = new LoginRequest(USER_1_EMAIL, USER_1_PASS);
+        ValidatableResponse initialResponse = login(request);
+
+        String initialAccessToken = initialResponse.extract().path("access_token");
+        String initialRefreshToken = initialResponse.extract().path("refresh_token");
+
+        // Step 2: Use the refresh token to get a new token pair
+        ValidatableResponse refreshedResponse = refreshToken(initialRefreshToken);
+
+        String newAccessToken = refreshedResponse.extract().path("access_token");
+        String newRefreshToken = refreshedResponse.extract().path("refresh_token");
+
+        // Step 3: Validate that a new token pair was generated
+        refreshedResponse
+                .body("access_token", not(initialAccessToken))
+                .body("refresh_token", not(initialRefreshToken))
+                .body("token_type", is("Bearer"))
+                .body("access_token", notNullValue())
+                .body("refresh_token", notNullValue());
+
+        // Step 4: Check that the initial access token is no longer valid
+        ValidatableResponse introspectResponse = getIntrospectResponse(initialAccessToken);
+
+        introspectResponse
+                .body("active", is(false));
+    }
+
+    @Test
+    void refreshToken_invalidatesAllTokensWhenRefreshReused() {
+        // Step 1: Generate initial token pair
+        LoginRequest request = new LoginRequest(USER_1_EMAIL, USER_1_PASS);
+        ValidatableResponse initialResponse = login(request);
+
+        String initialAccessToken = initialResponse.extract().path("access_token");
+        String initialRefreshToken = initialResponse.extract().path("refresh_token");
+
+        // Step 2: Use the refresh token to get a new token pair
+        ValidatableResponse refreshedResponse = refreshToken(initialRefreshToken);
+
+        String newAccessToken = refreshedResponse.extract().path("access_token");
+        String newRefreshToken = refreshedResponse.extract().path("refresh_token");
+
+        // Step 3: Validate that a new token pair was generated
+        refreshedResponse
+                .body("access_token", not(initialAccessToken))
+                .body("refresh_token", not(initialRefreshToken))
+                .body("token_type", is("Bearer"))
+                .body("access_token", notNullValue())
+                .body("refresh_token", notNullValue());
+
+        // Step 4: Check that the initial access token is no longer valid
+        ValidatableResponse introspectInitialTokenResponse = getIntrospectResponse(initialAccessToken);
+
+        introspectInitialTokenResponse
+                .body("active", is(false));
+
+        // Step 4: Check that the new access token is valid
+        ValidatableResponse introspectNewTokenResponse = getIntrospectResponse(newAccessToken);
+
+        introspectNewTokenResponse
+                .body("active", is(true));
+
+        // Step 5: Reuse initial refresh token and check it fails
+        ValidatableResponse refreshedAgainResponse = refreshToken(initialRefreshToken);
+
+        refreshedAgainResponse.statusCode(401);
+
+        // Step 5: Check latest access token is no longer valid
+        ValidatableResponse introspectNewTokenAgainResponse = getIntrospectResponse(newAccessToken);
+
+        introspectNewTokenAgainResponse
+                .body("active", is(false));
+
+        // Step 5: Reuse latest refresh token is also invalidated
+        ValidatableResponse refreshNewTokenResponse = refreshToken(newRefreshToken);
+
+        refreshNewTokenResponse.statusCode(401);
+    }
+
+    private ValidatableResponse refreshToken(String refreshToken) {
+        //@formatter:off
+        return RestAssured
+                .given()
+                    .header("Authorization", CLIENT_BEARER)
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .queryParam("grant_type", "refresh_token")
+                    .queryParam("refresh_token", refreshToken)
+                .when()
+                    .post("/oauth2/token")
+                .then();
+        //@formatter:on
+    }
+
+     private ValidatableResponse login(LoginRequest request) {
         //@formatter:off
         return RestAssured
                 .given()

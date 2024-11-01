@@ -22,6 +22,8 @@ import org.springframework.util.Assert;
 import java.security.Principal;
 import java.util.Map;
 
+import static com.masterello.auth.util.AuthenticationUtil.getAuthenticatedClientElseThrowInvalidClient;
+
 public abstract class AbstractAuthenticationProvider implements AuthenticationProvider  {
 
     private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
@@ -121,17 +123,6 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
                 .authorizationServerContext(AuthorizationServerContextHolder.getContext())
                 .authorizationGrantType(getGrantType())
                 .authorizationGrant(authenticationToken);
-    }
-
-    private static OAuth2ClientAuthenticationToken getAuthenticatedClientElseThrowInvalidClient(Authentication authentication) {
-        OAuth2ClientAuthenticationToken clientPrincipal = null;
-        if (OAuth2ClientAuthenticationToken.class.isAssignableFrom(authentication.getPrincipal().getClass())) {
-            clientPrincipal = (OAuth2ClientAuthenticationToken) authentication.getPrincipal();
-        }
-        if (clientPrincipal != null && clientPrincipal.isAuthenticated()) {
-            return clientPrincipal;
-        }
-        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
     }
 
     protected abstract MasterelloAuthenticationToken getPrincipal(Authentication authentication);

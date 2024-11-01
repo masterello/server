@@ -3,6 +3,7 @@ package com.masterello.auth.converter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.masterello.auth.config.AuthorisationServerConfig;
 import com.masterello.auth.domain.Authorization;
+import com.masterello.auth.domain.TokenPair;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloUser;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,9 +21,10 @@ import java.util.function.Supplier;
 import static com.masterello.auth.utils.AuthTestDataProvider.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.server.authorization.OAuth2Authorization.Token.INVALIDATED_METADATA_NAME;
 
 @ExtendWith(MockitoExtension.class)
-class AuthEntityToOAuth2AuthorizationConverterTest {
+class TokenPairEntityToOAuth2AuthorizationConverterTest {
 
     private final Supplier<ObjectMapper> authServiceObjectMapper = new AuthorisationServerConfig().authServiceObjectMapper();
     @Mock
@@ -30,11 +32,11 @@ class AuthEntityToOAuth2AuthorizationConverterTest {
     @Mock
     private MasterelloUserService userService;
 
-    private AuthEntityToOAuth2AuthorizationConverter converter;
+    private TokenPairEntityToOAuth2AuthorizationConverter converter;
 
     @BeforeEach
     void setUp() {
-        converter = new AuthEntityToOAuth2AuthorizationConverter(authServiceObjectMapper, registeredClientRepository, userService);
+        converter = new TokenPairEntityToOAuth2AuthorizationConverter(authServiceObjectMapper, registeredClientRepository, userService);
     }
 
     @Test
@@ -43,11 +45,26 @@ class AuthEntityToOAuth2AuthorizationConverterTest {
         when(registeredClientRepository.findById(CLIENT_ID.toString())).thenReturn(client);
         MasterelloUser user = getUser();
         when(userService.findById(USER_ID)).thenReturn(Optional.of(user));
-        Authorization authorization = getAuthorization();
+        TokenPair tokenPair = getTokenPair();
 
-        OAuth2Authorization oAuth2Authorization = converter.toOAuth2Authorization(authorization);
+        OAuth2Authorization oAuth2Authorization = converter.toOAuth2Authorization(tokenPair);
 
         OAuth2Authorization expectedOAuth2Authorization = getOAuthAuthorization(user);
+        assertEquals(expectedOAuth2Authorization, oAuth2Authorization);
+    }
+
+    @Test
+    void toOAuth2Authorization_revoked() {
+        RegisteredClient client = getClient();
+        when(registeredClientRepository.findById(CLIENT_ID.toString())).thenReturn(client);
+        MasterelloUser user = getUser();
+        when(userService.findById(USER_ID)).thenReturn(Optional.of(user));
+        TokenPair tokenPair = getTokenPair();
+        tokenPair.setRevoked(true);
+
+        OAuth2Authorization oAuth2Authorization = converter.toOAuth2Authorization(tokenPair);
+
+        OAuth2Authorization expectedOAuth2Authorization = getRevokedOAuthAuthorization(user);
         assertEquals(expectedOAuth2Authorization, oAuth2Authorization);
     }
 }
