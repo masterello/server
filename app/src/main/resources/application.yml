@@ -26,6 +26,10 @@ masterello:
     max-height: 4000
     compressed-size: 1024
     bucket-name: 'masterello'
+  auth:
+    sessionCleanup:
+      batchSize: 1000
+      cron: "0 0 0 * * ?"
 
 spring:
   servlet:
