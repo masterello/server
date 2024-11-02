@@ -69,7 +69,6 @@ class JpaOAuth2AuthorizationServiceTest {
         authorizationService.remove(authorization);
 
         // Assert
-        verify(tokenPairRepository).deleteAllTokensByAuthorizationId(id);
         verify(authorizationRepository).deleteById(id);
     }
 

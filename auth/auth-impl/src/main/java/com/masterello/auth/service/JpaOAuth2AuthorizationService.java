@@ -35,7 +35,6 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
     @Override
     @Transactional
     public void remove(OAuth2Authorization authorization) {
-        tokenPairRepository.deleteAllTokensByAuthorizationId(authorization.getId());
         authorizationRepository.deleteById(authorization.getId());
     }
 

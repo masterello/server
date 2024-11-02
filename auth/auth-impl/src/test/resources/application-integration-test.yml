@@ -33,5 +33,11 @@ masterello:
     google:
       verification-url: "http://localhost:8111/google"
       success-redirect-url: "https://masterello.com/login/google"
+    session-cleanup:
+      batch-size: 2
+      cron: "0 0 0 * * ?"
 
 
+logging:
+  level:
+    com.masterello: DEBUG
