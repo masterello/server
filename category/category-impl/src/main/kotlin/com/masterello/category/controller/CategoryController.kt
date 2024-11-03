@@ -1,8 +1,11 @@
 package com.masterello.category.controller
 
+import com.masterello.auth.data.AuthZRole
 import com.masterello.category.dto.CategoryBulkRequest
 import com.masterello.category.dto.CategoryDto
 import com.masterello.category.service.CategoryService
+import com.masterello.commons.security.validation.AuthZRule
+import com.masterello.commons.security.validation.AuthZRules
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -111,6 +114,7 @@ class CategoryController {
      */
     @Operation(summary = "Create Category", description = "Create a new category")
     @ApiResponse(responseCode = "201", description = "Category created successfully")
+    @AuthZRules(AuthZRule(roles = [AuthZRole.ADMIN]))
     @PostMapping
     fun createCategory(@RequestBody category: CategoryDto): CategoryDto {
         return categoryService.createCategory(category)
@@ -125,6 +129,7 @@ class CategoryController {
     @Operation(summary = "Update Category", description = "Update an existing category")
     @ApiResponse(responseCode = "200", description = "Category updated successfully")
     @ApiResponse(responseCode = "404", description = "Category not found")
+    @AuthZRules(AuthZRule(roles = [AuthZRole.ADMIN]))
     @PutMapping("/{id}")
     fun updateCategory(@PathVariable id: UUID,
                        @RequestBody category: CategoryDto): CategoryDto {
@@ -139,6 +144,7 @@ class CategoryController {
     @Operation(summary = "Activate/Deactivate Category", description = "Activate/Deactivate an existing category")
     @ApiResponse(responseCode = "200", description = "Category updated successfully")
     @ApiResponse(responseCode = "404", description = "Category not found")
+    @AuthZRules(AuthZRule(roles = [AuthZRole.ADMIN]))
     @PutMapping("/{id}/activate")
     fun activateCategory(@PathVariable id: UUID): CategoryDto {
         return categoryService.activateCategory(id)
