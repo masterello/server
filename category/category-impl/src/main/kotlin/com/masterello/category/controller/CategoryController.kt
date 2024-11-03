@@ -72,7 +72,7 @@ class CategoryController {
      */
     @Operation(summary = "Get All Categories", description = "Retrieve all categories")
     @ApiResponse(responseCode = "200", description = "Returns the list of all categories")
-    @GetMapping("/")
+    @GetMapping
     fun getCategories(): List<CategoryDto> {
         return categoryService.getAllCategories()
     }
@@ -111,7 +111,7 @@ class CategoryController {
      */
     @Operation(summary = "Create Category", description = "Create a new category")
     @ApiResponse(responseCode = "201", description = "Category created successfully")
-    @PostMapping("/")
+    @PostMapping
     fun createCategory(@RequestBody category: CategoryDto): CategoryDto {
         return categoryService.createCategory(category)
     }
