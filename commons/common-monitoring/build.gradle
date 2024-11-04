@@ -1,0 +1,18 @@
+plugins {
+    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+    id("org.jetbrains.kotlin.plugin.spring") version "1.9.25"
+
+}
+
+dependencies {
+    implementation "io.github.oshai:kotlin-logging-jvm:5.1.4"
+}
+
+
+test {
+    useJUnitPlatform()
+}
+
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}

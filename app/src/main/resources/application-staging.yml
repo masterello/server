@@ -71,6 +71,12 @@ masterello:
   openapi:
     oAuthFlow:
       tokenUrl: https:/api.masterello.com/oauth2/token
+  monitoring:
+    channel: slack
+    slack:
+      endpoint: ${SLACK_WEBHOOK}
+      clientId: ${SLACK_CLIENT_ID}
+      clientSecret: ${SLACK_CLIENT_SECRET}
 
 management:
   health:

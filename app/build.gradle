@@ -6,6 +6,7 @@ dependencies {
     implementation project(':category-impl')
     implementation project(':file-impl')
     implementation project(':db')
+    implementation project(':common-monitoring')
 
     testImplementation  project(':common-test')
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

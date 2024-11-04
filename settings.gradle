@@ -10,7 +10,8 @@ include 'common-test'
 project(':common-test').projectDir = new File('commons/common-test')
 include 'common-core'
 project(':common-core').projectDir = new File('commons/common-core')
-
+include 'common-monitoring'
+project(':common-monitoring').projectDir = new File('commons/common-monitoring')
 
 include 'user-impl'
 project(':user-impl').projectDir = new File('user/user-impl')
