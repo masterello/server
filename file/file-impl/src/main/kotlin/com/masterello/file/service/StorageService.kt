@@ -5,10 +5,7 @@ import com.masterello.file.entity.File
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
-import software.amazon.awssdk.services.s3.model.DeleteObjectResponse
-import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.services.s3.model.PutObjectRequest
+import software.amazon.awssdk.services.s3.model.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
@@ -41,9 +38,11 @@ class StorageService(private val s3Client: S3Client,
     private fun uploadFileToS3(entity: File, tempFile: Path) {
         val objectKey = "${entity.userUuid}/${entity.uuid}.${entity.fileExtension}"
 
+        val acl = if (entity.isPublic) ObjectCannedACL.PUBLIC_READ else ObjectCannedACL.PRIVATE
         val putObjectRequest = PutObjectRequest.builder()
             .bucket(fileProperties.bucketName)
             .key(objectKey)
+            .acl(acl)
             .build()
 
         s3Client.putObject(putObjectRequest, tempFile)

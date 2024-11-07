@@ -53,6 +53,18 @@ open class FileService(private val fileRepository: FileRepository,
         return userFiles.map { fileMapper.mapFileToDto(it) }
     }
 
+    override fun findAllThumbnailsByUserUuid(userUUID: UUID): List<FileDto> {
+        val userFiles = fileRepository.findAllThumbnailsByUserUuid(userUUID)
+
+        return userFiles.map { fileMapper.mapFileToDto(it) }
+    }
+
+    override fun findAllImagesByUserUuid(userUUID: UUID): List<FileDto> {
+        val userFiles = fileRepository.findAllImagesByUserUuid(userUUID)
+
+        return userFiles.map { fileMapper.mapFileToDto(it) }
+    }
+
     @Transactional
     override fun storeFile(payload: FileDto) {
         try {

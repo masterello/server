@@ -23,15 +23,39 @@ import java.util.*
 open class FileController(
         private val fileService: FileService
 ) {
+    @AuthZRules(
+        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
+        AuthZRule(roles = [AuthZRole.ADMIN])
+    )
+    @GetMapping("/{userUuid}/images")
+    @Operation(summary = "Get all files by user UUID", description = "Retrieve all files for a specific user")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved images")
+    fun getAllImagesByUserUuid(@PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
+        val files = fileService.findAllImagesByUserUuid(userUuid)
+        return ResponseEntity.ok(files)
+    }
 
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
+        AuthZRule(roles = [AuthZRole.ADMIN])
+    )
+    @GetMapping("/{userUuid}/thumbnails")
+    @Operation(summary = "Get all thumbnails by user UUID", description = "Retrieve all thumbnails for a specific user")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved thumbnails")
+    fun getAllThumbnailsByUserUuid(@PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
+        val files = fileService.findAllThumbnailsByUserUuid(userUuid)
+        return ResponseEntity.ok(files)
+    }
+
+
+    @AuthZRules(
+        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
         AuthZRule(roles = [AuthZRole.ADMIN])
     )
     @GetMapping("/{userUuid}")
     @Operation(summary = "Get all files by user UUID", description = "Retrieve all files for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved files")
-    fun getAllFilesByUserUuid(@OwnerId @PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
+    fun getAllFilesByUserUuid(@PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
         val files = fileService.findAllFilesByUserUuid(userUuid)
         return ResponseEntity.ok(files)
     }
