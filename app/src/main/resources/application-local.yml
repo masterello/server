@@ -8,6 +8,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
+          time_zone: UTC
           lob:
             non_contextual_creation: 'true'
     hibernate:

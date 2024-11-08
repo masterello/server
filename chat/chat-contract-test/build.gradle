@@ -1,0 +1,6 @@
+plugins {
+    id("org.jetbrains.kotlin.jvm") version "1.9.25"
+}
+bootJar {
+    enabled = false  // Disable the bootJar task in non-application modules
+}

@@ -1,0 +1,18 @@
+{
+  "messages": [
+    {
+      "id": "1a2b3c4d-1111-2222-3333-444444444444",
+      "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "message": "Hi, I saw your ad about dog walking services.",
+      "createdBy": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
+      "createdAt": "2025-01-12T10:15:00+00:00"
+    },
+    {
+      "id": "2b3c4d5e-5555-6666-7777-888888888888",
+      "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "message": "Hi! Yes, I offer dog-walking services. How can I help you?",
+      "createdBy": "57bc029c-d8e3-458f-b25a-7f73283cec98",
+      "createdAt": "2025-01-12T10:16:00+00:00"
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat</title>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.1/stomp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.23.0/picker.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        #emoji-picker {
+            position: absolute;
+            display: none;
+            z-index: 10000;
+            background-color: white;
+            border: 1px solid #ddd;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h2>Chat</h2>
+    <input type="text" id="chatId" placeholder="Enter chat ID">
+    <input type="text" id="message" placeholder="Type a message">
+    <button onclick="connectToChat()">Connect</button>
+    <button onclick="sendMessage()">Send</button>
+    <button id="emojiButton">😊</button>
+    <table id="messages">
+        <thead>
+        <tr>
+            <th>Created At</th>
+            <th>Created By</th>
+            <th>Message</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <emoji-picker id="emoji-picker"></emoji-picker>
+</div>
+
+<script>
+    var stompClient = null;
+    var messagesMap = new Map(); // Store messages as a map with id as key
+
+    function connectToChat() {
+        var chatId = document.getElementById('chatId').value;
+        if (!chatId) {
+            alert("Please enter a chat ID.");
+            return;
+        }
+
+        var socket = new SockJS('/ws/chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log("Connected: " + frame);
+
+            // Subscribe to the messages topic
+            stompClient.subscribe('/topic/messages/' + chatId, function (messageOutput) {
+                var message = JSON.parse(messageOutput.body);
+                addMessageToMap(message);
+                displayMessages();
+            });
+
+            // Fetch chat history
+            fetchChatHistory(chatId);
+        }, function (error) {
+            console.error("Connection error:", error);
+        });
+    }
+
+    async function fetchChatHistory(chatId) {
+        try {
+            const response = await fetch(`/api/chat/${chatId}/history`);
+            const history = await response.json();
+
+            history.messages.forEach(function (message) {
+                addMessageToMap(message);
+            });
+
+            displayMessages();
+        } catch (error) {
+            console.error("Failed to fetch chat history:", error);
+        }
+    }
+
+    function addMessageToMap(message) {
+        if (!messagesMap.has(message.id)) {
+            messagesMap.set(message.id, message);
+        }
+    }
+
+    function displayMessages() {
+        // Sort messages by createdAt
+        const sortedMessages = Array.from(messagesMap.values()).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+        var tbody = document.getElementById('messages').getElementsByTagName('tbody')[0];
+        tbody.innerHTML = ''; // Clear current table content
+
+        sortedMessages.forEach(function (message) {
+            var row = tbody.insertRow();
+
+            var createdAtCell = row.insertCell(0);
+            createdAtCell.textContent = message.createdAt;
+
+            var createdByNameCell = row.insertCell(1);
+            createdByNameCell.textContent = message.createdByName;
+
+            var messageCell = row.insertCell(2);
+            messageCell.textContent = message.message;
+        });
+    }
+
+    function sendMessage() {
+        var message = document.getElementById('message').value;
+        var chatId = document.getElementById('chatId').value;
+
+        if (!chatId) {
+            alert("Please enter a chat ID.");
+            return;
+        }
+
+        if (message) {
+            stompClient.send("/ws/sendMessage/" + chatId, {}, message);
+        } else {
+            alert("Please type a message.");
+        }
+    }
+
+    const emojiPicker = document.getElementById('emoji-picker');
+    const emojiButton = document.getElementById('emojiButton');
+    const messageInput = document.getElementById('message');
+
+    emojiButton.addEventListener('click', function(event) {
+        event.stopPropagation();
+        const buttonRect = emojiButton.getBoundingClientRect();
+        emojiPicker.style.left = `${buttonRect.left}px`;
+        emojiPicker.style.top = `${buttonRect.bottom + window.scrollY}px`;
+        emojiPicker.style.display = (emojiPicker.style.display === 'none' || emojiPicker.style.display === '') ? 'block' : 'none';
+    });
+
+    emojiPicker.addEventListener('emoji-click', function(event) {
+        messageInput.value += event.detail.unicode;
+        emojiPicker.style.display = 'none';
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!emojiButton.contains(event.target) && !emojiPicker.contains(event.target)) {
+            emojiPicker.style.display = 'none';
+        }
+    });
+</script>
+</body>
+</html>
