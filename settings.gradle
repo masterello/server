@@ -43,6 +43,11 @@ include 'file-contract'
 project(':file-contract').projectDir = new File('file/file-contract')
 include 'file-contract-test'
 project(':file-contract-test').projectDir = new File('file/file-contract-test')
+
+include 'task-contract'
+project(':task-contract').projectDir = new File('task/task-contract')
+include 'task-contract-test'
+project(':task-contract-test').projectDir = new File('task/task-contract-test')
 //include 'worker:worker-contract'
 //include 'worker:worker-contract-test'
 
