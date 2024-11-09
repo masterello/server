@@ -23,10 +23,6 @@ import java.util.*
 open class FileController(
         private val fileService: FileService
 ) {
-    @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
-        AuthZRule(roles = [AuthZRole.ADMIN])
-    )
     @GetMapping("/{userUuid}/images")
     @Operation(summary = "Get all files by user UUID", description = "Retrieve all files for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved images")
@@ -35,10 +31,6 @@ open class FileController(
         return ResponseEntity.ok(files)
     }
 
-    @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
-        AuthZRule(roles = [AuthZRole.ADMIN])
-    )
     @GetMapping("/{userUuid}/thumbnails")
     @Operation(summary = "Get all thumbnails by user UUID", description = "Retrieve all thumbnails for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved thumbnails")
@@ -47,11 +39,6 @@ open class FileController(
         return ResponseEntity.ok(files)
     }
 
-
-    @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
-        AuthZRule(roles = [AuthZRole.ADMIN])
-    )
     @GetMapping("/{userUuid}")
     @Operation(summary = "Get all files by user UUID", description = "Retrieve all files for a specific user")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved files")
