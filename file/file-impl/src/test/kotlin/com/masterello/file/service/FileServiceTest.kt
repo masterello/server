@@ -106,6 +106,72 @@ class FileServiceTest {
     }
 
     @Test
+    fun `test findAllImagesByUserUuid returns list of file DTOs`() {
+        val userUuid = UUID.randomUUID()
+        val file = File(
+            uuid = UUID.randomUUID(),
+            userUuid = userUuid,
+            fileName = "test.txt",
+            fileType = FileType.IMAGE,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        val fileDto = FileDto(
+            uuid = file.uuid,
+            userUuid = file.userUuid,
+            fileType = file.fileType,
+            fileName = file.fileName,
+            isPublic = file.isPublic,
+            createdDate = OffsetDateTime.now(),
+            updatedDate = OffsetDateTime.now(),
+            file = null
+        )
+
+        `when`(fileRepository.findAllImagesByUserUuid(userUuid)).thenReturn(listOf(file))
+        `when`(fileMapper.mapFileToDto(file)).thenReturn(fileDto)
+
+        val result = fileService.findAllImagesByUserUuid(userUuid)
+
+        assertNotNull(result)
+        assertEquals(1, result.size)
+        assertEquals(fileDto, result[0])
+    }
+
+    @Test
+    fun `test findAllThumbnailsByUserUuid returns list of file DTOs`() {
+        val userUuid = UUID.randomUUID()
+        val file = File(
+            uuid = UUID.randomUUID(),
+            userUuid = userUuid,
+            fileName = "test.txt",
+            fileType = FileType.THUMBNAIL,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        val fileDto = FileDto(
+            uuid = file.uuid,
+            userUuid = file.userUuid,
+            fileType = file.fileType,
+            fileName = file.fileName,
+            isPublic = file.isPublic,
+            createdDate = OffsetDateTime.now(),
+            updatedDate = OffsetDateTime.now(),
+            file = null
+        )
+
+        `when`(fileRepository.findAllThumbnailsByUserUuid(userUuid)).thenReturn(listOf(file))
+        `when`(fileMapper.mapFileToDto(file)).thenReturn(fileDto)
+
+        val result = fileService.findAllThumbnailsByUserUuid(userUuid)
+
+        assertNotNull(result)
+        assertEquals(1, result.size)
+        assertEquals(fileDto, result[0])
+    }
+
+    @Test
     fun `test storeFile throws FileNotProvidedException`() {
         val dto = FileDto(
             uuid = UUID.randomUUID(),

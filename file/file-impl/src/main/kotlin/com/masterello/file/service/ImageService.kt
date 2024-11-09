@@ -1,5 +1,6 @@
 package com.masterello.file.service
 
+import com.masterello.file.exception.FileNotProvidedException
 import net.coobird.thumbnailator.Thumbnails
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -66,6 +67,7 @@ class ImageService {
     }
 
     fun createBufferedImage(file: MultipartFile?): BufferedImage {
-        return ImageIO.read(file?.inputStream)
+        file?.inputStream ?: throw FileNotProvidedException("File is not provided")
+        return ImageIO.read(file.inputStream)
     }
 }

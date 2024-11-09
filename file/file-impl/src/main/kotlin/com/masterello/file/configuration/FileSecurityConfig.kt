@@ -22,6 +22,8 @@ open class FileSecurityConfig(private val authFilter: AuthFilter) {
             .securityMatcher(AntPathRequestMatcher("/api/files/**"))
             .csrf { it.disable() }
             .authorizeHttpRequests { auth -> auth
+                .requestMatchers("/api/files/{userUuid}/images", "/api/files/{userUuid}/thumbnails",
+                    "/api/files/{userUuid}").permitAll()
                 .anyRequest().authenticated() }
             .addFilterBefore(authFilter, AnonymousAuthenticationFilter::class.java)
             .sessionManagement { session -> session

@@ -16,20 +16,20 @@ data class File(
     val uuid: UUID? = null,
 
     @Column(name = "userUuid")
-    var userUuid: UUID,
+    var userUuid: UUID = UUID.randomUUID(),
 
     @Column(name = "file_name", length = 255)
-    var fileName: String,
+    var fileName: String = "",
 
     @Column(name = "file_extension", length = 255)
-    var fileExtension: String,
+    var fileExtension: String = "",
 
     @Column(name = "is_public")
-    var isPublic: Boolean,
+    var isPublic: Boolean = false,
 
     @Convert(converter = FileTypeConverter::class)
     @Column(name = "file_type")
-    var fileType: FileType,
+    var fileType: FileType = FileType.IMAGE,
 
     @CreationTimestamp
     @Column(name = "created_date", insertable = false, updatable = false)
