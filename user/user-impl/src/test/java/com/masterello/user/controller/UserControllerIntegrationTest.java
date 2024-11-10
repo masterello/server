@@ -28,7 +28,6 @@ import java.util.*;
 import static com.masterello.user.util.TestDataProvider.*;
 import static com.masterello.user.value.Role.USER;
 import static org.hamcrest.Matchers.*;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -103,11 +102,97 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .post("/api/user/signup")
                 .then()
-                    .statusCode(400);
-
+                    .statusCode(400)
+                    .body("errors", hasSize(2))
+                    .body("errors", containsInAnyOrder(
+                            Map.of("field", "password", "message", "Password must contain at least one special character"),
+                            Map.of("field", "password", "message", "Password must contain at least one uppercase letter")
+                    ));
         //@formatter:on
     }
 
+    @Test
+    public void signUp_email_empty() {
+        SignUpRequest signUpRequest = SignUpRequest.builder()
+                .email("")
+                .password("Password123!")
+                .build();
+
+        var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
+
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(eq(mimeMessage));
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+        //@formatter:off
+        RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(signUpRequest)
+                .when()
+                    .post("/api/user/signup")
+                .then()
+                    .statusCode(400)
+                    .body("errors", hasSize(1))
+                    .body("errors[0].field", is("email"))
+                    .body("errors[0].message", is("must not be empty"));
+        //@formatter:on
+    }
+
+    @Test
+    public void signUp_email_null() {
+        SignUpRequest signUpRequest = SignUpRequest.builder()
+                .password("Password123!")
+                .build();
+
+        var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
+
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(eq(mimeMessage));
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+        //@formatter:off
+        RestAssured
+                .given()
+                .accept("application/json")
+                .contentType("application/json")
+                .body(signUpRequest)
+                .when()
+                .post("/api/user/signup")
+                .then()
+                .statusCode(400)
+                .body("errors", hasSize(1))
+                .body("errors[0].field", is("email"))
+                .body("errors[0].message", is("must not be empty"));
+        //@formatter:on
+    }
+
+    @Test
+    public void signUp_email_wrongformat() {
+        SignUpRequest signUpRequest = SignUpRequest.builder()
+                .email("not_an_email@")
+                .password("Password123!")
+                .build();
+
+        var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
+
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(eq(mimeMessage));
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+        //@formatter:off
+        RestAssured
+                .given()
+                .accept("application/json")
+                .contentType("application/json")
+                .body(signUpRequest)
+                .when()
+                .post("/api/user/signup")
+                .then()
+                .statusCode(400)
+                .body("errors", hasSize(1))
+                .body("errors[0].field", is("email"))
+                .body("errors[0].message", is("must be a well-formed email address"));
+        //@formatter:on
+    }
 
     @Test
     public void signUp_user_already_exists() {
@@ -163,15 +248,15 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
 
     @Test
     public void updatePassword_successful() {
-         String newPassword = "newPassword123!";
-         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+        String newPassword = "newPassword123!";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword(VERIFIED_USER_PASS)
                 .newPassword(newPassword)
                 .build();
 
-         mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
-         //@formatter:off
+        //@formatter:off
         RestAssured
                 .given()
                     .cookie(tokenCookie())
@@ -185,9 +270,9 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
 
         //@formatter:on
 
-         val masterelloUserEntity = userRepository.findById(VERIFIED_USER).orElse(new MasterelloUserEntity());
-         assertTrue(passwordEncoder.matches(newPassword, masterelloUserEntity.getPassword()));
-     }
+        val masterelloUserEntity = userRepository.findById(VERIFIED_USER).orElse(new MasterelloUserEntity());
+        assertTrue(passwordEncoder.matches(newPassword, masterelloUserEntity.getPassword()));
+    }
 
     @Test
     public void updatePassword_same_password_failed() {
@@ -217,17 +302,17 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
         assertTrue(passwordEncoder.matches(newPassword, masterelloUserEntity.getPassword()));
     }
 
-     @Test
+    @Test
     public void updatePassword_invalid() {
-         String newPassword = "newPassword";
-         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+        String newPassword = "newPassword";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("")
                 .newPassword(newPassword)
                 .build();
 
-         mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
-         //@formatter:off
+        //@formatter:off
          RestAssured
                 .given()
                     .cookie(tokenCookie())
@@ -246,7 +331,7 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     ));
 
         //@formatter:on
-     }
+    }
 
     @Test
     public void addRole_existing_role() {
@@ -520,9 +605,9 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     private void mockAuth(UUID userId, List<AuthZRole> roles, boolean emailVerified) {
         when(authService.validateToken(ACCESS_TOKEN))
                 .thenReturn(Optional.of(AuthData.builder()
-                                .userId(userId)
-                                .userRoles(roles)
-                                .emailVerified(emailVerified)
+                        .userId(userId)
+                        .userRoles(roles)
+                        .emailVerified(emailVerified)
                         .build()));
     }
 }

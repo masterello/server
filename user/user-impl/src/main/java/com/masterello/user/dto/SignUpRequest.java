@@ -10,6 +10,7 @@ import lombok.Data;
 @Builder
 public class SignUpRequest {
     @Email
+    @NotEmpty
     private String email;
     @NotEmpty
     @Password
