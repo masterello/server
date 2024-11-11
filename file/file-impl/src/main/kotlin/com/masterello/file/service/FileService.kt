@@ -1,8 +1,8 @@
 package com.masterello.file.service
 
 import com.masterello.file.configuration.FileProperties
-import com.masterello.file.dto.FileDto
-import com.masterello.file.dto.FileType
+import com.masterello.file.dto.*
+import com.masterello.file.entity.File
 import com.masterello.file.exception.FileDimensionException
 import com.masterello.file.exception.FileNotProvidedException
 import com.masterello.file.exception.NotFoundException
@@ -26,7 +26,13 @@ open class FileService(private val fileRepository: FileRepository,
 ) : ReadOnlyFileService {
     private val log = KotlinLogging.logger {}
 
-    override fun downloadUserFile(userUuid: UUID, fileUUID: UUID): Pair<String, ByteArray?>? {
+    companion object {
+        const val SMALL: Int = 112
+        const val MEDIUM: Int = 224
+        const val LARGE: Int = 368
+    }
+
+    fun downloadUserFile(userUuid: UUID, fileUUID: UUID): Pair<String, ByteArray?>? {
         val file = fileRepository.findFileByUuidAndUserUuid(fileUUID, userUuid)
 
         return file?.let {
@@ -36,7 +42,7 @@ open class FileService(private val fileRepository: FileRepository,
     }
 
     @Transactional
-    override fun removeFile(userUuid: UUID, fileUUID: UUID): Boolean {
+    fun removeFile(userUuid: UUID, fileUUID: UUID): Boolean {
         val file = fileRepository.findFileByUuidAndUserUuid(fileUUID, userUuid)
             ?: throw NotFoundException("File for user $userUuid with uuid $fileUUID is not found")
 
@@ -53,6 +59,39 @@ open class FileService(private val fileRepository: FileRepository,
         return userFiles.map { fileMapper.mapFileToDto(it) }
     }
 
+    override fun findAvatarsByUserUuidsBulk(bulkImageSearchRequest: BulkImageSearchRequest): List<BulkImageResponseDto> {
+        when (bulkImageSearchRequest.fileType) {
+            FileType.AVATAR -> return findAvatarsBulk(bulkImageSearchRequest)
+            else -> { log.error { "Unknown file type to process: ${bulkImageSearchRequest.fileType}" }
+            return emptyList() }
+        }
+    }
+
+    private fun findAvatarsBulk(bulkImageSearchRequest: BulkImageSearchRequest): List<BulkImageResponseDto> {
+        val userUuids = bulkImageSearchRequest.userUuids
+        val files = fileRepository.findAllIAvatarsByUserUuids(userUuids)
+        val filesByUserUuid = files.groupBy { it.userUuid }
+
+        return userUuids.mapNotNull { userUuid ->
+            val userFiles = filesByUserUuid[userUuid]
+            if (userFiles.isNullOrEmpty()) {
+                null
+            } else {
+                val avatars = AvatarDto()
+                userFiles.forEach { userFile ->
+                    val avatarLink = constructAvatarLink(userFile)
+                    when (userFile.thumbailSize) {
+                        SMALL -> avatars.small = avatarLink
+                        MEDIUM -> avatars.medium = avatarLink
+                        LARGE -> avatars.big = avatarLink
+                        else -> avatars.original = avatarLink
+                    }
+                }
+                BulkImageResponseDto(userUuid, avatars)
+            }
+        }
+    }
+
     override fun findAllThumbnailsByUserUuid(userUUID: UUID): List<FileDto> {
         val userFiles = fileRepository.findAllThumbnailsByUserUuid(userUUID)
 
@@ -66,13 +105,13 @@ open class FileService(private val fileRepository: FileRepository,
     }
 
     @Transactional
-    override fun storeFile(payload: FileDto) {
+    fun storeFile(payload: FileDto) {
         try {
             payload.file ?: throw FileNotProvidedException("File is not provided in the request")
 
             when (payload.fileType) {
-                FileType.IMAGE -> createThumbnailsAndUploadImage(payload)
-                FileType.DOCUMENT -> storeAndUploadDocument(payload)
+                FileType.AVATAR, FileType.PORTFOLIO -> createThumbnailsAndUploadAvatar(payload)
+                FileType.DOCUMENT, FileType.CERTIFICATE -> storeAndUploadDocument(payload)
                 else -> log.error { "Unknown file type to process: ${payload.fileType}" }
             }
         } catch (e: IOException) {
@@ -98,7 +137,15 @@ open class FileService(private val fileRepository: FileRepository,
         }
     }
 
-    private fun createThumbnailsAndUploadImage(payload: FileDto) {
+    private fun createThumbnailsAndUploadAvatar(payload: FileDto) {
+        if (payload.fileType == FileType.AVATAR) {
+            val files = fileRepository.getAllIAvatarsByUserUuid(payload.userUuid)
+
+            files.map { storageService.removeFile(it) }
+
+            fileRepository.deleteAll(files)
+            log.info { "all previous avatars were removed" }
+        }
         return try {
             val file = payload.file
             val bufferedImage: BufferedImage = imageService.createBufferedImage(file)
@@ -110,10 +157,10 @@ open class FileService(private val fileRepository: FileRepository,
                 height > fileProperties.maxHeight) {
                 throw FileDimensionException("Provided image exceeds max width and height")
             } else {
-                createAndSaveThumbnail(bufferedImage, 112, payload)
-                createAndSaveThumbnail(bufferedImage, 224, payload)
-                createAndSaveThumbnail(bufferedImage, 368, payload)
                 createAndSaveCompressedImage(bufferedImage, payload)
+                createAndSaveThumbnail(bufferedImage, SMALL, payload)
+                createAndSaveThumbnail(bufferedImage, MEDIUM, payload)
+                createAndSaveThumbnail(bufferedImage, LARGE, payload)
             }
 
         } catch (e: IOException) {
@@ -126,11 +173,13 @@ open class FileService(private val fileRepository: FileRepository,
 
         val originalFilename = FileUtil.getFileName(payload)
         val fileNameWithoutExtension: String = FileUtil.getFileNameWithoutExtension(originalFilename)
-        val fileNameExt: String = FileUtil.getFileExtension(originalFilename)
+        val fileNameExt = "webp"
+        val isAvatar = payload.fileType == FileType.AVATAR
 
         val newImageName = "$fileNameWithoutExtension-thumbnail-$size.$fileNameExt"
 
-        val entity = fileMapper.mapFileDtoToFile(payload, FileType.THUMBNAIL, newImageName, fileNameExt)
+        val entity = fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, newImageName,
+            fileNameExt, size, isAvatar)
         val savedEntity = fileRepository.save(entity)
         storageService.uploadFile(savedEntity, thumbnail)
         log.info { "saved thumbnail for user ${payload.userUuid}" }
@@ -138,7 +187,7 @@ open class FileService(private val fileRepository: FileRepository,
 
     private fun createAndSaveCompressedImage(bufferedImage: BufferedImage, payload: FileDto) {
         val fileName = FileUtil.getFileName(payload)
-        val fileExt = FileUtil.getFileExtension(fileName)
+        val fileExt = "webp"
         val compressedImage = imageService.compressedImage(bufferedImage, 0.35f, fileExt)
 
         val fileNameWithoutExtension: String = FileUtil.getFileNameWithoutExtension(fileName)
@@ -150,5 +199,11 @@ open class FileService(private val fileRepository: FileRepository,
 
         storageService.uploadFile(savedEntity, compressedImage)
         log.info { "saved thumbnail for user ${payload.userUuid}" }
+    }
+
+    private fun constructAvatarLink(userFile: File): String {
+        val objectKey = "${userFile.userUuid}/${userFile.uuid}.${userFile.fileExtension}"
+
+        return fileProperties.cdnLink + objectKey
     }
 }

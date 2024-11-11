@@ -27,9 +27,15 @@ data class File(
     @Column(name = "is_public")
     var isPublic: Boolean = false,
 
+    @Column(name = "avatar_thumbnail")
+    var avatarThumbnail: Boolean? = false,
+
+    @Column(name = "thumbnail_size")
+    var thumbailSize: Int? = null,
+
     @Convert(converter = FileTypeConverter::class)
     @Column(name = "file_type")
-    var fileType: FileType = FileType.IMAGE,
+    var fileType: FileType = FileType.AVATAR,
 
     @CreationTimestamp
     @Column(name = "created_date", insertable = false, updatable = false)

@@ -69,7 +69,7 @@ class FileUtilTest {
     @Test
     fun `test getFileName with FileDto containing fileName`() {
         val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
-            fileName = "testfile.txt", isPublic = true, fileType = FileType.IMAGE, createdDate = OffsetDateTime.now(),
+            fileName = "testfile.txt", isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(), file = null)
         val result = FileUtil.getFileName(fileDto)
 
@@ -81,7 +81,7 @@ class FileUtilTest {
         val multipartFile: MultipartFile = mock()
         `when`(multipartFile.originalFilename).thenReturn("multipartfile.txt")
         val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
-            fileName = null, isPublic = true, fileType = FileType.IMAGE, createdDate = OffsetDateTime.now(),
+            fileName = null, isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(), file = multipartFile)
         val result = FileUtil.getFileName(fileDto)
 
@@ -91,7 +91,7 @@ class FileUtilTest {
     @Test
     fun `test getFileName throws exception`() {
         val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
-            fileName = null, isPublic = true, fileType = FileType.IMAGE, createdDate = OffsetDateTime.now(),
+            fileName = null, isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(), file = null)
 
         val exception = assertThrows<FileNameException> {

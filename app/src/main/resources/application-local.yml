@@ -65,6 +65,7 @@ masterello:
       secretKey: ${DO_SPACES_SECRET_KEY}
       endpoint: ${DO_SPACES_ENDPOINT}
       region: ${DO_SPACES_REGION}
+      cdnLink: 'https://static.masterello.com/masterello/'
   openapi:
     oAuthFlow:
       tokenUrl: http:/127.0.0.1:8090/oauth2/token

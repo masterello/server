@@ -44,7 +44,7 @@ class StorageServiceTest {
         `when`(file.inputStream).thenReturn(inputStream)
 
         val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, FileType.IMAGE, OffsetDateTime.now(), OffsetDateTime.now())
+            true, true, 112, FileType.AVATAR, OffsetDateTime.now(), OffsetDateTime.now())
         `when`(fileProperties.bucketName).thenReturn("test-bucket")
 
         storageService.uploadFile(entity, file)
@@ -57,7 +57,7 @@ class StorageServiceTest {
         val bufferedImage = BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB)
 
         val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, FileType.IMAGE, OffsetDateTime.now(), OffsetDateTime.now())
+            true, true, 112, FileType.AVATAR, OffsetDateTime.now(), OffsetDateTime.now())
         `when`(fileProperties.bucketName).thenReturn("test-bucket")
 
         storageService.uploadFile(entity, bufferedImage)
@@ -70,7 +70,7 @@ class StorageServiceTest {
         val byteArrayOutputStream = ByteArrayOutputStream()
 
         val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, FileType.IMAGE, OffsetDateTime.now(), OffsetDateTime.now())
+            true, true, 112, FileType.AVATAR,  OffsetDateTime.now(), OffsetDateTime.now())
         `when`(fileProperties.bucketName).thenReturn("test-bucket")
 
         storageService.uploadFile(entity, byteArrayOutputStream)
@@ -81,7 +81,7 @@ class StorageServiceTest {
     @Test
     fun `test downloadFile`() {
         val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, FileType.IMAGE, OffsetDateTime.now(), OffsetDateTime.now())
+            true, true, 112,  FileType.AVATAR, OffsetDateTime.now(), OffsetDateTime.now())
         val mockResponseInputStream: ResponseInputStream<GetObjectResponse> = mock()
 
         `when`(fileProperties.bucketName).thenReturn("test-bucket")
@@ -99,7 +99,7 @@ class StorageServiceTest {
             uuid = UUID.randomUUID(),
             userUuid = UUID.randomUUID(),
             fileName = "test.jpg",
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             isPublic = false,
             fileExtension = "jpg"
         )

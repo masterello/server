@@ -9,7 +9,7 @@ class FileTypeConverterTest {
 
     @Test
     fun `test convertToDatabaseColumn with valid FileType`() {
-        val fileType = FileType.IMAGE
+        val fileType = FileType.AVATAR
         val result = converter.convertToDatabaseColumn(fileType)
 
         assertEquals(fileType.code, result)
@@ -24,10 +24,10 @@ class FileTypeConverterTest {
 
     @Test
     fun `test convertToEntityAttribute with valid code`() {
-        val code = FileType.IMAGE.code
+        val code = FileType.AVATAR.code
         val result = converter.convertToEntityAttribute(code)
 
-        assertEquals(FileType.IMAGE, result)
+        assertEquals(FileType.AVATAR, result)
     }
 
     @Test

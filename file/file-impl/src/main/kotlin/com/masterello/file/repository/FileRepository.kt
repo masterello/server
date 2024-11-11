@@ -20,6 +20,20 @@ interface FileRepository: JpaRepository<File, UUID> {
 
     @Query(nativeQuery = true, value = """
         SELECT * from files f
+        WHERE f.file_type IN (0,1) and f.user_uuid = :userUuid
+        AND (f.file_type <> 1 OR f.avatar_thumbnail = true)
+    """)
+    fun getAllIAvatarsByUserUuid(@Param("userUuid") userUUID: UUID): List<File>
+
+    @Query(nativeQuery = true, value = """
+        SELECT * from files f
+        WHERE f.file_type IN (0,1) and f.user_uuid IN(:userUuids)
+        AND (f.file_type <> 1 OR f.avatar_thumbnail = true)
+    """)
+    fun findAllIAvatarsByUserUuids(@Param("userUuids") userUUID: List<UUID>): List<File>
+
+    @Query(nativeQuery = true, value = """
+        SELECT * from files f
         WHERE f.file_type = 1 and f.user_uuid = :userUuid
     """)
     fun findAllThumbnailsByUserUuid(@Param("userUuid") userUUID: UUID): List<File>

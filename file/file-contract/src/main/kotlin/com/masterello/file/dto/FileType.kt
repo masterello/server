@@ -1,7 +1,9 @@
 package com.masterello.file.dto
 
 enum class FileType(val code: Int) {
-    IMAGE(0),
+    AVATAR(0),
     THUMBNAIL(1),
-    DOCUMENT(2);
+    DOCUMENT(2),
+    PORTFOLIO(3),
+    CERTIFICATE(4);
 }

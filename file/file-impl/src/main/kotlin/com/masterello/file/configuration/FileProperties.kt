@@ -8,5 +8,6 @@ data class FileProperties @ConstructorBinding constructor(
     val maxWidth: Int,
     val maxHeight: Int,
     val compressedSize: Int,
-    val bucketName: String
+    val bucketName: String,
+    val cdnLink: String
 )

@@ -1,6 +1,9 @@
 package com.masterello.file.service
 
+import com.luciad.imageio.webp.WebPImageReaderSpi
+import com.luciad.imageio.webp.WebPImageWriterSpi
 import com.masterello.file.exception.FileNotProvidedException
+import jakarta.annotation.PostConstruct
 import net.coobird.thumbnailator.Thumbnails
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -11,9 +14,17 @@ import java.io.IOException
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
+import javax.imageio.spi.IIORegistry
 
 @Service
 class ImageService {
+
+    @PostConstruct
+    fun registerWebP() {
+        val registry = IIORegistry.getDefaultInstance()
+        registry.registerServiceProvider(WebPImageReaderSpi())
+        registry.registerServiceProvider(WebPImageWriterSpi())
+    }
 
     fun createThumbnail(compressedImage: BufferedImage, size: Int): BufferedImage {
         return Thumbnails.of(compressedImage)
@@ -29,38 +40,29 @@ class ImageService {
         ImageIO.createImageOutputStream(compressed).use { outputStream ->
             val jpgWriter = ImageIO.getImageWritersByFormatName("JPEG").next()
             val jpgWriteParam = jpgWriter.defaultWriteParam
+            val newBufferedImage = BufferedImage(
+                originalImage.width,
+                originalImage.height,
+                BufferedImage.TYPE_INT_BGR
+            )
 
-            if (fileType == "jpg") {
-                jpgWriteParam.compressionMode = ImageWriteParam.MODE_EXPLICIT
-                jpgWriteParam.compressionQuality = compressValue
-                jpgWriter.output = outputStream
-                jpgWriter.write(null, IIOImage(originalImage, null, null), jpgWriteParam)
-                jpgWriter.dispose()
-            } else {
-                val newBufferedImage = BufferedImage(
-                    originalImage.width,
-                    originalImage.height,
-                    BufferedImage.TYPE_INT_BGR
-                )
+            newBufferedImage.createGraphics()
+                .drawImage(newBufferedImage, 0, 0, Color.white, null)
 
-                newBufferedImage.createGraphics()
-                    .drawImage(newBufferedImage, 0, 0, Color.white, null)
+            val g2d = newBufferedImage.createGraphics()
+            g2d.color = Color.WHITE
+            g2d.fillRect(0, 0, newBufferedImage.width, newBufferedImage.height)
+            g2d.drawImage(originalImage, 0, 0, null)
+            g2d.dispose()
 
-                val g2d = newBufferedImage.createGraphics()
-                g2d.color = Color.WHITE
-                g2d.fillRect(0, 0, newBufferedImage.width, newBufferedImage.height)
-                g2d.drawImage(originalImage, 0, 0, null)
-                g2d.dispose()
+            newBufferedImage.flush()
 
-                newBufferedImage.flush()
+            jpgWriteParam.compressionMode = ImageWriteParam.MODE_EXPLICIT
+            jpgWriteParam.compressionQuality = compressValue
 
-                jpgWriteParam.compressionMode = ImageWriteParam.MODE_EXPLICIT
-                jpgWriteParam.compressionQuality = compressValue
-
-                jpgWriter.output = outputStream
-                jpgWriter.write(null, IIOImage(newBufferedImage, null, null), jpgWriteParam)
-                jpgWriter.dispose()
-            }
+            jpgWriter.output = outputStream
+            jpgWriter.write(null, IIOImage(newBufferedImage, null, null), jpgWriteParam)
+            jpgWriter.dispose()
         }
 
         return compressed
