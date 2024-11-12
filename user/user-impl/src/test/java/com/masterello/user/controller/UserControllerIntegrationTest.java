@@ -1,7 +1,7 @@
 package com.masterello.user.controller;
 
-import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
+import com.masterello.auth.extension.AuthMocked;
 import com.masterello.auth.service.AuthService;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
@@ -23,7 +23,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 
 import static com.masterello.user.util.TestDataProvider.*;
 import static com.masterello.user.value.Role.USER;
@@ -216,6 +218,7 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void addRole_successful() {
         MasterelloUserEntity masterelloUser = userRepository.findById(VERIFIED_USER).orElseThrow();
         assertEquals(1, masterelloUser.getRoles().size());
@@ -223,8 +226,6 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
 
         AddRoleRequest request = AddRoleRequest.builder()
                 .role(Role.WORKER).build();
-
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -247,14 +248,13 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void updatePassword_successful() {
         String newPassword = "newPassword123!";
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword(VERIFIED_USER_PASS)
                 .newPassword(newPassword)
                 .build();
-
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -275,14 +275,13 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_2_S, roles = {AuthZRole.USER})
     public void updatePassword_same_password_failed() {
         String newPassword = "Qwerty123!";
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword(newPassword)
                 .newPassword(newPassword)
                 .build();
-
-        mockAuth(VERIFIED_USER_2, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -303,14 +302,13 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void updatePassword_invalid() {
         String newPassword = "newPassword";
         UpdatePasswordRequest request = UpdatePasswordRequest.builder()
                 .oldPassword("")
                 .newPassword(newPassword)
                 .build();
-
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
          RestAssured
@@ -334,10 +332,10 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void addRole_existing_role() {
         AddRoleRequest request = AddRoleRequest.builder()
                 .role(USER).build();
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -355,11 +353,11 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = "ba7bb05a-80b3-41be-8182-66608aba2a33", roles = {AuthZRole.USER})
     public void addRole_user_not_found() {
         AddRoleRequest request = AddRoleRequest.builder()
                 .role(USER).build();
-        UUID user = UUID.randomUUID();
-        mockAuth(user, List.of(AuthZRole.USER), true);
+        String userId = "ba7bb05a-80b3-41be-8182-66608aba2a33";
 
         //@formatter:off
         RestAssured
@@ -369,7 +367,7 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .contentType("application/json")
                     .body(request)
                 .when()
-                .post("/api/user/{uuid}/add-role", user.toString())
+                .post("/api/user/{uuid}/add-role", userId)
                 .then()
                     .statusCode(404);
 
@@ -377,8 +375,8 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void retrieveUserByOwner() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -396,8 +394,8 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void retrieveCurrentUser() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -415,8 +413,8 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_2_S, roles = {AuthZRole.ADMIN})
     public void retrieveUserByAdmin() {
-        mockAuth(UUID.randomUUID(), List.of(AuthZRole.ADMIN), false);
 
         //@formatter:off
         RestAssured
@@ -434,10 +432,8 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_2_S, roles = {AuthZRole.USER})
     public void retrieveUser_not_authorized() {
-        UUID randomUser = UUID.randomUUID();
-        mockAuth(randomUser, List.of(AuthZRole.USER), true);
-
         //@formatter:off
         RestAssured
                 .given()
@@ -445,7 +441,7 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .get("/api/user/{uuid}", VERIFIED_USER.toString())
                 .then()
-                    .statusCode(401);
+                    .statusCode(403);
         //@formatter:on
     }
 
@@ -460,31 +456,29 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .get("/api/user/{uuid}", VERIFIED_USER.toString())
                 .then()
-                    .statusCode(403);
+                    .statusCode(401);
         //@formatter:on
     }
 
     @Test
+    @AuthMocked(userId = "49200ea0-3879-11ee-be56-0242ac120009", roles = {AuthZRole.USER})
     public void retrieveUser_not_found() {
-        UUID user = UUID.randomUUID();
-        mockAuth(user, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
                 .given()
                     .cookie(tokenCookie())
                 .when()
-                    .get("/api/user/{uuid}", user.toString())
+                    .get("/api/user/{uuid}", "49200ea0-3879-11ee-be56-0242ac120009")
                 .then()
                     .statusCode(404);
         //@formatter:on
     }
 
     @Test
+    @AuthMocked(userId = "49200ea0-3879-11ee-be56-0242ac120009", roles = {AuthZRole.USER})
     public void patch_user_not_found() {
-        UUID user = UUID.randomUUID();
         String body = "[{\"op\":\"replace\",\"path\":\"/name\",\"value\":\"User\"},{\"op\":\"replace\",\"path\":\"/surname\",\"value\":\"Test\"}]";
-        mockAuth(user, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -494,16 +488,16 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .accept("application/json")
                     .contentType("application/json-patch+json")
                 .when()
-                    .patch("/api/user/{uuid}", user.toString())
+                    .patch("/api/user/{uuid}", "49200ea0-3879-11ee-be56-0242ac120009")
                 .then()
                     .statusCode(404);
         //@formatter:on
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void patch_user() {
         String body = "[{\"op\":\"replace\",\"path\":\"/name\",\"value\":\"User\"},{\"op\":\"replace\",\"path\":\"/lastname\",\"value\":\"Test\"}]";
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -523,10 +517,10 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void patch_user_add_language() {
         String body = "[{\"op\":\"add\",\"path\":\"/languages/-\",\"value\": \"EN\"}," +
                 "{\"op\":\"add\",\"path\":\"/languages/-\",\"value\":\"UA\"}]";
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -544,9 +538,9 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void patch_user_replace_language() {
         String body = "[{\"op\":\"replace\",\"path\":\"/languages\",\"value\": [\"EN\",  \"UA\"]}]";
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -565,9 +559,9 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void patch_user_remove_language() {
         String body = "[{\"op\":\"remove\",\"path\":\"/languages/0\"}]";
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -585,9 +579,9 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void patch_user_forbidden_fields() {
         String body = "[{\"op\":\"replace\",\"path\":\"/name\",\"value\":\"User\"},{\"op\":\"replace\",\"path\":\"/email\",\"value\":\"Test\"}]";
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
         //@formatter:off
         RestAssured
                 .given()
@@ -600,14 +594,5 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .then()
                 .statusCode(400);
         //@formatter:on
-    }
-
-    private void mockAuth(UUID userId, List<AuthZRole> roles, boolean emailVerified) {
-        when(authService.validateToken(ACCESS_TOKEN))
-                .thenReturn(Optional.of(AuthData.builder()
-                        .userId(userId)
-                        .userRoles(roles)
-                        .emailVerified(emailVerified)
-                        .build()));
     }
 }

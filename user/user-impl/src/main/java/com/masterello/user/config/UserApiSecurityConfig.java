@@ -1,5 +1,6 @@
 package com.masterello.user.config;
 
+import com.masterello.auth.service.AuthService;
 import com.masterello.commons.security.filter.AuthFilter;
 import com.masterello.commons.security.filter.SuperAdminFilter;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +13,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
 public class UserApiSecurityConfig {
 
-    private final AuthFilter authFilter;
+    private final AuthService authService;
     private final SuperAdminFilter superAdminFilter;
 
     @Bean
@@ -37,11 +42,20 @@ public class UserApiSecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain apiUserFilter(HttpSecurity http) throws Exception {
+        RequestMatcher publicEndpoints = new OrRequestMatcher(
+                new AntPathRequestMatcher("/api/user/signup"),
+                new AntPathRequestMatcher("/api/user/confirmationLink/**"),
+                new AntPathRequestMatcher("/api/user/resetPassword/**"),
+                new AntPathRequestMatcher("/api/user/supported-languages")
+        );
+        AuthFilter authFilter = new AuthFilter(
+                new NegatedRequestMatcher(publicEndpoints), authService);
+
         http
                 .securityMatcher("/api/user/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/user/signup", "/api/user/confirmationLink/**", "/api/user/resetPassword/**", "/api/user/supported-languages").permitAll()
+                        .requestMatchers(publicEndpoints).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -51,11 +65,16 @@ public class UserApiSecurityConfig {
     @Bean
     @Order(3)
     public SecurityFilterChain apiSupportFilter(HttpSecurity http) throws Exception {
+        RequestMatcher publicEndpoints = new AntPathRequestMatcher("/api/support/contact");
+
+        AuthFilter authFilter = new AuthFilter(
+                new NegatedRequestMatcher(publicEndpoints), authService);
+
         http
                 .securityMatcher("/api/support/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/support/contact").permitAll()
+                        .requestMatchers(publicEndpoints).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(authFilter, AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

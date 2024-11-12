@@ -1,5 +1,7 @@
 package com.masterello.commons.test;
 
+import com.masterello.auth.extension.AuthMockExtension;
+import com.masterello.auth.service.AuthService;
 import io.restassured.RestAssured;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith({SpringExtension.class, AuthMockExtension.class})
 @AutoConfigureMockMvc
 @ActiveProfiles("integration-test")
 @Slf4j
@@ -24,6 +26,9 @@ public class AbstractWebIntegrationTest extends AbstractDBIntegrationTest{
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private AuthService authService;
 
     @LocalServerPort
     private Integer port;

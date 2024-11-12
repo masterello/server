@@ -24,8 +24,12 @@ public final class TestDataProvider {
 
     public static final String CLIENT_BEARER = "Basic Z3c6M1RaLCZdL0VyQHRicCZQQmRofDtScHNvY2tQdygo";
 
-    public static final UUID VERIFIED_USER = UUID.fromString("49200ea0-3879-11ee-be56-0242ac120002");
-    public static final UUID VERIFIED_USER_2 = UUID.fromString("ba7bb05a-80b3-41be-8182-66608aba2a31");
+    public static final String VERIFIED_USER_S ="49200ea0-3879-11ee-be56-0242ac120002";
+
+    public static final UUID VERIFIED_USER = UUID.fromString(VERIFIED_USER_S);
+
+    public static final String VERIFIED_USER_2_S = "ba7bb05a-80b3-41be-8182-66608aba2a31";
+    public static final UUID VERIFIED_USER_2 = UUID.fromString(VERIFIED_USER_2_S);
     public static final String VERIFIED_USER_EMAIL = "verified@gmail.com";
     public static final String VERIFIED_USER_PASS = "password";
     public static final UUID NOT_VERIFIED_LINK_EXPIRED_USER = UUID.fromString("e8b0639f-148c-4f74-b834-bbe04072a999");

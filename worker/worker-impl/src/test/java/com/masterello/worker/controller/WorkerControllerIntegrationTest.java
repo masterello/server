@@ -1,9 +1,8 @@
 package com.masterello.worker.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
-import com.masterello.auth.service.AuthService;
+import com.masterello.auth.extension.AuthMocked;
 import com.masterello.category.dto.CategoryBulkRequest;
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
@@ -30,7 +29,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import static com.masterello.worker.util.WorkerTestDataProvider.*;
 import static org.hamcrest.Matchers.*;
@@ -46,13 +44,12 @@ import static org.mockito.Mockito.when;
 class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
 
     @Autowired
-    private AuthService authService;
-    @Autowired
     private ReadOnlyCategoryService categoryService;
     @Autowired
     private MasterelloUserService userService;
 
     @Test
+    @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.WORKER})
     void storeWorkerInfo() {
 
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
@@ -65,8 +62,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .phone(PHONE)
                 .services(services)
                 .build();
-
-        mockAuth(WORKER_6, List.of(AuthZRole.WORKER), true);
 
         //@formatter:off
         RestAssured
@@ -93,6 +88,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.ADMIN})
     void storeWorkerInfo_by_admin() {
 
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
@@ -105,8 +101,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .phone(PHONE)
                 .services(services)
                 .build();
-
-        mockAuth(ADMIN, List.of(AuthZRole.ADMIN), true);
 
         //@formatter:off
         RestAssured
@@ -133,6 +127,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = USER_S)
     void storeWorkerInfo_fails_for_not_worker() {
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
                 new WorkerServiceDTO(20, 200));
@@ -145,8 +140,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .services(services)
                 .build();
 
-        mockAuth(USER, List.of(AuthZRole.USER), true);
-
         //@formatter:off
         RestAssured
                 .given()
@@ -157,13 +150,13 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .put("/api/worker/{uuid}/info", USER.toString())
                 .then()
-                    .statusCode(401);
+                    .statusCode(403);
         //@formatter:on
     }
 
     @Test
+    @AuthMocked(userId = WORKER_1_S, roles = {AuthZRole.WORKER})
     void getWorkerInfo() {
-        mockAuth(WORKER_1, List.of(AuthZRole.WORKER), true);
 
         //@formatter:off
         RestAssured
@@ -192,8 +185,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = ADMIN_S, roles = {AuthZRole.ADMIN})
     void getWorkerInfo_by_admin() {
-        mockAuth(ADMIN, List.of(AuthZRole.ADMIN), true);
 
         //@formatter:off
         RestAssured
@@ -263,12 +256,11 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
     void patchWorkerInfoServices() {
 
         String body = "[{\"op\":\"replace\",\"path\":\"/services\"," +
                 "\"value\":[{\"serviceId\":10, \"amount\": 250}, {\"serviceId\":15, \"amount\": 100}]}]";
-
-        mockAuth(WORKER_2, List.of(AuthZRole.WORKER), true);
 
         //@formatter:off
         RestAssured
@@ -301,8 +293,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = USER_S)
     void getWorkerInfo_fails_for_not_worker() {
-        mockAuth(USER, List.of(AuthZRole.USER), true);
 
         //@formatter:off
         RestAssured
@@ -313,13 +305,13 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .get("/api/worker/{uuid}/info", WORKER_1.toString())
                 .then()
-                    .statusCode(401);
+                    .statusCode(403);
         //@formatter:on
     }
 
     @Test
+    @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
     void patchWorkerInfo() {
-        mockAuth(WORKER_2, List.of(AuthZRole.WORKER), true);
 
         String body = "[{\"op\":\"replace\",\"path\":\"/description\",\"value\":\"Not that good plumber\"}," +
                 "{\"op\":\"replace\",\"path\":\"/phone\",\"value\":\"new phone\"}," +
@@ -611,15 +603,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     public static WorkerSearchResponse readWorkerFromFile(String filePath) {
         ObjectMapper objectMapper = new ObjectMapper();
         return objectMapper.readValue(new File(filePath), WorkerSearchResponse.class);
-    }
-
-    private void mockAuth(UUID userId, List<AuthZRole> roles, boolean emailVerified) {
-        when(authService.validateToken(ACCESS_TOKEN))
-                .thenReturn(Optional.of(AuthData.builder()
-                        .userId(userId)
-                        .userRoles(roles)
-                        .emailVerified(emailVerified)
-                        .build()));
     }
 
     private void mockCategories(List<Integer> categories, Map<Integer, List<CategoryDto>> response) {
