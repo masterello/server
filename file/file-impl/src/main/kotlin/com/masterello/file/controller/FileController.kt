@@ -4,6 +4,8 @@ import com.masterello.auth.data.AuthZRole
 import com.masterello.commons.security.validation.AuthZRule
 import com.masterello.commons.security.validation.AuthZRules
 import com.masterello.commons.security.validation.OwnerId
+import com.masterello.file.dto.BulkImageResponseDto
+import com.masterello.file.dto.BulkImageSearchRequest
 import com.masterello.file.dto.FileDto
 import com.masterello.file.service.FileService
 import com.masterello.file.util.FileUtil
@@ -11,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -37,6 +38,16 @@ open class FileController(
     fun getAllThumbnailsByUserUuid(@PathVariable userUuid: UUID): ResponseEntity<List<FileDto>> {
         val files = fileService.findAllThumbnailsByUserUuid(userUuid)
         return ResponseEntity.ok(files)
+    }
+
+    @PostMapping("/imageSearchBulk")
+    @Operation(summary = "Get images specified by type and userUuids",
+        description = "Retrieve all images specified by type and userUuids")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved images specified by type and userUuids")
+    fun getImagesByTypeBulk(@Valid @RequestBody bulkImageSearchRequest: BulkImageSearchRequest):
+            ResponseEntity<List<BulkImageResponseDto>> {
+        val response = fileService.findImagesBulk(bulkImageSearchRequest.fileType, bulkImageSearchRequest.userUuids)
+        return ResponseEntity.ok(response)
     }
 
     @GetMapping("/{userUuid}")

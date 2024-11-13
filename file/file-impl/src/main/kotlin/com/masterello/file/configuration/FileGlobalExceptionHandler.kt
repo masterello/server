@@ -1,5 +1,6 @@
 package com.masterello.file.configuration
 
+import com.masterello.file.exception.FileTypeException
 import com.masterello.file.exception.NotFoundException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -14,5 +15,11 @@ class FileGlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleNotFoundException(ex: NotFoundException): ResponseEntity<String> {
         return ResponseEntity(ex.message ?: "Resource not found", HttpStatus.NOT_FOUND)
+    }
+
+    @ExceptionHandler(FileTypeException::class)
+    @ResponseStatus(HttpStatus.NOT_IMPLEMENTED)
+    fun handleFileTypeException(ex: FileTypeException): ResponseEntity<String> {
+        return ResponseEntity(ex.message ?: "Not implemented yes", HttpStatus.NOT_IMPLEMENTED)
     }
 }

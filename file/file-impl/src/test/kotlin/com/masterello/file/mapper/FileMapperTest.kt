@@ -19,21 +19,21 @@ class FileMapperTest {
         val dto = FileDto(
             uuid = uuid,
             userUuid = userUuid,
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             fileName = "testfile",
             isPublic = true,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(),
             file = null
         )
-        val type = FileType.IMAGE
+        val type = FileType.AVATAR
         val fileName = "testfile"
         val fileExtension = "jpg"
 
         val result = fileMapper.mapFileDtoToFile(dto, type, fileName, fileExtension)
 
         assertEquals(userUuid, result.userUuid)
-        assertEquals(FileType.IMAGE, result.fileType)
+        assertEquals(FileType.AVATAR, result.fileType)
         assertEquals("testfile", result.fileName)
         assertTrue(result.isPublic)
         assertEquals("jpg", result.fileExtension)
@@ -42,7 +42,7 @@ class FileMapperTest {
     @Test
     fun `test mapFileDtoToFile with null FileDto`() {
         val exception = assertThrows<IllegalArgumentException> {
-            fileMapper.mapFileDtoToFile(null, FileType.IMAGE, "testfile", "jpg")
+            fileMapper.mapFileDtoToFile(null, FileType.AVATAR, "testfile", "jpg")
         }
         assertEquals("FileDto cannot be null", exception.message)
     }
@@ -54,7 +54,7 @@ class FileMapperTest {
         val file = File(
             uuid = uuid,
             userUuid = userUuid,
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             fileName = "testfile",
             isPublic = true,
             fileExtension = "jpg",
@@ -66,10 +66,36 @@ class FileMapperTest {
 
         assertEquals(uuid, result.uuid)
         assertEquals(userUuid, result.userUuid)
-        assertEquals(FileType.IMAGE, result.fileType)
+        assertEquals(FileType.AVATAR, result.fileType)
         assertEquals("testfile", result.fileName)
         assertTrue(result.isPublic)
         assertNotNull(result.createdDate)
         assertNotNull(result.updatedDate)
+    }
+
+    @Test
+    fun `test mapAvatarThumbnailToFile`() {
+        val uuid = UUID.randomUUID()
+        val userUuid = UUID.randomUUID()
+        val file = FileDto(
+            uuid = uuid,
+            userUuid = userUuid,
+            fileType = FileType.AVATAR,
+            fileName = "testfile",
+            isPublic = true,
+            file = null,
+            createdDate = OffsetDateTime.now(),
+            updatedDate = OffsetDateTime.now()
+        )
+
+        val result = fileMapper.mapAvatarThumbnailToFile(file, FileType.AVATAR, "testfile", "webp",
+            112, true)
+
+        assertEquals(userUuid, result.userUuid)
+        assertEquals(FileType.AVATAR, result.fileType)
+        assertEquals("testfile", result.fileName)
+        assertTrue(result.isPublic)
+        assertTrue(result.avatarThumbnail!!)
+        assertEquals(112, result.thumbailSize)
     }
 }

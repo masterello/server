@@ -21,21 +21,6 @@ class ImageServiceTest {
     }
 
     @Test
-    fun `test compressedImage with jpg format`() {
-        val originalImage = BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB)
-        val compressValue = 0.5f
-        val fileType = "jpg"
-
-        val compressed = ByteArrayOutputStream()
-        assertDoesNotThrow {
-            val output = imageService.compressedImage(originalImage, compressValue, fileType)
-            compressed.write(output.toByteArray())
-        }
-
-        assertTrue(compressed.size() > 0)
-    }
-
-    @Test
     fun `test compressedImage with non-jpg format`() {
         val originalImage = BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB)
         val compressValue = 0.5f

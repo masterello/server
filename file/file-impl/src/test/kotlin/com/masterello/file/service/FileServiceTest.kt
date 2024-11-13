@@ -1,11 +1,13 @@
 package com.masterello.file.service
 
 import com.masterello.file.configuration.FileProperties
+import com.masterello.file.dto.BulkImageSearchRequest
 import com.masterello.file.dto.FileDto
 import com.masterello.file.dto.FileType
 import com.masterello.file.entity.File
 import com.masterello.file.exception.FileDimensionException
 import com.masterello.file.exception.FileNotProvidedException
+import com.masterello.file.exception.FileTypeException
 import com.masterello.file.exception.NotFoundException
 import com.masterello.file.mapper.FileMapper
 import com.masterello.file.repository.FileRepository
@@ -106,13 +108,57 @@ class FileServiceTest {
     }
 
     @Test
+    fun `test findImagesBulk with documents`() {
+        assertThrows<FileTypeException> {
+            fileService.findImagesBulk(FileType.DOCUMENT, listOf(UUID.randomUUID()))
+        }
+    }
+
+    @Test
+    fun `test findImagesBulk with avatars no data`() {
+        val userUuid = UUID.randomUUID()
+
+        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid))).thenReturn(listOf())
+        val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid))
+
+        assertEquals(0, result.size)
+    }
+
+    @Test
+    fun `test findImagesBulk with avatars`() {
+        val userUuid = UUID.randomUUID()
+        val userUuid2 = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+
+        val file = File(
+            uuid = fileUuid,
+            userUuid = userUuid,
+            fileName = "test.txt",
+            fileType = FileType.AVATAR,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
+        val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid, userUuid2))
+
+        assertEquals(1, result.size)
+        assertEquals(userUuid, result[0].userUUID)
+        assertEquals("", result[0].avatarDto.big)
+        assertEquals("", result[0].avatarDto.medium)
+        assertEquals("", result[0].avatarDto.small)
+        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].avatarDto.original)
+    }
+
+    @Test
     fun `test findAllImagesByUserUuid returns list of file DTOs`() {
         val userUuid = UUID.randomUUID()
         val file = File(
             uuid = UUID.randomUUID(),
             userUuid = userUuid,
             fileName = "test.txt",
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             isPublic = false,
             fileExtension = "txt"
         )
@@ -176,7 +222,7 @@ class FileServiceTest {
         val dto = FileDto(
             uuid = UUID.randomUUID(),
             userUuid = UUID.randomUUID(),
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             fileName = "testfile",
             isPublic = true,
             createdDate = OffsetDateTime.now(),
@@ -223,7 +269,7 @@ class FileServiceTest {
         val payload = FileDto(
             file = mock(),
             fileName = "test.jpg",
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             userUuid = UUID.randomUUID(),
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
@@ -240,24 +286,75 @@ class FileServiceTest {
         val baos = ByteArrayOutputStream()
         val bufferedImage = BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB)
         `when`(imageService.createBufferedImage(any())).thenReturn(bufferedImage)
-        `when`(imageService.compressedImage(bufferedImage, 0.35f, "jpg")).thenReturn(baos)
+        `when`(imageService.compressedImage(bufferedImage, 0.35f, "webp")).thenReturn(baos)
         `when`(imageService.createThumbnail(bufferedImage, 112)).thenReturn(bufferedImage)
         `when`(imageService.createThumbnail(bufferedImage, 224)).thenReturn(bufferedImage)
         `when`(imageService.createThumbnail(bufferedImage, 368)).thenReturn(bufferedImage)
         `when`(fileProperties.maxWidth).thenReturn(500)
         `when`(fileProperties.maxHeight).thenReturn(500)
-        `when`(fileMapper.mapFileDtoToFile(payload, FileType.IMAGE, "test-compressed.jpg",
-            "jpg")).thenReturn(entity)
-        `when`(fileMapper.mapFileDtoToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.jpg",
-            "jpg")).thenReturn(entity)
-        `when`(fileMapper.mapFileDtoToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.jpg",
-            "jpg")).thenReturn(entity)
-        `when`(fileMapper.mapFileDtoToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.jpg",
-            "jpg")).thenReturn(entity)
+        `when`(fileMapper.mapFileDtoToFile(payload, FileType.AVATAR, "test-compressed.webp",
+            "webp")).thenReturn(entity)
+        `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.webp",
+            "webp", 112, true)).thenReturn(entity)
+        `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.webp",
+            "webp", 224, true)).thenReturn(entity)
+        `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.webp",
+            "webp", 368, true)).thenReturn(entity)
         `when`(fileRepository.save(entity)).thenReturn(entity)
 
         fileService.storeFile(payload)
 
+        verify(imageService, times(1)).createThumbnail(bufferedImage, 112)
+        verify(imageService, times(1)).createThumbnail(bufferedImage, 224)
+        verify(imageService, times(1)).createThumbnail(bufferedImage, 368)
+        verify(fileRepository, times(4)).save(any())
+    }
+
+
+    @Test
+    fun `test storeFile uploads image file correctly and removinng old avatars`() {
+        val userUuid = UUID.randomUUID()
+        val payload = FileDto(
+            file = mock(),
+            fileName = "test.jpg",
+            fileType = FileType.AVATAR,
+            userUuid = userUuid,
+            createdDate = OffsetDateTime.now(),
+            updatedDate = OffsetDateTime.now()
+        )
+
+        val entity = File(
+            uuid = UUID.randomUUID(),
+            userUuid = payload.userUuid,
+            fileName = payload.fileName!!,
+            fileType = payload.fileType,
+            isPublic = false,
+            fileExtension = FileUtil.getFileExtension(payload.fileName!!)
+        )
+        val baos = ByteArrayOutputStream()
+        val bufferedImage = BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB)
+        `when`(fileRepository.getAllIAvatarsByUserUuid(userUuid)).thenReturn(listOf(entity))
+        `when`(imageService.createBufferedImage(any())).thenReturn(bufferedImage)
+        `when`(imageService.compressedImage(bufferedImage, 0.35f, "webp")).thenReturn(baos)
+        `when`(imageService.createThumbnail(bufferedImage, 112)).thenReturn(bufferedImage)
+        `when`(imageService.createThumbnail(bufferedImage, 224)).thenReturn(bufferedImage)
+        `when`(imageService.createThumbnail(bufferedImage, 368)).thenReturn(bufferedImage)
+        `when`(fileProperties.maxWidth).thenReturn(500)
+        `when`(fileProperties.maxHeight).thenReturn(500)
+        `when`(fileMapper.mapFileDtoToFile(payload, FileType.AVATAR, "test-compressed.webp",
+            "webp")).thenReturn(entity)
+        `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.webp",
+            "webp", 112, true)).thenReturn(entity)
+        `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.webp",
+            "webp", 224, true)).thenReturn(entity)
+        `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.webp",
+            "webp", 368, true)).thenReturn(entity)
+        `when`(fileRepository.save(entity)).thenReturn(entity)
+
+        fileService.storeFile(payload)
+
+        verify(fileRepository, times(1)).deleteAll(any())
+        verify(storageService, times(1)).removeFile(entity)
         verify(imageService, times(1)).createThumbnail(bufferedImage, 112)
         verify(imageService, times(1)).createThumbnail(bufferedImage, 224)
         verify(imageService, times(1)).createThumbnail(bufferedImage, 368)
@@ -269,7 +366,7 @@ class FileServiceTest {
         val payload = FileDto(
             file = mock(),
             fileName = "image.jpg",
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             userUuid = UUID.randomUUID(),
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
@@ -291,7 +388,7 @@ class FileServiceTest {
         val payload = FileDto(
             file = mock(),
             fileName = "image.jpg",
-            fileType = FileType.IMAGE,
+            fileType = FileType.AVATAR,
             userUuid = UUID.randomUUID(),
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
