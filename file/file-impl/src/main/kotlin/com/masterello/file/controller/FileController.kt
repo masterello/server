@@ -40,13 +40,13 @@ open class FileController(
         return ResponseEntity.ok(files)
     }
 
-    @PostMapping("/bulkSearch")
-    @Operation(summary = "Get files specified by type and userUuids",
-        description = "Retrieve all files specified by type and userUuids")
-    @ApiResponse(responseCode = "200", description = "Successfully retrieved files specified by type and userUuids")
-    fun getAllFilesByUserUuidsAndType(@RequestBody bulkImageSearchRequest: BulkImageSearchRequest):
+    @PostMapping("/imageSearchBulk")
+    @Operation(summary = "Get images specified by type and userUuids",
+        description = "Retrieve all images specified by type and userUuids")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved images specified by type and userUuids")
+    fun getImagesByTypeBulk(@Valid @RequestBody bulkImageSearchRequest: BulkImageSearchRequest):
             ResponseEntity<List<BulkImageResponseDto>> {
-        val response = fileService.findAvatarsByUserUuidsBulk(bulkImageSearchRequest)
+        val response = fileService.findImagesBulk(bulkImageSearchRequest.fileType, bulkImageSearchRequest.userUuids)
         return ResponseEntity.ok(response)
     }
 

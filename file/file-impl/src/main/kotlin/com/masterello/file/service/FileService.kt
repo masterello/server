@@ -5,6 +5,7 @@ import com.masterello.file.dto.*
 import com.masterello.file.entity.File
 import com.masterello.file.exception.FileDimensionException
 import com.masterello.file.exception.FileNotProvidedException
+import com.masterello.file.exception.FileTypeException
 import com.masterello.file.exception.NotFoundException
 import com.masterello.file.mapper.FileMapper
 import com.masterello.file.repository.FileRepository
@@ -59,16 +60,15 @@ open class FileService(private val fileRepository: FileRepository,
         return userFiles.map { fileMapper.mapFileToDto(it) }
     }
 
-    override fun findAvatarsByUserUuidsBulk(bulkImageSearchRequest: BulkImageSearchRequest): List<BulkImageResponseDto> {
-        when (bulkImageSearchRequest.fileType) {
-            FileType.AVATAR -> return findAvatarsBulk(bulkImageSearchRequest)
-            else -> { log.error { "Unknown file type to process: ${bulkImageSearchRequest.fileType}" }
-            return emptyList() }
+    override fun findImagesBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto> {
+        when (fileType) {
+            FileType.AVATAR -> return findAvatarsBulk(userUuids)
+            else -> { log.error { "Unknown file type to process: ${fileType}" }
+            throw FileTypeException("Invalid file type provided") }
         }
     }
 
-    private fun findAvatarsBulk(bulkImageSearchRequest: BulkImageSearchRequest): List<BulkImageResponseDto> {
-        val userUuids = bulkImageSearchRequest.userUuids
+    private fun findAvatarsBulk(userUuids: List<UUID>): List<BulkImageResponseDto> {
         val files = fileRepository.findAllIAvatarsByUserUuids(userUuids)
         val filesByUserUuid = files.groupBy { it.userUuid }
 

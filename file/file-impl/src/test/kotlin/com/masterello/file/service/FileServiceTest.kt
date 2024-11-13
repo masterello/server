@@ -1,11 +1,13 @@
 package com.masterello.file.service
 
 import com.masterello.file.configuration.FileProperties
+import com.masterello.file.dto.BulkImageSearchRequest
 import com.masterello.file.dto.FileDto
 import com.masterello.file.dto.FileType
 import com.masterello.file.entity.File
 import com.masterello.file.exception.FileDimensionException
 import com.masterello.file.exception.FileNotProvidedException
+import com.masterello.file.exception.FileTypeException
 import com.masterello.file.exception.NotFoundException
 import com.masterello.file.mapper.FileMapper
 import com.masterello.file.repository.FileRepository
@@ -103,6 +105,50 @@ class FileServiceTest {
         assertNotNull(result)
         assertEquals(1, result.size)
         assertEquals(fileDto, result[0])
+    }
+
+    @Test
+    fun `test findImagesBulk with documents`() {
+        assertThrows<FileTypeException> {
+            fileService.findImagesBulk(FileType.DOCUMENT, listOf(UUID.randomUUID()))
+        }
+    }
+
+    @Test
+    fun `test findImagesBulk with avatars no data`() {
+        val userUuid = UUID.randomUUID()
+
+        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid))).thenReturn(listOf())
+        val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid))
+
+        assertEquals(0, result.size)
+    }
+
+    @Test
+    fun `test findImagesBulk with avatars`() {
+        val userUuid = UUID.randomUUID()
+        val userUuid2 = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+
+        val file = File(
+            uuid = fileUuid,
+            userUuid = userUuid,
+            fileName = "test.txt",
+            fileType = FileType.AVATAR,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
+        val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid, userUuid2))
+
+        assertEquals(1, result.size)
+        assertEquals(userUuid, result[0].userUUID)
+        assertEquals("", result[0].avatarDto.big)
+        assertEquals("", result[0].avatarDto.medium)
+        assertEquals("", result[0].avatarDto.small)
+        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].avatarDto.original)
     }
 
     @Test
