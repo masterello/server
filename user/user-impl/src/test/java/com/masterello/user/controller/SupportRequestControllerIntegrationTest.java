@@ -1,27 +1,17 @@
 package com.masterello.user.controller;
 
-import com.masterello.auth.data.AuthData;
 import com.masterello.auth.data.AuthZRole;
-import com.masterello.auth.service.AuthService;
+import com.masterello.auth.extension.AuthMocked;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.masterello.user.util.TestDataProvider.ACCESS_TOKEN;
-import static com.masterello.user.util.TestDataProvider.VERIFIED_USER;
-import static com.masterello.user.util.TestDataProvider.buildSupportRequestDto;
-import static com.masterello.user.util.TestDataProvider.tokenCookie;
+import static com.masterello.user.util.TestDataProvider.*;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.when;
 
 @SqlGroup({
         @Sql(scripts = "classpath:sql/create-test-data.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD),
@@ -30,12 +20,9 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {UserTestConfiguration.class})
 public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrationTest {
 
-    @Autowired
-    private AuthService authService;
-
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.ADMIN})
     public void completeRequest() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.ADMIN), true);
         //@formatter:off
         RestAssured
                 .given()
@@ -59,12 +46,13 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
                 .when()
                     .post("/api/support/completeRequest/2d3c2abe-af52-4008-b147-6c816dbaba06")
                 .then()
-                    .statusCode(403);
+                    .statusCode(401);
         //@formatter:on
     }
+
     @Test
-    public void completeRequestUserAuth() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
+    public void completeRequestUserAuth_notOwner() {
         //@formatter:off
         RestAssured
                 .given()
@@ -74,13 +62,13 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
                 .when()
                     .post("/api/support/completeRequest/2d3c2abe-af52-4008-b147-6c816dbaba06")
                 .then()
-                .statusCode(401);
+                .statusCode(403);
         //@formatter:on
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.ADMIN})
     public void completeRequestNotFound() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.ADMIN), true);
         //@formatter:off
         RestAssured
                 .given()
@@ -112,8 +100,8 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.ADMIN})
     public void retrieveUnprocessedRequests() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.ADMIN), true);
         //@formatter:off
         RestAssured
                 .given()
@@ -135,8 +123,8 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
     }
 
     @Test
-    public void retrieveUnprocessedRequestsUserAuth() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
+    public void retrieveUnprocessedRequestsUserAuth_notAdmin() {
         //@formatter:off
         RestAssured
                 .given()
@@ -146,7 +134,7 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
                 .when()
                     .get("/api/support/getAllUnprocessedRequests")
                 .then()
-                    .statusCode(401);
+                    .statusCode(403);
         //@formatter:on
     }
 
@@ -166,8 +154,8 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.ADMIN})
     public void retrieveAllSupportRequests() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.ADMIN), true);
 
         //@formatter:off
         RestAssured
@@ -184,9 +172,8 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
     }
 
     @Test
-    public void retrieveAllSupportRequestsUserAuth() {
-        mockAuth(VERIFIED_USER, List.of(AuthZRole.USER), true);
-
+    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
+    public void retrieveAllSupportRequestsUserAuth_notAdmin() {
         //@formatter:off
         RestAssured
                 .given()
@@ -196,7 +183,7 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
                 .when()
                     .get("/api/support/getAllRequests")
                 .then()
-                    .statusCode(401);
+                    .statusCode(403);
         //@formatter:on
     }
 
@@ -211,16 +198,7 @@ public class SupportRequestControllerIntegrationTest extends AbstractWebIntegrat
                 .when()
                     .get("/api/support/getAllRequests")
                 .then()
-                    .statusCode(403);
+                    .statusCode(401);
         //@formatter:on
-    }
-
-    private void mockAuth(UUID userId, List<AuthZRole> roles, boolean emailVerified) {
-        when(authService.validateToken(ACCESS_TOKEN))
-                .thenReturn(Optional.of(AuthData.builder()
-                        .userId(userId)
-                        .userRoles(roles)
-                        .emailVerified(emailVerified)
-                        .build()));
     }
 }
