@@ -1,6 +1,7 @@
 package com.masterello.user.config;
 
 import com.masterello.auth.service.AuthService;
+import com.masterello.commons.security.config.SuperAdminProperties;
 import com.masterello.commons.security.filter.AuthFilter;
 import com.masterello.commons.security.filter.SuperAdminFilter;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 public class UserApiSecurityConfig {
 
     private final AuthService authService;
-    private final SuperAdminFilter superAdminFilter;
+    private final SuperAdminProperties superAdminProperties;
 
     @Bean
     @Order(1)  // Higher priority to match this first
@@ -34,7 +35,7 @@ public class UserApiSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated())  // Require authentication for /api/user/admin
-                .addFilterBefore(superAdminFilter, AnonymousAuthenticationFilter.class)
+                .addFilterBefore(new SuperAdminFilter(superAdminProperties), AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));  // Stateless session management
 
         return http.build();

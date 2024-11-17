@@ -12,6 +12,7 @@ import com.masterello.auth.responsehandlers.Oauth2SuccessAuthHandler;
 import com.masterello.auth.responsehandlers.TokenAuthenticationFailureHandler;
 import com.masterello.auth.revocation.LogoutRevocationAuthenticationProvider;
 import com.masterello.auth.revocation.LogoutRevocationEndpointAuthenticationConverter;
+import com.masterello.commons.security.config.SuperAdminProperties;
 import com.masterello.commons.security.filter.SuperAdminFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -38,7 +39,7 @@ public class SecurityConfig {
     private final CustomOauth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
     private final GoogleSuccessAuthHandler googleSuccessAuthHandler;
-    private final SuperAdminFilter superAdminFilter;
+    private final SuperAdminProperties superAdminProperties;
 
     /**
      * Security config for token management endpoints:
@@ -118,7 +119,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated())
-                .addFilterBefore(superAdminFilter, AnonymousAuthenticationFilter.class)
+                .addFilterBefore(new SuperAdminFilter(superAdminProperties), AnonymousAuthenticationFilter.class)
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
