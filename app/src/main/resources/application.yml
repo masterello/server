@@ -26,7 +26,7 @@ masterello:
     max-height: 4000
     compressed-size: 1024
     bucket-name: 'masterello'
-    cdnLink: 'prod-link'
+    cdnLink: 'https://static.masterello.com/masterello/'
   auth:
     sessionCleanup:
       batchSize: 1000
