@@ -9,6 +9,7 @@ server:
       suffix:
       file-date-format:
       pattern: "[ACCESS] %h %t \"%r\" %s %b"
+      condition-unless: "NO_LOG"
 
 masterello:
   user:
