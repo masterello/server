@@ -1,26 +1,24 @@
 package com.masterello.monitoring.filter
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
-class UncaughtExceptionLoggingFilter : OncePerRequestFilter() {
-    private val log = KotlinLogging.logger {}
+@Order(Ordered.HIGHEST_PRECEDENCE + 1)
+class AccessLogFilter : OncePerRequestFilter() {
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
-        try {
-            filterChain.doFilter(request, response)
-        } catch (ex: Exception) {
-            log.error(ex) {"Uncaught exception while request processing"}
-            response.status = INTERNAL_SERVER_ERROR.value()
+        val uri = request.requestURI
+        //detect the uri who dont need to be log
+        if (uri.startsWith("/actuator")) {
+            //add the "No_LOG" Attribute to request, the value is not important, there only need to be not null
+            request.setAttribute("NO_LOG", "true")
         }
+        filterChain.doFilter(request, response)
     }
 }
