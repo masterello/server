@@ -5,7 +5,6 @@
       "title": "Mr.",
       "name": "worker1",
       "lastname": "workerson",
-      "city": "köln",
       "languages": ["DE", "RU"],
       "workerInfo": {
         "description": "best plumber",
@@ -13,6 +12,8 @@
         "telegram": "plumber-t",
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
+        "country": "DE",
+        "city": "HH",
         "services": [
           {
             "serviceId": 10,

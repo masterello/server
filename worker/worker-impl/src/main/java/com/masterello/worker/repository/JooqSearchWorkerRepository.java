@@ -1,5 +1,7 @@
 package com.masterello.worker.repository;
 
+import com.masterello.user.value.City;
+import com.masterello.user.value.Country;
 import com.masterello.user.value.Language;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.WorkerInfo;
@@ -37,10 +39,11 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         .join(DSL.table("user_roles").as("ur")).on(field("u.uuid").eq(field("ur.user_id")))
                         .leftJoin(DSL.table("user_languages").as("ul")).on(field("u.uuid").eq(field("ul.user_id")))
                         .leftJoin(DSL.table("worker_services").as("ws")).on(field("u.uuid").eq(field("ws.worker_id")))
+                        .leftJoin(DSL.table("worker_info").as("wi")).on(field("u.uuid").eq(field("wi.worker_id")))
                         .where(field("ur.role").eq("WORKER")
                                 .and(filters.hasLanguageFilter()? field("ul.language").in(filters.getLanguageFilter()) : DSL.noCondition())
                                 .and(filters.hasServiceFilter() ? field("ws.service_id").in(filters.getServices()) : DSL.noCondition())
-                                .and(filters.hasCityFilter() ? field("u.city").in(filters.getCities()) : DSL.noCondition())
+                                .and(filters.hasCityFilter() ? field("wi.city").in(filters.getCityFilter()) : DSL.noCondition())
                         )
                 )
                 .selectCount()
@@ -70,7 +73,7 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         .where(field("ur.role").eq("WORKER")
                                 .and(filters.hasLanguageFilter()? field("ul.language").in(filters.getLanguageFilter()) : DSL.noCondition())
                                 .and(filters.hasServiceFilter() ? field("ws.service_id").in(filters.getServices()) : DSL.noCondition())
-                                .and(filters.hasCityFilter() ? field("u.city").in(filters.getCities()) : DSL.noCondition())
+                                .and(filters.hasCityFilter() ? field("wi.city").in(filters.getCityFilter()) : DSL.noCondition())
                         )
                 )
                 .select(field("uuid"))
@@ -104,7 +107,8 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         DSL.field("u.title"),
                         DSL.field("u.name"),
                         DSL.field("u.lastname"),
-                        DSL.field("u.city"),
+                        DSL.field("wi.country"),
+                        DSL.field("wi.city"),
                         DSL.field("wi.worker_id"),
                         DSL.field("wi.description"),
                         DSL.field("wi.phone"),
@@ -121,7 +125,7 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                 .where(DSL.field("u.uuid").in(ids))
                 .groupBy(
                         DSL.field("u.uuid"), DSL.field("u.title"), DSL.field("u.name"),
-                        DSL.field("u.lastname"), DSL.field("u.city"),
+                        DSL.field("u.lastname"), DSL.field("wi.city"),
                         DSL.field("wi.worker_id"), DSL.field("wi.description"), DSL.field("wi.phone"),
                         DSL.field("wi.telegram"), DSL.field("wi.whatsapp"), DSL.field("wi.viber")
                 )
@@ -138,7 +142,6 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                 .title(record.get("u.title", String.class))
                 .name(record.get("u.name", String.class))
                 .lastname(record.get("u.lastname", String.class))
-                .city(record.get("u.city", String.class))
                 .workerInfo(mapWorkerInfo(record))
                 .languages(mapLanguages(record))
                 .build();
@@ -156,6 +159,8 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                 .telegram(record.get("wi.telegram", String.class))
                 .whatsapp(record.get("wi.whatsapp", String.class))
                 .viber(record.get("wi.viber", String.class))
+                .country(mapToCountry(record))
+                .city(mapToCity(record))
                 .build();
     }
 
@@ -188,5 +193,15 @@ public class JooqSearchWorkerRepository implements SearchWorkerRepository {
                         .sorted(Comparator.comparing(Language::name))
                         .collect(Collectors.toList()))
                 .orElse(List.of());
+    }
+
+    private City mapToCity(Record record) {
+        String cityCode = record.get("wi.city", String.class);
+       return cityCode == null ? null : City.getCity(cityCode);
+    }
+
+    private Country mapToCountry(Record record) {
+        String countryCode = record.get("wi.country", String.class);
+        return countryCode == null ? null : Country.getCountry(countryCode);
     }
 }

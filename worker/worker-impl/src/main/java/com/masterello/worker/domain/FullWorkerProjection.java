@@ -19,8 +19,6 @@ public class FullWorkerProjection {
     private String name;
     @Sortable
     private String lastname;
-    @Sortable
-    private String city;
     private List<Language> languages;
     @Sortable(nested = true, targetTableAlias = "wi")
     private WorkerInfo workerInfo;

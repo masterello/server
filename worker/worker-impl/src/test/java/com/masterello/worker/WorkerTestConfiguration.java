@@ -6,6 +6,7 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = {
         "com.masterello.worker",
         "com.masterello.user",
+        "com.masterello.user.domain",
         "com.masterello.auth",
         "com.masterello.category",
         "com.masterello.commons"

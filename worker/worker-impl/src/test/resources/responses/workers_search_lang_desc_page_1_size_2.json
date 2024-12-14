@@ -5,7 +5,6 @@
       "title": null,
       "name": "worker6",
       "lastname": "workerson",
-      "city": "berlin",
       "languages": ["EN"],
       "workerInfo": null
     },
@@ -14,7 +13,6 @@
       "title": "Frau",
       "name": "worker4",
       "lastname": "workerson",
-      "city": "berlin",
       "languages": ["DE"],
       "workerInfo": {
         "description": "not so good electrician",
@@ -22,6 +20,8 @@
         "telegram": "meh-electrician-t",
         "whatsapp": "meh-electrician-w",
         "viber": "meh-electrician-v",
+        "country": "DE",
+        "city": "BE",
         "services": [
           {
             "serviceId": 40,

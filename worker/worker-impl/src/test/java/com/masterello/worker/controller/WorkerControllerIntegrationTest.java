@@ -8,6 +8,8 @@ import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.service.MasterelloUserService;
+import com.masterello.user.value.City;
+import com.masterello.user.value.Country;
 import com.masterello.user.value.Language;
 import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.worker.WorkerTestConfiguration;
@@ -60,6 +62,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
                 .services(services)
                 .build();
 
@@ -99,6 +103,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
                 .services(services)
                 .build();
 
@@ -137,6 +143,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
                 .services(services)
                 .build();
 
@@ -221,7 +229,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .title("Herr.")
                         .name("Plumber")
                         .lastname("Plumberson")
-                        .city("Berlin")
                         .languages(List.of(Language.EN, Language.DE))
                         .build()));
         //@formatter:off
@@ -237,7 +244,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("title", is("Herr."))
                     .body("name", is("Plumber"))
                     .body("lastname", is("Plumberson"))
-                    .body("city", is("Berlin"))
                     .body("languages", hasSize(2))
                     .body("languages",hasItems(Language.EN.name(), Language.DE.name()))
                     .body("workerInfo.description", is("best plumber"))
@@ -246,6 +252,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("workerInfo.viber", is("plumber-v"))
                     .body("workerInfo.phone", is("+49111111111"))
                     .body("workerInfo.services", hasSize(1))
+                    .body("workerInfo.city", is(City.HAMBURG.getCode()))
                     .body("workerInfo.services",hasItem(
                             allOf(
                                     hasEntry("serviceId", 10),
@@ -478,13 +485,13 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     void searchWorkers_by_city() {
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
-                .cities(List.of("münchen", "köln"))
+                .cities(List.of(City.MUNICH, City.HAMBURG))
                 .pageRequest(PageRequestDTO.builder()
                         .page(1)
                         .pageSize(10)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(PageRequestDTO.SortOrder.ASC)
-                                .fields(List.of("city"))
+                                .fields(List.of("workerInfo.city"))
                                 .build())
                         .build())
                 .build();

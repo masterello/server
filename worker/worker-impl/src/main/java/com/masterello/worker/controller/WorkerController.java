@@ -43,7 +43,7 @@ public class WorkerController {
     @RequestMapping(value = "/{worker_uuid}/info", method = RequestMethod.PUT)
     @ResponseStatus(HttpStatus.CREATED)
     public WorkerInfoDTO storeWorkerInfo(@OwnerId @PathVariable("worker_uuid") @Parameter(required = true) UUID workerId,
-                                         @RequestBody WorkerInfoDTO request) {
+                                         @RequestBody @Valid WorkerInfoDTO request) {
         WorkerInfo infoToStore = workerInfoMapper.mapToEntity(request);
         infoToStore.setWorkerId(workerId);
         val stored = workerService.storeWorkerInfo(infoToStore);

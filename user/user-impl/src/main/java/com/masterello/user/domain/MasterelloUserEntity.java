@@ -2,10 +2,7 @@ package com.masterello.user.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.masterello.commons.core.json.Patchable;
-import com.masterello.user.value.Language;
-import com.masterello.user.value.MasterelloUser;
-import com.masterello.user.value.Role;
-import com.masterello.user.value.UserStatus;
+import com.masterello.user.value.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -62,8 +59,12 @@ public class MasterelloUserEntity implements MasterelloUser {
     private String phone;
 
     @Patchable
+    @Column(name = "country")
+    private Country country;
+
+    @Patchable
     @Column(name = "city")
-    private String city;
+    private City city;
 
     @Column(name = "status")
     private UserStatus status;

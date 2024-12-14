@@ -1,5 +1,6 @@
 package com.masterello.worker.repository;
 
+import com.masterello.user.value.City;
 import com.masterello.user.value.Language;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
@@ -16,7 +17,7 @@ public class WorkerSearchFilters {
     @Nullable
     private List<Integer> services;
     @Nullable
-    private List<String> cities;
+    private List<City> cities;
 
     public boolean hasLanguageFilter() {
         return languages != null && !languages.isEmpty();
@@ -32,6 +33,11 @@ public class WorkerSearchFilters {
 
     public List<String> getLanguageFilter() {
         return hasLanguageFilter() ? languages.stream().map(Language::name)
+                .toList() : Collections.emptyList();
+    }
+
+    public List<String> getCityFilter(){
+        return hasCityFilter() ? cities.stream().map(City::getCode)
                 .toList() : Collections.emptyList();
     }
 }

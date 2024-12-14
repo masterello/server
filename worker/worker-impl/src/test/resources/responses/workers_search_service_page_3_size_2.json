@@ -5,7 +5,6 @@
       "title": "Mr.",
       "name": "worker7",
       "lastname": "workerson",
-      "city": "berlin",
       "languages": ["IT"],
       "workerInfo": {
         "description": "fix toilets",
@@ -13,6 +12,8 @@
         "telegram": "plumber-t",
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
+        "country": "DE",
+        "city": "BE",
         "services": [
           {
             "serviceId": 11,
@@ -26,7 +27,6 @@
       "title": "Mr.",
       "name": "worker8",
       "lastname": "workerson",
-      "city": "berlin",
       "languages": ["IT"],
       "workerInfo": {
         "description": "fix sinks",
@@ -34,6 +34,8 @@
         "telegram": "plumber-t",
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
+        "country": "DE",
+        "city": "BE",
         "services": [
           {
             "serviceId": 12,

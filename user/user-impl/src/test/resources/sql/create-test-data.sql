@@ -1,10 +1,10 @@
 insert into public.users (uuid, name, lastname, email, phone, password, city, status, email_verified)
 values
-    ('e8b0639f-148c-4f74-b834-bbe04072a416', 'test', 'user', 'not_verified_link_valid@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, false),
-    ('e8b0639f-148c-4f74-b834-bbe04072a999', 'aa', 'bb', 'not_verified_link_expired@gmail.com', '123456712312', 'vvvvvvv', 'berlin', 0, false),
-    ('49200ea0-3879-11ee-be56-0242ac120002', 'test1', 'user1', 'verified@gmail.com', '123123123', '$2a$10$YtXmJtc04cZPCH32VEkQEObDJqy.X1.Gx4ecuDWiCGaqSTnAKoZMS', 'milan', 0, true),
-    ('49200ea0-3879-11ee-be56-0242ac120003', 'test1', 'user1', 'oauth@gmail.com', '123123123', null, 'milan', 0, true),
-    ('ba7bb05a-80b3-41be-8182-66608aba2a31', 'test12', 'user12', 'verified2@gmail.com', '441231', '$2a$10$ePFU/x7oAoA/ars/v2Vbpe11IBcPg/ElMR3pR1KkFrT8OJl4AIlSq', 'berlin', 0, true);
+    ('e8b0639f-148c-4f74-b834-bbe04072a416', 'test', 'user', 'not_verified_link_valid@gmail.com', '1234567', 'aaabbb123', 'BE', 0, false),
+    ('e8b0639f-148c-4f74-b834-bbe04072a999', 'aa', 'bb', 'not_verified_link_expired@gmail.com', '123456712312', 'vvvvvvv', 'BE', 0, false),
+    ('49200ea0-3879-11ee-be56-0242ac120002', 'test1', 'user1', 'verified@gmail.com', '123123123', '$2a$10$YtXmJtc04cZPCH32VEkQEObDJqy.X1.Gx4ecuDWiCGaqSTnAKoZMS', 'F', 0, true),
+    ('49200ea0-3879-11ee-be56-0242ac120003', 'test1', 'user1', 'oauth@gmail.com', '123123123', null, 'HH', 0, true),
+    ('ba7bb05a-80b3-41be-8182-66608aba2a31', 'test12', 'user12', 'verified2@gmail.com', '441231', '$2a$10$ePFU/x7oAoA/ars/v2Vbpe11IBcPg/ElMR3pR1KkFrT8OJl4AIlSq', 'BE', 0, true);
 insert into public.user_roles (user_id, role)
 values
     ('e8b0639f-148c-4f74-b834-bbe04072a416', 'USER'),
