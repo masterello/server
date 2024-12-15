@@ -1,7 +1,7 @@
-package com.masterello.user.controller;
+package com.masterello.worker.controller;
 
-import com.masterello.user.dto.SupportedLanguagesDTO;
-import com.masterello.user.value.Language;
+import com.masterello.worker.domain.Language;
+import com.masterello.worker.dto.SupportedLanguagesDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,7 +16,7 @@ import java.util.Set;
 @RequestMapping("/api")
 public class LanguagesController {
 
-    @RequestMapping(value = "/user/supported-languages", method = RequestMethod.GET)
+    @RequestMapping(value = "/worker/supported-languages", method = RequestMethod.GET)
     @ResponseStatus(HttpStatus.OK)
     public SupportedLanguagesDTO getSupportedLanguages() {
         return SupportedLanguagesDTO.builder()

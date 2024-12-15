@@ -12,7 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -24,11 +24,11 @@ import java.util.UUID;
 public class WorkerInfo {
 
     @Id
+    @Sortable
     @Column(name = "worker_id")
     private UUID workerId;
 
     @Patchable
-    @Sortable
     @Column(name = "description")
     private String description;
 
@@ -45,16 +45,21 @@ public class WorkerInfo {
     private String whatsapp;
 
     @Patchable
-    @Sortable
     @Column(name = "country")
     @Convert(converter = CountryConverter.class)
     private Country country;
 
     @Patchable
-    @Sortable
     @Column(name = "city")
     @Convert(converter = CityConverter.class)
     private City city;
+
+    @Patchable
+    @ElementCollection(targetClass = Language.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "worker_languages", joinColumns = @JoinColumn(name = "worker_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "language")
+    private Set<Language> languages;
 
     @Patchable
     @Column(name = "viber")
@@ -63,5 +68,5 @@ public class WorkerInfo {
     @Patchable
     @ElementCollection(targetClass = WorkerServiceEntity.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "worker_services", joinColumns = @JoinColumn(name = "worker_id"))
-    private List<WorkerServiceEntity> services;
+    private Set<WorkerServiceEntity> services;
 }

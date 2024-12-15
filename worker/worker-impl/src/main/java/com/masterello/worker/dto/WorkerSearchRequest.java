@@ -1,7 +1,7 @@
 package com.masterello.worker.dto;
 
 import com.masterello.user.value.City;
-import com.masterello.user.value.Language;
+import com.masterello.worker.domain.Language;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

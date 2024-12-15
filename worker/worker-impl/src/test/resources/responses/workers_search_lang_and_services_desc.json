@@ -1,27 +1,23 @@
 {
   "workers": [
     {
-      "uuid": "d1c822c9-0ee4-462a-a88e-7c45e3bb0e54",
-      "title": "Ms.",
-      "name": "worker3",
+      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "title": "Mr.",
+      "name": "worker1",
       "lastname": "workerson",
-      "languages": ["DE", "EN"],
       "workerInfo": {
-        "description": "best vocal-coach",
-        "phone": "+49444444444",
-        "telegram": "vocal-coach-t",
-        "whatsapp": "vocal-coach-w",
-        "viber": "vocal-coach-v",
+        "description": "best plumber",
+        "phone": "+49111111111",
+        "telegram": "plumber-t",
+        "whatsapp": "plumber-w",
+        "viber": "plumber-v",
         "country": "DE",
-        "city": "BE",
+        "city": "HH",
+        "languages": ["DE", "RU"],
         "services": [
           {
             "serviceId": 10,
-            "amount": 300
-          },
-          {
-            "serviceId": 30,
-            "amount": 300
+            "amount": 100
           }
         ]
       }
@@ -31,7 +27,6 @@
       "title": "Herr",
       "name": "worker2",
       "lastname": "workerson",
-      "languages": ["EN", "UA"],
       "workerInfo": {
         "description": "best electrician",
         "phone": "+49222222222",
@@ -40,6 +35,7 @@
         "viber": "electrician-v",
         "country": "DE",
         "city": "M",
+        "languages": ["EN", "UA"],
         "services": [
           {
             "serviceId": 10,
@@ -53,23 +49,27 @@
       }
     },
     {
-      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
-      "title": "Mr.",
-      "name": "worker1",
+      "uuid": "d1c822c9-0ee4-462a-a88e-7c45e3bb0e54",
+      "title": "Ms.",
+      "name": "worker3",
       "lastname": "workerson",
-      "languages": ["DE", "RU"],
       "workerInfo": {
-        "description": "best plumber",
-        "phone": "+49111111111",
-        "telegram": "plumber-t",
-        "whatsapp": "plumber-w",
-        "viber": "plumber-v",
+        "description": "best vocal-coach",
+        "phone": "+49444444444",
+        "telegram": "vocal-coach-t",
+        "whatsapp": "vocal-coach-w",
+        "viber": "vocal-coach-v",
         "country": "DE",
-        "city": "HH",
+        "city": "BE",
+        "languages": ["DE", "EN"],
         "services": [
           {
             "serviceId": 10,
-            "amount": 100
+            "amount": 300
+          },
+          {
+            "serviceId": 30,
+            "amount": 300
           }
         ]
       }

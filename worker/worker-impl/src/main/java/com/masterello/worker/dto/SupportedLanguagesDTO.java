@@ -1,6 +1,6 @@
-package com.masterello.user.dto;
+package com.masterello.worker.dto;
 
-import com.masterello.user.value.Language;
+import com.masterello.worker.domain.Language;
 import lombok.Builder;
 import lombok.Data;
 

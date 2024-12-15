@@ -1,4 +1,4 @@
-package com.masterello.user.value;
+package com.masterello.worker.domain;
 
 public enum Language {
     EN,  // English

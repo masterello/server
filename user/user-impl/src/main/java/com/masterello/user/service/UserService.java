@@ -18,10 +18,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -112,6 +114,12 @@ public class UserService implements MasterelloUserService  {
     public Optional<MasterelloUser> findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(Function.identity());
+    }
+
+    @Override
+    public Map<UUID, MasterelloUser> findAllByIds(Set<UUID> ids) {
+        return userRepository.findAllById(ids).stream()
+                .collect(Collectors.toMap(MasterelloUserEntity::getUuid, Function.identity()));
     }
 
     @Override

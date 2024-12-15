@@ -1,36 +1,10 @@
 {
   "workers": [
     {
-      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
-      "title": "Mr.",
-      "name": "worker1",
-      "lastname": "workerson",
-      "languages": [
-        "DE",
-        "RU"
-      ],
-      "workerInfo": {
-        "description": "best plumber",
-        "phone": "+49111111111",
-        "telegram": "plumber-t",
-        "whatsapp": "plumber-w",
-        "viber": "plumber-v",
-        "country": "DE",
-        "city": "HH",
-        "services": [
-          {
-            "serviceId": 10,
-            "amount": 100
-          }
-        ]
-      }
-    },
-    {
       "uuid": "e4de38bf-168e-41fc-b7b1-b9d74a47529e",
       "title": "Herr",
       "name": "worker2",
       "lastname": "workerson",
-      "languages": ["EN", "UA"],
       "workerInfo": {
         "description": "best electrician",
         "phone": "+49222222222",
@@ -39,6 +13,7 @@
         "viber": "electrician-v",
         "country": "DE",
         "city": "M",
+        "languages": ["EN", "UA"],
         "services": [
           {
             "serviceId": 10,
@@ -47,6 +22,31 @@
           {
             "serviceId": 20,
             "amount": 200
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "title": "Mr.",
+      "name": "worker1",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best plumber",
+        "phone": "+49111111111",
+        "telegram": "plumber-t",
+        "whatsapp": "plumber-w",
+        "viber": "plumber-v",
+        "country": "DE",
+        "city": "HH",
+        "languages": [
+          "DE",
+          "RU"
+        ],
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 100
           }
         ]
       }

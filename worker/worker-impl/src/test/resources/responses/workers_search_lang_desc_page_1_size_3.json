@@ -1,31 +1,49 @@
 {
   "workers": [
     {
-      "uuid": "8824a15c-98f5-49d9-bd97-43d1cba3f62c",
-      "title": null,
-      "name": "worker6",
+      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "title": "Mr.",
+      "name": "worker1",
       "lastname": "workerson",
-      "languages": ["EN"],
-      "workerInfo": null
-    },
-    {
-      "uuid": "57bc029c-d8e3-458f-b25a-7f73283cec98",
-      "title": "Frau",
-      "name": "worker4",
-      "lastname": "workerson",
-      "languages": ["DE"],
       "workerInfo": {
-        "description": "not so good electrician",
-        "phone": "+49555555555",
-        "telegram": "meh-electrician-t",
-        "whatsapp": "meh-electrician-w",
-        "viber": "meh-electrician-v",
+        "description": "best plumber",
+        "phone": "+49111111111",
+        "telegram": "plumber-t",
+        "whatsapp": "plumber-w",
+        "viber": "plumber-v",
         "country": "DE",
-        "city": "BE",
+        "city": "HH",
+        "languages": ["DE", "RU"],
         "services": [
           {
-            "serviceId": 40,
-            "amount": 400
+            "serviceId": 10,
+            "amount": 100
+          }
+        ]
+      }
+    },
+    {
+      "uuid": "e4de38bf-168e-41fc-b7b1-b9d74a47529e",
+      "title": "Herr",
+      "name": "worker2",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best electrician",
+        "phone": "+49222222222",
+        "telegram": "electrician-t",
+        "whatsapp": "electrician-w",
+        "viber": "electrician-v",
+        "country": "DE",
+        "city": "M",
+        "languages": ["EN", "UA"],
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 150
+          },
+          {
+            "serviceId": 20,
+            "amount": 200
           }
         ]
       }
@@ -35,7 +53,6 @@
       "title": "Ms.",
       "name": "worker3",
       "lastname": "workerson",
-      "languages": ["DE", "EN"],
       "workerInfo": {
         "description": "best vocal-coach",
         "phone": "+49444444444",
@@ -44,6 +61,7 @@
         "viber": "vocal-coach-v",
         "country": "DE",
         "city": "BE",
+        "languages": ["DE", "EN"],
         "services": [
           {
             "serviceId": 10,

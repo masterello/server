@@ -11,10 +11,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -72,14 +70,6 @@ public class MasterelloUserEntity implements MasterelloUser {
     @Column(name = "email_verified")
     @Builder.Default
     private boolean emailVerified = false;
-
-    @Patchable
-    @ElementCollection(targetClass = Language.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_languages", joinColumns = @JoinColumn(name = "user_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "language")
-    private List<Language> languages;
-
 
     /**
      * username is expected by spring framework to be a unique user identifier

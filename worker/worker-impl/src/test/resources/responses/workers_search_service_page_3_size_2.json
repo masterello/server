@@ -5,7 +5,6 @@
       "title": "Mr.",
       "name": "worker7",
       "lastname": "workerson",
-      "languages": ["IT"],
       "workerInfo": {
         "description": "fix toilets",
         "phone": "+49777777",
@@ -14,6 +13,7 @@
         "viber": "plumber-v",
         "country": "DE",
         "city": "BE",
+        "languages": ["IT"],
         "services": [
           {
             "serviceId": 11,
@@ -21,29 +21,7 @@
           }
         ]
       }
-    },
-    {
-      "uuid": "dda832b4-b8e3-43df-a457-d77043b01751",
-      "title": "Mr.",
-      "name": "worker8",
-      "lastname": "workerson",
-      "languages": ["IT"],
-      "workerInfo": {
-        "description": "fix sinks",
-        "phone": "+498888888881",
-        "telegram": "plumber-t",
-        "whatsapp": "plumber-w",
-        "viber": "plumber-v",
-        "country": "DE",
-        "city": "BE",
-        "services": [
-          {
-            "serviceId": 12,
-            "amount": 700
-          }
-        ]
-      }
     }
   ],
-  "count": 6
+  "count": 5
 }

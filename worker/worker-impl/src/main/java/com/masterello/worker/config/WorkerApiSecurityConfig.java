@@ -27,7 +27,8 @@ public class WorkerApiSecurityConfig {
     public SecurityFilterChain apiWorkerFilter(HttpSecurity http) throws Exception {
         RequestMatcher publicEndpoints = new OrRequestMatcher(
                 new AntPathRequestMatcher("/api/worker/search"),
-                new AntPathRequestMatcher("/api/worker/*/full-info")
+                new AntPathRequestMatcher("/api/worker/*/full-info"),
+                new AntPathRequestMatcher("/api/worker/supported-languages")
         );
         AuthFilter authFilter = new AuthFilter(
                 new NegatedRequestMatcher(publicEndpoints), authService);

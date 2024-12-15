@@ -10,10 +10,15 @@ import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
-import com.masterello.user.value.Language;
 import com.masterello.user.value.MasterelloTestUser;
+import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.WorkerTestConfiguration;
-import com.masterello.worker.dto.*;
+import com.masterello.worker.domain.Language;
+import com.masterello.worker.dto.PageRequestDTO;
+import com.masterello.worker.dto.WorkerInfoDTO;
+import com.masterello.worker.dto.WorkerSearchRequest;
+import com.masterello.worker.dto.WorkerSearchResponse;
+import com.masterello.worker.dto.WorkerServiceDTO;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import lombok.SneakyThrows;
@@ -31,11 +36,15 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.masterello.worker.util.WorkerTestDataProvider.*;
 import static org.hamcrest.Matchers.*;
 import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.when;
 
 @SqlGroup({
@@ -229,7 +238,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .title("Herr.")
                         .name("Plumber")
                         .lastname("Plumberson")
-                        .languages(List.of(Language.EN, Language.DE))
                         .build()));
         //@formatter:off
         RestAssured
@@ -244,8 +252,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("title", is("Herr."))
                     .body("name", is("Plumber"))
                     .body("lastname", is("Plumberson"))
-                    .body("languages", hasSize(2))
-                    .body("languages",hasItems(Language.EN.name(), Language.DE.name()))
                     .body("workerInfo.description", is("best plumber"))
                     .body("workerInfo.whatsapp", is("plumber-w"))
                     .body("workerInfo.telegram", is("plumber-t"))
@@ -258,7 +264,10 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                                     hasEntry("serviceId", 10),
                                     hasEntry("amount", 100)
                             ))
-                    );
+                    )
+                    .body("workerInfo.languages", hasSize(2))
+                    .body("workerInfo.languages",
+                            containsInAnyOrder(Language.RU.name(), Language.DE.name()));
         //@formatter:on
     }
 
@@ -360,6 +369,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     })
     void searchWorkers_by_lang_and_service(PageRequestDTO.SortOrder order, String expectedResponseFileName) {
         mockCategories(listOf(), Map.of());
+        mockUsers(Set.of(WORKER_1, WORKER_2, WORKER_3));
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .languages(listOf(Language.DE, Language.EN))
@@ -369,7 +379,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .pageSize(10)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(order)
-                                .fields(List.of("name"))
+                                .fields(List.of("workerId"))
                                 .build())
                         .build())
                 .build();
@@ -392,6 +402,13 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         assertEquals(expectedResponse, actualResponse);
     }
 
+    private void mockUsers(Set<UUID> ids) {
+        Map<UUID, MasterelloUser> users = getMasterelloTestUsers().entrySet().stream()
+                .filter(u -> ids.contains(u.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        when(userService.findAllByIds(ids)).thenReturn(users);
+    }
+
     @SneakyThrows
     @ParameterizedTest
     @CsvSource({
@@ -403,7 +420,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     })
     void searchWorkers_by_lang_desc(int page, int pageSize, String expectedResponseFileName) {
         mockCategories(listOf(), Map.of());
-
+        when(userService.findAllByIds(anySet())).thenReturn(getMasterelloTestUsers());
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .languages(listOf(Language.DE, Language.EN))
@@ -412,7 +429,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .pageSize(pageSize)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(PageRequestDTO.SortOrder.DESC)
-                                .fields(List.of("name"))
+                                .fields(List.of("workerId"))
                                 .build())
                         .build())
                 .build();
@@ -448,6 +465,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     void searchWorkers_by_service(int page, int pageSize, String expectedResponseFileName) {
 
         mockCategories(listOf(10), Map.of(10, List.of(randomCategory(11, 10), randomCategory(12, 10))));
+        when(userService.findAllByIds(anySet())).thenReturn(getMasterelloTestUsers());
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .services(listOf(10))
@@ -456,7 +474,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .pageSize(pageSize)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(PageRequestDTO.SortOrder.ASC)
-                                .fields(List.of("name"))
+                                .fields(List.of("workerId"))
                                 .build())
                         .build())
                 .build();
@@ -483,6 +501,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
 
     @Test
     void searchWorkers_by_city() {
+        when(userService.findAllByIds(anySet())).thenReturn(getMasterelloTestUsers());
 
         WorkerSearchRequest request = WorkerSearchRequest.builder()
                 .cities(List.of(City.MUNICH, City.HAMBURG))
@@ -491,7 +510,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .pageSize(10)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(PageRequestDTO.SortOrder.ASC)
-                                .fields(List.of("workerInfo.city"))
+                                .fields(List.of("workerId"))
                                 .build())
                         .build())
                 .build();
@@ -527,7 +546,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .pageSize(20)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(PageRequestDTO.SortOrder.ASC)
-                                .fields(List.of("name"))
+                                .fields(List.of("workerId"))
                                 .build())
                         .build())
                 .build();

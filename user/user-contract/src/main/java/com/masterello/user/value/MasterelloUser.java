@@ -1,6 +1,5 @@
 package com.masterello.user.value;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,8 +29,6 @@ public interface MasterelloUser {
     UserStatus getStatus();
 
     boolean isEmailVerified();
-
-    List<Language> getLanguages();
 
     String getUsername();
 
