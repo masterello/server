@@ -1,5 +1,6 @@
 package com.masterello.worker.dto;
 
+import com.masterello.user.value.City;
 import com.masterello.user.value.Language;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
@@ -17,7 +18,7 @@ public class WorkerSearchRequest {
     @Nullable
     private List<Integer> services;
     @Nullable
-    private List<String> cities;
+    private List<City> cities;
     @NotNull
     @Valid
     private PageRequestDTO pageRequest;

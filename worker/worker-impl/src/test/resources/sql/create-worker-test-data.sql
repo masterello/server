@@ -1,15 +1,15 @@
 insert into public.users (uuid, name, lastname, title, email, phone, password, city, status, email_verified)
 values
-    ('bb2c6e16-2228-4ac1-8482-1f3548672b43', 'user', 'userson', 'Mr.', 'user@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('455aee9c-9629-466f-bfc5-8d956da74769', 'admin', 'adminson', 'Mr.', 'admin@gmail.com', '1234567', 'aaabbb123', 'köln', 0, true),
-    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'worker1', 'workerson', 'Mr.', 'worker1@gmail.com', '1234567', 'aaabbb123', 'köln', 0, true),
-    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'worker2', 'workerson', 'Herr', 'worker2@gmail.com', '1234567', 'aaabbb123', 'münchen', 0, true),
-    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'worker3', 'workerson', 'Ms.', 'worker3@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'worker4', 'workerson', 'Frau', 'worker4@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'worker5', 'workerson', null, 'worker5@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('8824a15c-98f5-49d9-bd97-43d1cba3f62c', 'worker6', 'workerson', null, 'worker6@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'worker7', 'workerson', 'Mr.', 'worker7@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true),
-    ('dda832b4-b8e3-43df-a457-d77043b01751', 'worker8', 'workerson', 'Mr.', 'worker8@gmail.com', '1234567', 'aaabbb123', 'berlin', 0, true);
+    ('bb2c6e16-2228-4ac1-8482-1f3548672b43', 'user', 'userson', 'Mr.', 'user@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true),
+    ('455aee9c-9629-466f-bfc5-8d956da74769', 'admin', 'adminson', 'Mr.', 'admin@gmail.com', '1234567', 'aaabbb123', 'F', 0, true),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'worker1', 'workerson', 'Mr.', 'worker1@gmail.com', '1234567', 'aaabbb123', 'HH', 0, true),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'worker2', 'workerson', 'Herr', 'worker2@gmail.com', '1234567', 'aaabbb123', 'M', 0, true),
+    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'worker3', 'workerson', 'Ms.', 'worker3@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true),
+    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'worker4', 'workerson', 'Frau', 'worker4@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true),
+    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'worker5', 'workerson', null, 'worker5@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true),
+    ('8824a15c-98f5-49d9-bd97-43d1cba3f62c', 'worker6', 'workerson', null, 'worker6@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true),
+    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'worker7', 'workerson', 'Mr.', 'worker7@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true),
+    ('dda832b4-b8e3-43df-a457-d77043b01751', 'worker8', 'workerson', 'Mr.', 'worker8@gmail.com', '1234567', 'aaabbb123', 'BE', 0, true);
 
 
 insert into public.user_roles (user_id, role)
@@ -35,15 +35,15 @@ values
     ('dda832b4-b8e3-43df-a457-d77043b01751', 'WORKER');
 
 
-insert into public.worker_info (worker_id, description, phone, whatsapp, telegram, viber)
+insert into public.worker_info (worker_id, description, phone, whatsapp, telegram, viber, country, city)
 values
-    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'best plumber', '+49111111111', 'plumber-w', 'plumber-t', 'plumber-v'),
-    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'best electrician', '+49222222222', 'electrician-w', 'electrician-t', 'electrician-v'),
-    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'best vocal-coach', '+49444444444', 'vocal-coach-w', 'vocal-coach-t', 'vocal-coach-v'),
-    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'not so good electrician', '+49555555555', 'meh-electrician-w', 'meh-electrician-t', 'meh-electrician-v'),
-    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'not so good plumber', '+49666666666', 'meh-plumber-w', 'meh-plumber-t', 'meh-plumber-v'),
-    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'fix toilets', '+49777777', 'plumber-w', 'plumber-t', 'plumber-v'),
-    ('dda832b4-b8e3-43df-a457-d77043b01751', 'fix sinks', '+498888888881', 'plumber-w', 'plumber-t', 'plumber-v');
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'best plumber', '+49111111111', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'HH'),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'best electrician', '+49222222222', 'electrician-w', 'electrician-t', 'electrician-v', 'DE', 'M'),
+    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'best vocal-coach', '+49444444444', 'vocal-coach-w', 'vocal-coach-t', 'vocal-coach-v', 'DE', 'BE'),
+    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'not so good electrician', '+49555555555', 'meh-electrician-w', 'meh-electrician-t', 'meh-electrician-v', 'DE', 'BE'),
+    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'not so good plumber', '+49666666666', 'meh-plumber-w', 'meh-plumber-t', 'meh-plumber-v', 'DE', 'BE'),
+    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'fix toilets', '+49777777', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'BE'),
+    ('dda832b4-b8e3-43df-a457-d77043b01751', 'fix sinks', '+498888888881', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'BE');
 
 insert into public.worker_services (worker_id, service_id, amount)
 values

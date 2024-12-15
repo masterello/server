@@ -6,6 +6,8 @@ import com.masterello.user.domain.PasswordReset;
 import com.masterello.user.domain.SupportRequest;
 import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.dto.UserDTO;
+import com.masterello.user.value.City;
+import com.masterello.user.value.Country;
 import io.restassured.http.Cookie;
 
 import java.time.OffsetDateTime;
@@ -40,7 +42,8 @@ public final class TestDataProvider {
 
     public static MasterelloUserEntity buildUser() {
         return MasterelloUserEntity.builder()
-                .city("Berlin")
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
                 .email("test@masterello.com")
                 .name("Name")
                 .lastname("Surname")
@@ -60,7 +63,8 @@ public final class TestDataProvider {
 
     public static UserDTO buildUserDto() {
         return UserDTO.builder()
-                .city("Berlin")
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
                 .email("test@masterello.com")
                 .name("Name")
                 .lastname("Surname")

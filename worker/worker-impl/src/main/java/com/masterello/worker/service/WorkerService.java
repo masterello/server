@@ -5,6 +5,7 @@ import com.masterello.category.dto.CategoryBulkRequest;
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.user.service.MasterelloUserService;
+import com.masterello.user.value.City;
 import com.masterello.user.value.Language;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.domain.FullWorkerPage;
@@ -71,7 +72,7 @@ public class WorkerService {
                 .orElseThrow(() -> new WorkerInfoNotFoundException("Worker info not found for worker " + workerId));
     }
 
-    public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<String> cities, PageRequestDTO pageRequestDTO) {
+    public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<City> cities, PageRequestDTO pageRequestDTO) {
 
         final List<Integer> categoriesWithChildren = getCategories(serviceIds);
         val filters = WorkerSearchFilters.builder()
@@ -98,7 +99,6 @@ public class WorkerService {
                 .name(masterelloUser.getName())
                 .lastname(masterelloUser.getLastname())
                 .title(masterelloUser.getTitle())
-                .city(masterelloUser.getCity())
                 .languages(masterelloUser.getLanguages())
                 .workerInfo(workerInfo)
                 .build();

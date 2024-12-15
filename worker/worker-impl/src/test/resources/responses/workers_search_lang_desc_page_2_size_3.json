@@ -5,7 +5,6 @@
       "title": "Herr",
       "name": "worker2",
       "lastname": "workerson",
-      "city": "münchen",
       "languages": ["EN", "UA"],
       "workerInfo": {
         "description": "best electrician",
@@ -13,6 +12,8 @@
         "telegram": "electrician-t",
         "whatsapp": "electrician-w",
         "viber": "electrician-v",
+        "country": "DE",
+        "city": "M",
         "services": [
           {
             "serviceId": 10,
@@ -30,7 +31,6 @@
       "title": "Mr.",
       "name": "worker1",
       "lastname": "workerson",
-      "city": "köln",
       "languages": [
         "DE",
         "RU"
@@ -41,6 +41,8 @@
         "telegram": "plumber-t",
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
+        "country": "DE",
+        "city": "HH",
         "services": [
           {
             "serviceId": 10,

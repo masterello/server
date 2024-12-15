@@ -2,6 +2,10 @@ package com.masterello.worker.domain;
 
 import com.masterello.commons.core.json.Patchable;
 import com.masterello.commons.core.sort.Sortable;
+import com.masterello.user.domain.CityConverter;
+import com.masterello.user.domain.CountryConverter;
+import com.masterello.user.value.City;
+import com.masterello.user.value.Country;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +43,18 @@ public class WorkerInfo {
     @Patchable
     @Column(name = "whatsapp")
     private String whatsapp;
+
+    @Patchable
+    @Sortable
+    @Column(name = "country")
+    @Convert(converter = CountryConverter.class)
+    private Country country;
+
+    @Patchable
+    @Sortable
+    @Column(name = "city")
+    @Convert(converter = CityConverter.class)
+    private City city;
 
     @Patchable
     @Column(name = "viber")

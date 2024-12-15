@@ -1,8 +1,6 @@
 package com.masterello.user.dto;
 
-import com.masterello.user.value.Language;
-import com.masterello.user.value.Role;
-import com.masterello.user.value.UserStatus;
+import com.masterello.user.value.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
@@ -24,7 +22,8 @@ public class UserDTO {
     @Email
     private String email;
     private String phone;
-    private String city;
+    private Country country;
+    private City city;
     private Boolean emailVerified;
     private Set<Role> roles;
     private UserStatus status;

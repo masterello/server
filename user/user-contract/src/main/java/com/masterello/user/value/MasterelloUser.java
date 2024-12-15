@@ -23,7 +23,9 @@ public interface MasterelloUser {
 
     String getPhone();
 
-    String getCity();
+    Country getCountry();
+
+    City getCity();
 
     UserStatus getStatus();
 

@@ -23,7 +23,8 @@ public class MasterelloTestUser implements MasterelloUser {
     private String lastname;
     private Set<Role> roles;
     private String phone;
-    private String city;
+    private Country country;
+    private City city;
     private UserStatus status;
     private boolean emailVerified;
     private List<Language> languages;

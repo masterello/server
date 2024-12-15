@@ -151,7 +151,7 @@ public class UserServiceTest {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode patch = mapper.readTree("""
                 [
-                    {"op":"replace","path":"/city","value":"Warsaw"}
+                    {"op":"replace","path":"/city","value":"HH"}
                 ]
                 """);
         when(userRepository.saveAndFlush(any())).thenReturn(savedUser);

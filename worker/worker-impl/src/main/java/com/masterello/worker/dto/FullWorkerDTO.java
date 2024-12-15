@@ -19,7 +19,6 @@ public class FullWorkerDTO {
     private String title;
     private String name;
     private String lastname;
-    private String city;
     private List<Language> languages;
     private WorkerInfoDTO workerInfo;
 }

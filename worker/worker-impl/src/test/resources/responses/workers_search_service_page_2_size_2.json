@@ -5,7 +5,6 @@
       "title": "Ms.",
       "name": "worker3",
       "lastname": "workerson",
-      "city": "berlin",
       "languages": ["DE", "EN"],
       "workerInfo": {
         "description": "best vocal-coach",
@@ -13,6 +12,8 @@
         "telegram": "vocal-coach-t",
         "whatsapp": "vocal-coach-w",
         "viber": "vocal-coach-v",
+        "country": "DE",
+        "city": "BE",
         "services": [
           {
             "serviceId": 10,
@@ -30,7 +31,6 @@
       "title": null,
       "name": "worker5",
       "lastname": "workerson",
-      "city": "berlin",
       "languages": [],
       "workerInfo": {
         "description": "not so good plumber",
@@ -38,6 +38,8 @@
         "telegram": "meh-plumber-t",
         "whatsapp": "meh-plumber-w",
         "viber": "meh-plumber-v",
+        "country": "DE",
+        "city": "BE",
         "services": [
           {
             "serviceId": 10,
