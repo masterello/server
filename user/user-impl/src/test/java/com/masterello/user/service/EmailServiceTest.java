@@ -62,7 +62,7 @@ public class EmailServiceTest {
         doNothing().when(mailSender).send(eq(mimeMessage));
 
         //WHEN
-        emailService.sendConfirmationEmail(user, token);
+        emailService.sendConfirmationEmail(user, token, null);
 
         //THEN
         verify(mailSender, times(1)).createMimeMessage();

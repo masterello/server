@@ -7,11 +7,12 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 
 @Service
@@ -19,8 +20,8 @@ import java.io.UnsupportedEncodingException;
 @RequiredArgsConstructor
 public class EmailService {
     private final EmailConfigProperties emailConfigProperties;
-    private static final String CONFIRMATION_LINK = "/api/user/confirmationLink/verifyUserToken?code=";
-    private static final String RESET_PASSWORD_LINK = "/reset-password?token=";
+    private static final String CONFIRMATION_LINK = "/user/confirm-email/";
+    private static final String RESET_PASSWORD_LINK = "/user/reset-password/";
     private static final String CONTENT = """
             Dear user,<br>
             Please click the link below to verify your registration:<br>
@@ -50,14 +51,15 @@ public class EmailService {
         sendMessage(user, text, emailConfigProperties.getResetPassSubject());
     }
 
-    public void sendConfirmationEmail(@NonNull MasterelloUser user, @NonNull String verificationCode) throws MessagingException, UnsupportedEncodingException {
-        String text = CONTENT.replace("${verifyURL}", buildRequestUrl(verificationCode));
+    public void sendConfirmationEmail(@NonNull MasterelloUser user, @NonNull String verificationCode,
+                                      @Nullable String locale) throws MessagingException, UnsupportedEncodingException {
+        String resolvedLocale = StringUtils.isBlank(locale) ? "en" : locale;
+        String text = CONTENT.replace("${verifyURL}", buildConfirmEmailUrl(verificationCode, resolvedLocale));
         sendMessage(user, text, emailConfigProperties.getRegistrationSubject());
     }
 
-    private String buildRequestUrl(String verificationCode) {
-        final String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
-        return baseUrl + CONFIRMATION_LINK + verificationCode;
+    private String buildConfirmEmailUrl(String verificationCode, String locale) {
+        return emailConfigProperties.getServiceUrl() +  "/" + locale + CONFIRMATION_LINK + verificationCode;
     }
 
     private String buildPasswordResetRequestUrl(String resetLinkToken, String locale) {

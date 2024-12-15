@@ -42,8 +42,9 @@ public class ConfirmationLinkController {
             @ApiResponse(responseCode = "500", description = "Error(s) while resending confirmation link"),
     })
     @PostMapping(value = "/resendToken", produces = {MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<Void> resendConfirmationLink(@RequestParam @Parameter(required = true) UUID userUuid) throws MessagingException, UnsupportedEncodingException {
-        confirmationLinkService.resendConfirmationLink(userUuid);
+    public ResponseEntity<Void> resendConfirmationLink(@RequestParam @Parameter(required = true) UUID userUuid,
+                                                       @RequestParam(required = false) @Parameter String locale) throws MessagingException, UnsupportedEncodingException {
+        confirmationLinkService.resendConfirmationLink(userUuid, locale);
         return ResponseEntity.ok().build();
     }
 }

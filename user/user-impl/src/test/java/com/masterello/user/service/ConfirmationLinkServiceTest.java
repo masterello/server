@@ -132,7 +132,7 @@ public class ConfirmationLinkServiceTest {
 
         //WHEN
         assertThrows(UserNotFoundException.class,
-                () -> confirmationLinkService.resendConfirmationLink(UUID.randomUUID()));
+                () -> confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null));
 
         //THEN
         verify(userRepository, times(1)).findById(any());
@@ -145,16 +145,16 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
+        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
 
         //THEN
         verify(userRepository, times(1)).findById(any());
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -167,16 +167,16 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
+        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
 
         //THEN
         verify(userRepository, times(1)).findById(any());
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -191,7 +191,7 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
+        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
 
         //THEN
         verify(userRepository, times(1)).findById(any());
@@ -203,15 +203,15 @@ public class ConfirmationLinkServiceTest {
         //WHEN
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID());
+        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
 
         //THEN
         verify(userRepository, times(1)).findById(any());
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -220,15 +220,15 @@ public class ConfirmationLinkServiceTest {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.sendConfirmationLink(buildUser());
+        confirmationLinkService.sendConfirmationLink(buildUser(), null);
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -240,15 +240,15 @@ public class ConfirmationLinkServiceTest {
 
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.sendConfirmationLink(buildUser());
+        confirmationLinkService.sendConfirmationLink(buildUser(), null);
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -256,14 +256,14 @@ public class ConfirmationLinkServiceTest {
     public void sendConfirmationLink() throws MessagingException, UnsupportedEncodingException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.sendConfirmationLink(buildUser());
+        confirmationLinkService.sendConfirmationLink(buildUser(), null);
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(confirmationLinkRepository, emailService);
     }
 
@@ -272,15 +272,15 @@ public class ConfirmationLinkServiceTest {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.sendConfirmationLinkSafe(buildUser());
+        confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -292,15 +292,15 @@ public class ConfirmationLinkServiceTest {
 
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.sendConfirmationLinkSafe(buildUser());
+        confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
@@ -308,14 +308,14 @@ public class ConfirmationLinkServiceTest {
     public void sendConfirmationLinkSafe() throws MessagingException, UnsupportedEncodingException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
-        doNothing().when(emailService).sendConfirmationEmail(any(), any());
+        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.sendConfirmationLinkSafe(buildUser());
+        confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any());
+        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(confirmationLinkRepository, emailService);
     }
 }

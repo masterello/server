@@ -52,7 +52,7 @@ class SignUpServiceTest {
         when(userService.createUser(eq(userToSave))).thenReturn(expectedUser);
 
         // when
-        MasterelloUser actualUser = signUpService.selfSignup(EMAIL, PASSWORD);
+        MasterelloUser actualUser = signUpService.selfSignup(EMAIL, PASSWORD, null);
 
         // then
         assertNotNull(actualUser);
@@ -64,7 +64,7 @@ class SignUpServiceTest {
         // Verify interactions with mocks
         verify(passwordEncoder).encode(PASSWORD);
         verify(userService).createUser(userToSave);
-        verify(confirmationLinkService).sendConfirmationLinkSafe(expectedUser);
+        verify(confirmationLinkService).sendConfirmationLinkSafe(expectedUser, null);
     }
 
     @Test

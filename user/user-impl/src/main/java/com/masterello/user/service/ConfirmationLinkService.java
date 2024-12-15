@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Nullable;
 import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -50,21 +51,21 @@ public class ConfirmationLinkService {
         checkToken(confirmationLink, user);
     }
 
-    public void sendConfirmationLinkSafe(@NonNull MasterelloUser user) {
+    public void sendConfirmationLinkSafe(@NonNull MasterelloUser user, @Nullable String locale) {
         try {
-            sendConfirmationLink(user);
+            sendConfirmationLink(user, locale);
         } catch (MessagingException | UnsupportedEncodingException e) {
             log.error("Error sending email", e);
         }
     }
 
-    public void sendConfirmationLink(@NonNull MasterelloUser user) throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLink(@NonNull MasterelloUser user, @Nullable String locale) throws MessagingException, UnsupportedEncodingException {
         log.info("Sending confirmation link for user {}", user);
         String verificationCode = checkConfirmationLinkRecord(user);
-        emailService.sendConfirmationEmail(user, verificationCode);
+        emailService.sendConfirmationEmail(user, verificationCode, locale);
     }
 
-    public void resendConfirmationLink(UUID userUuid) throws MessagingException, UnsupportedEncodingException {
+    public void resendConfirmationLink(UUID userUuid, String locale) throws MessagingException, UnsupportedEncodingException {
         var user = userRepository.findById(userUuid)
                 .orElseThrow(() -> new UserNotFoundException("user is not found"));
 
@@ -73,7 +74,7 @@ public class ConfirmationLinkService {
             return;
         }
 
-        sendConfirmationLink(user);
+        sendConfirmationLink(user, locale);
     }
 
     private void checkToken(ConfirmationLink confirmationLink, MasterelloUserEntity user) {
