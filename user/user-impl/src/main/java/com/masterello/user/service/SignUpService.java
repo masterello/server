@@ -22,7 +22,7 @@ public class SignUpService implements AuthNService{
     private final ConfirmationLinkService confirmationLinkService;
 
     @Transactional
-    public MasterelloUser selfSignup(String email, String password){
+    public MasterelloUser selfSignup(String email, String password, String locale){
         MasterelloUserEntity user = MasterelloUserEntity.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))
@@ -34,7 +34,7 @@ public class SignUpService implements AuthNService{
 
         log.info("User with email {} successfully registered. Sending confirmation link to the email", email);
 
-        confirmationLinkService.sendConfirmationLinkSafe(savedUser);
+        confirmationLinkService.sendConfirmationLinkSafe(savedUser, locale);
         return savedUser;
     }
 

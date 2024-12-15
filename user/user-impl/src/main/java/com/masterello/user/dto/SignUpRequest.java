@@ -15,4 +15,5 @@ public class SignUpRequest {
     @NotEmpty
     @Password
     private String password;
+    private String locale;
 }

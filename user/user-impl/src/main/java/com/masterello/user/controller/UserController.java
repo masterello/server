@@ -50,7 +50,7 @@ public class UserController {
     @RequestMapping(value = "/signup", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.CREATED)
     public UserDTO signUp(@Validated @RequestBody SignUpRequest request) {
-        MasterelloUser user = signUpService.selfSignup(request.getEmail(), request.getPassword());
+        MasterelloUser user = signUpService.selfSignup(request.getEmail(), request.getPassword(), request.getLocale());
         return userMapper.mapUserToDto(user);
     }
 
