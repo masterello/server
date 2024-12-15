@@ -3,9 +3,12 @@ package com.masterello.user.controller;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.dto.RequestPasswordResetDTO;
+import com.masterello.user.dto.ResetPasswordDTO;
 import com.masterello.user.repository.PasswordResetRepository;
 import com.masterello.user.repository.UserRepository;
 import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import org.junit.jupiter.api.Test;
@@ -45,63 +48,75 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
     public static final String BASE_URL = "/api/passwordReset";
 
     @Test
-    public void resetPassword_user_not_found() {
+    public void requestPasswordReset_user_not_found() {
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userEmail", "unknown@email.com")
-                    .queryParam("locale", "en")
+                    .contentType(ContentType.JSON)
+                    .body(RequestPasswordResetDTO.builder()
+                        .userEmail("unknown@email.com")
+                        .locale("en")
+                        .build())
                 .when()
-                    .post(BASE_URL)
+                    .post(BASE_URL + "/request")
                 .then()
                     .statusCode(404);
         //@formatter:on
     }
 
     @Test
-    public void resetPassword_user_not_verified() {
+    public void requestPasswordReset_user_not_verified() {
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userEmail", "not_verified_link_valid@gmail.com")
-                    .queryParam("locale", "en")
+                    .contentType(ContentType.JSON)
+                    .body(RequestPasswordResetDTO.builder()
+                        .userEmail("not_verified_link_valid@gmail.com")
+                        .locale("en")
+                        .build())
                 .when()
-                    .post(BASE_URL)
+                    .post(BASE_URL + "/request")
                 .then()
                     .statusCode(409);
         //@formatter:on
     }
 
     @Test
-    public void resetPassword_user_with_oauth() {
+    public void requestPasswordReset_user_with_oauth() {
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userEmail", "oauth@gmail.com")
-                    .queryParam("locale", "en")
+                    .contentType(ContentType.JSON)
+                    .body(RequestPasswordResetDTO.builder()
+                        .userEmail("oauth@gmail.com")
+                        .locale("en")
+                        .build())
                 .when()
-                    .post(BASE_URL)
+                    .post(BASE_URL + "/request")
                 .then()
                     .statusCode(406);
         //@formatter:on
     }
 
     @Test
-    public void resetPassword_rate_limit() {
+    public void requestPasswordReset_rate_limit() {
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userEmail", "verified2@gmail.com")
-                    .queryParam("locale", "en")
+                    .contentType(ContentType.JSON)
+                    .body(RequestPasswordResetDTO.builder()
+                        .userEmail("verified2@gmail.com")
+                        .locale("en")
+                        .build())
                 .when()
-                    .post(BASE_URL)
+                    .post(BASE_URL + "/request")
                 .then()
                     .statusCode(400);
         //@formatter:on
     }
 
     @Test
-    public void resetPassword() {
+    public void requestPasswordReset() {
 
         var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
 
@@ -111,10 +126,13 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userEmail", "verified@gmail.com")
-                    .queryParam("locale", "en")
+                    .contentType(ContentType.JSON)
+                    .body(RequestPasswordResetDTO.builder()
+                        .userEmail("verified@gmail.com")
+                        .locale("en")
+                        .build())
                 .when()
-                    .post(BASE_URL)
+                    .post(BASE_URL + "/request")
                 .then()
                     .statusCode(200);
         //@formatter:on
@@ -128,9 +146,13 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("password", "StrongPass123!")
+                    .contentType(ContentType.JSON)
+                    .body(ResetPasswordDTO.builder()
+                        .password("StrongPass123!")
+                        .token("test54")
+                        .build())
                 .when()
-                    .post(BASE_URL + "/test54")
+                    .post(BASE_URL)
                 .then()
                     .statusCode(404);
         //@formatter:on
@@ -141,9 +163,13 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("password", "StrongPass123!")
+                    .contentType(ContentType.JSON)
+                    .body(ResetPasswordDTO.builder()
+                        .password("StrongPass123!")
+                        .token("test1")
+                        .build())
                 .when()
-                    .post(BASE_URL + "/test1")
+                    .post(BASE_URL)
                 .then()
                     .statusCode(400);
         //@formatter:on
@@ -154,9 +180,13 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("password", "invalid")
+                    .contentType(ContentType.JSON)
+                    .body(ResetPasswordDTO.builder()
+                        .password("invalid")
+                        .token("test2")
+                        .build())
                 .when()
-                    .post(BASE_URL + "/test2")
+                    .post(BASE_URL)
                 .then()
                     .statusCode(400);
         //@formatter:on
@@ -169,9 +199,13 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("password", password)
+                    .contentType(ContentType.JSON)
+                    .body(ResetPasswordDTO.builder()
+                        .password(password)
+                        .token("test2")
+                        .build())
                 .when()
-                    .post(BASE_URL + "/test2")
+                    .post(BASE_URL)
                 .then()
                     .statusCode(200);
         //@formatter:on
