@@ -44,6 +44,9 @@ public class WorkerService {
     private final PatchService patchService;
     private final ReadOnlyCategoryService categoryService;
     private final MasterelloUserService masterelloUserService;
+    private static final PageRequestDTO.Sort DEFAULT_SORT = PageRequestDTO.Sort.builder()
+            .fields(List.of("workerId"))
+            .order(PageRequestDTO.SortOrder.DESC).build();
 
     public WorkerInfo storeWorkerInfo(WorkerInfo workerInfo) {
         return workerInfoRepository.save(workerInfo);
@@ -77,7 +80,6 @@ public class WorkerService {
         PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
         val workerIds = workerInfoRepository.findWorkerIdsByFilters(cities, languages, categoriesWithChildren, pageRequest);
         val workers = workerInfoRepository.findAllByWorkerIdIn(workerIds.toSet(), pageRequest.getSort());
-//        val workers = workerInfoRepository.findByFilters(cities ,languages, categoriesWithChildren, pageRequest);
         val fullWorkers = getFullWorkerProjections(workers);
         return new FullWorkerPage(fullWorkers, workerIds.getTotalElements());
     }
@@ -131,11 +133,13 @@ public class WorkerService {
 
     private static PageRequest validateAndPreparePageRequest(PageRequestDTO pageRequestDTO) {
         try {
-            val mappedSortingFields = SortUtil.mapSortingFields(pageRequestDTO.getSort().getFields(), WorkerInfo.class);
+            PageRequestDTO.Sort sort = pageRequestDTO.getSort() == null ? DEFAULT_SORT : pageRequestDTO.getSort();
+
+            val mappedSortingFields = SortUtil.mapSortingFields(sort.getFields(), WorkerInfo.class);
             return PageRequest.of(
                     pageRequestDTO.getPage() - 1,
                     pageRequestDTO.getPageSize(),
-                    pageRequestDTO.getSort().getOrder() == PageRequestDTO.SortOrder.DESC ? Sort.Direction.DESC : Sort.Direction.ASC,
+                    sort.getOrder() == PageRequestDTO.SortOrder.DESC ? Sort.Direction.DESC : Sort.Direction.ASC,
                     mappedSortingFields.toArray(new String[0])
             );
         } catch (Exception ex) {

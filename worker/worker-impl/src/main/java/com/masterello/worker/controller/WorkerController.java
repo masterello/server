@@ -41,7 +41,7 @@ public class WorkerController {
             @AuthZRule(roles = {AuthZRole.ADMIN})
     })
     @RequestMapping(value = "/{worker_uuid}/info", method = RequestMethod.PUT)
-    @ResponseStatus(HttpStatus.CREATED)
+    @ResponseStatus(HttpStatus.OK)
     public WorkerInfoDTO storeWorkerInfo(@OwnerId @PathVariable("worker_uuid") @Parameter(required = true) UUID workerId,
                                          @RequestBody @Valid WorkerInfoDTO request) {
         WorkerInfo infoToStore = workerInfoMapper.mapToEntity(request);

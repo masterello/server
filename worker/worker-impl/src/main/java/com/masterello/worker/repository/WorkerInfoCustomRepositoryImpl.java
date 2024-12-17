@@ -13,14 +13,17 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Selection;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepository {
 
@@ -30,11 +33,15 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
     @Override
     public Page<UUID> findWorkerIdsByFilters(List<City> cities, List<Language> languages, List<Integer> serviceIds, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<UUID> query = cb.createQuery(UUID.class);
+        CriteriaQuery<Object[]> query = cb.createQuery(Object[].class); // Use Object[] to select multiple columns
         Root<WorkerInfo> root = query.from(WorkerInfo.class);
+        List<String> sortedFields = getSortFields(pageable.getSort());
+        List<Selection<?>> selectFields = new ArrayList<>();
+        sortedFields.forEach(field -> {
+            selectFields.add(root.get(field)); // Add sorting fields
+        });
 
-        // Select only workerId
-        query.select(root.get("workerId"));
+        query.multiselect(selectFields);
 
         // Build predicates
         Predicate[] predicates = getPredicates(cities, languages, serviceIds, root);
@@ -46,7 +53,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         applySorting(query, root, cb, pageable);
 
         // Create a typed query for pagination
-        TypedQuery<UUID> typedQuery = entityManager.createQuery(query);
+        TypedQuery<Object[]> typedQuery = entityManager.createQuery(query);
 
         // Apply pagination
         int pageSize = pageable.getPageSize();
@@ -54,8 +61,11 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         typedQuery.setFirstResult(pageNumber * pageSize);
         typedQuery.setMaxResults(pageSize);
 
-        // Fetch results
-        List<UUID> workerIds = typedQuery.getResultList();
+        // Fetch results - return only workerId as UUID
+        List<UUID> workerIds = new ArrayList<>();
+        for (Object[] row : typedQuery.getResultList()) {
+            workerIds.add((UUID) row[sortedFields.indexOf("workerId")]); // Extract the workerId from the result array
+        }
 
         // Count query for total elements
         CriteriaBuilder ccb = entityManager.getCriteriaBuilder();
@@ -66,6 +76,14 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         Long totalElements = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(workerIds, pageable, totalElements);
+    }
+
+    private List<String> getSortFields(Sort sort) {
+        ArrayList<String> sortFields = sort.stream().map(Sort.Order::getProperty).collect(Collectors.toCollection(ArrayList::new));
+        if(!sortFields.contains("workerId")) {
+            sortFields.add("workerId");
+        }
+        return sortFields;
     }
 
     @NotNull

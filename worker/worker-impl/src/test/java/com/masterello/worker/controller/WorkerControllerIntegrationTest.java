@@ -58,6 +58,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     private ReadOnlyCategoryService categoryService;
     @Autowired
     private MasterelloUserService userService;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.WORKER})
@@ -86,13 +88,14 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .put("/api/worker/{uuid}/info", WORKER_6.toString())
                 .then()
-                    .statusCode(201)
+                    .statusCode(200)
                     .body("description", is(DESCRIPTION))
                     .body("whatsapp", is(WHATSAPP))
                     .body("telegram", is(TELEGRAM))
                     .body("phone", is(PHONE))
                     .body("viber", nullValue())
                     .body("services", hasSize(2))
+                    .body("registeredAt", notNullValue())
                     .body("services", containsInAnyOrder(
                         Map.of("serviceId", 10, "amount", 100),
                         Map.of("serviceId", 20, "amount", 200)
@@ -127,7 +130,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .when()
                     .put("/api/worker/{uuid}/info", WORKER_6.toString())
                 .then()
-                    .statusCode(201)
+                    .statusCode(200)
                     .body("description", is(DESCRIPTION))
                     .body("whatsapp", is(WHATSAPP))
                     .body("telegram", is(TELEGRAM))
@@ -379,7 +382,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         .pageSize(10)
                         .sort(PageRequestDTO.Sort.builder()
                                 .order(order)
-                                .fields(List.of("workerId"))
+                                .fields(List.of("registeredAt", "workerId"))
                                 .build())
                         .build())
                 .build();
@@ -427,10 +430,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .pageRequest(PageRequestDTO.builder()
                         .page(page)
                         .pageSize(pageSize)
-                        .sort(PageRequestDTO.Sort.builder()
-                                .order(PageRequestDTO.SortOrder.DESC)
-                                .fields(List.of("workerId"))
-                                .build())
                         .build())
                 .build();
 
@@ -626,8 +625,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @SneakyThrows
-    public static WorkerSearchResponse readWorkerFromFile(String filePath) {
-        ObjectMapper objectMapper = new ObjectMapper();
+    public WorkerSearchResponse readWorkerFromFile(String filePath) {
         return objectMapper.readValue(new File(filePath), WorkerSearchResponse.class);
     }
 

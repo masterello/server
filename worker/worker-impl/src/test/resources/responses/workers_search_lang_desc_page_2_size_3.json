@@ -19,7 +19,8 @@
             "serviceId": 15,
             "amount": 500
           }
-        ]
+        ],
+        "registeredAt": "2024-12-10T15:00:00.111111Z"
       }
     },
     {
@@ -41,7 +42,8 @@
             "serviceId": 40,
             "amount": 400
           }
-        ]
+        ],
+        "registeredAt": "2024-12-11T15:00:00.111111Z"
       }
     }
   ],
