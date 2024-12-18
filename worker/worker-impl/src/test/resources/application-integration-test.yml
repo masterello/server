@@ -19,10 +19,11 @@ spring:
           lob:
             non_contextual_creation: 'true'
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create
   sql:
     init:
       mode: always
+
 
 masterello:
   user:
@@ -32,3 +33,6 @@ masterello:
       subject: Please verify your registration
       sender: Masterello
 
+# Enable Hibernate SQL logging
+logging.level.org.hibernate.SQL: debug
+logging.level.org.hibernate.type: trace

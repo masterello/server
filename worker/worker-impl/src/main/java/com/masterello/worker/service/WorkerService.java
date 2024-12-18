@@ -6,7 +6,7 @@ import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
-import com.masterello.user.value.Language;
+import com.masterello.worker.domain.Language;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
@@ -15,11 +15,9 @@ import com.masterello.worker.dto.PageRequestDTO;
 import com.masterello.worker.exception.InvalidSearchRequestException;
 import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
-import com.masterello.worker.repository.SearchWorkerRepository;
 import com.masterello.worker.repository.WorkerInfoRepository;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.commons.core.sort.util.SortUtil;
-import com.masterello.worker.repository.WorkerSearchFilters;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -32,6 +30,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,9 +42,11 @@ public class WorkerService {
 
     private final WorkerInfoRepository workerInfoRepository;
     private final PatchService patchService;
-    private final SearchWorkerRepository searchWorkerRepository;
     private final ReadOnlyCategoryService categoryService;
     private final MasterelloUserService masterelloUserService;
+    private static final PageRequestDTO.Sort DEFAULT_SORT = PageRequestDTO.Sort.builder()
+            .fields(List.of("workerId"))
+            .order(PageRequestDTO.SortOrder.DESC).build();
 
     public WorkerInfo storeWorkerInfo(WorkerInfo workerInfo) {
         return workerInfoRepository.save(workerInfo);
@@ -75,19 +76,30 @@ public class WorkerService {
     public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<City> cities, PageRequestDTO pageRequestDTO) {
 
         final List<Integer> categoriesWithChildren = getCategories(serviceIds);
-        val filters = WorkerSearchFilters.builder()
-                .services(categoriesWithChildren)
-                .languages(languages)
-                .cities(cities).build();
-        val total = searchWorkerRepository.getTotalCount(filters);
-        if( total > 0 ) {
-            PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
-            val workersIds = searchWorkerRepository.findWorkersIds(filters, pageRequest);
-            return workersIds.isEmpty() ? FullWorkerPage.emptyPage(total) :
-                    new FullWorkerPage(searchWorkerRepository.findWorkers(workersIds, pageRequest.getSort()), total);
-        } else {
-            return FullWorkerPage.emptyPage(total);
-        }
+
+        PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
+        val workerIds = workerInfoRepository.findWorkerIdsByFilters(cities, languages, categoriesWithChildren, pageRequest);
+        val workers = workerInfoRepository.findAllByWorkerIdIn(workerIds.toSet(), pageRequest.getSort());
+        val fullWorkers = getFullWorkerProjections(workers);
+        return new FullWorkerPage(fullWorkers, workerIds.getTotalElements());
+    }
+
+    private List<FullWorkerProjection> getFullWorkerProjections(List<WorkerInfo> workers) {
+        Set<UUID> ids = workers.stream().map(WorkerInfo::getWorkerId).collect(Collectors.toSet());
+        Map<UUID, MasterelloUser> users = masterelloUserService.findAllByIds(ids);
+        return workers.stream()
+                .map(wi -> toFullWorkerProjection(wi, users.get(wi.getWorkerId())))
+                .toList();
+    }
+
+    private FullWorkerProjection toFullWorkerProjection(WorkerInfo workerInfo, MasterelloUser masterelloUser) {
+        return FullWorkerProjection.builder()
+                .uuid(masterelloUser.getUuid())
+                .title(masterelloUser.getTitle())
+                .lastname(masterelloUser.getLastname())
+                .name(masterelloUser.getName())
+                .workerInfo(workerInfo)
+                .build();
     }
 
     public FullWorkerProjection getFullWorkerInfo(UUID workerId) {
@@ -99,7 +111,6 @@ public class WorkerService {
                 .name(masterelloUser.getName())
                 .lastname(masterelloUser.getLastname())
                 .title(masterelloUser.getTitle())
-                .languages(masterelloUser.getLanguages())
                 .workerInfo(workerInfo)
                 .build();
     }
@@ -122,11 +133,13 @@ public class WorkerService {
 
     private static PageRequest validateAndPreparePageRequest(PageRequestDTO pageRequestDTO) {
         try {
-            val mappedSortingFields = SortUtil.mapSortingFields(pageRequestDTO.getSort().getFields(), FullWorkerProjection.class);
+            PageRequestDTO.Sort sort = pageRequestDTO.getSort() == null ? DEFAULT_SORT : pageRequestDTO.getSort();
+
+            val mappedSortingFields = SortUtil.mapSortingFields(sort.getFields(), WorkerInfo.class);
             return PageRequest.of(
                     pageRequestDTO.getPage() - 1,
                     pageRequestDTO.getPageSize(),
-                    pageRequestDTO.getSort().getOrder() == PageRequestDTO.SortOrder.DESC ? Sort.Direction.DESC : Sort.Direction.ASC,
+                    sort.getOrder() == PageRequestDTO.SortOrder.DESC ? Sort.Direction.DESC : Sort.Direction.ASC,
                     mappedSortingFields.toArray(new String[0])
             );
         } catch (Exception ex) {

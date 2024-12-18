@@ -1,54 +1,49 @@
 {
   "workers": [
     {
-      "uuid": "e4de38bf-168e-41fc-b7b1-b9d74a47529e",
-      "title": "Herr",
-      "name": "worker2",
+      "uuid": "b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52",
+      "title": null,
+      "name": "worker5",
       "lastname": "workerson",
-      "languages": ["EN", "UA"],
       "workerInfo": {
-        "description": "best electrician",
-        "phone": "+49222222222",
-        "telegram": "electrician-t",
-        "whatsapp": "electrician-w",
-        "viber": "electrician-v",
+        "description": "not so good plumber",
+        "phone": "+49666666666",
+        "telegram": "meh-plumber-t",
+        "whatsapp": "meh-plumber-w",
+        "viber": "meh-plumber-v",
         "country": "DE",
-        "city": "M",
+        "city": "BE",
+        "languages": ["DE", "TR"],
         "services": [
           {
-            "serviceId": 10,
-            "amount": 150
-          },
-          {
-            "serviceId": 20,
-            "amount": 200
+            "serviceId": 15,
+            "amount": 500
           }
-        ]
+        ],
+        "registeredAt": "2024-12-10T15:00:00.111111Z"
       }
     },
     {
-      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
-      "title": "Mr.",
-      "name": "worker1",
+      "uuid": "57bc029c-d8e3-458f-b25a-7f73283cec98",
+      "title": "Frau",
+      "name": "worker4",
       "lastname": "workerson",
-      "languages": [
-        "DE",
-        "RU"
-      ],
       "workerInfo": {
-        "description": "best plumber",
-        "phone": "+49111111111",
-        "telegram": "plumber-t",
-        "whatsapp": "plumber-w",
-        "viber": "plumber-v",
+        "description": "not so good electrician",
+        "phone": "+49555555555",
+        "telegram": "meh-electrician-t",
+        "whatsapp": "meh-electrician-w",
+        "viber": "meh-electrician-v",
         "country": "DE",
-        "city": "HH",
+        "city": "BE",
+        "languages": ["DE"],
         "services": [
           {
-            "serviceId": 10,
-            "amount": 100
+            "serviceId": 40,
+            "amount": 400
           }
-        ]
+        ],
+        "registeredAt": "2024-12-11T15:00:00.111111Z"
       }
     }
   ],

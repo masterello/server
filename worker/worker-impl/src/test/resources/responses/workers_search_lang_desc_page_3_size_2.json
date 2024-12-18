@@ -1,25 +1,26 @@
 {
   "workers": [
     {
-      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
-      "title": "Mr.",
-      "name": "worker1",
+      "uuid": "57bc029c-d8e3-458f-b25a-7f73283cec98",
+      "title": "Frau",
+      "name": "worker4",
       "lastname": "workerson",
-      "languages": ["DE", "RU"],
       "workerInfo": {
-        "description": "best plumber",
-        "phone": "+49111111111",
-        "telegram": "plumber-t",
-        "whatsapp": "plumber-w",
-        "viber": "plumber-v",
+        "description": "not so good electrician",
+        "phone": "+49555555555",
+        "telegram": "meh-electrician-t",
+        "whatsapp": "meh-electrician-w",
+        "viber": "meh-electrician-v",
         "country": "DE",
-        "city": "HH",
+        "city": "BE",
+        "languages": ["DE"],
         "services": [
           {
-            "serviceId": 10,
-            "amount": 100
+            "serviceId": 40,
+            "amount": 400
           }
-        ]
+        ],
+        "registeredAt": "2024-12-11T15:00:00.111111Z"
       }
     }
   ],

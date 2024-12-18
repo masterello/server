@@ -10,7 +10,6 @@ import com.masterello.user.dto.AddRoleRequest;
 import com.masterello.user.dto.SignUpRequest;
 import com.masterello.user.dto.UpdatePasswordRequest;
 import com.masterello.user.repository.UserRepository;
-import com.masterello.user.value.Language;
 import com.masterello.user.value.Role;
 import io.restassured.RestAssured;
 import jakarta.mail.Session;
@@ -513,68 +512,6 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("email", is(VERIFIED_USER_EMAIL))
                     .body("name", is("User"))
                     .body("lastname", is("Test"));
-        //@formatter:on
-    }
-
-    @Test
-    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
-    public void patch_user_add_language() {
-        String body = "[{\"op\":\"add\",\"path\":\"/languages/-\",\"value\": \"EN\"}," +
-                "{\"op\":\"add\",\"path\":\"/languages/-\",\"value\":\"UA\"}]";
-
-        //@formatter:off
-        RestAssured
-                .given()
-                    .cookie(tokenCookie())
-                    .body(body)
-                    .accept("application/json")
-                    .contentType("application/json-patch+json")
-                .when()
-                    .patch("/api/user/{uuid}", VERIFIED_USER.toString())
-                .then()
-                    .statusCode(200)
-                    .body("languages", containsInAnyOrder(Language.EN.name(), Language.UA.name(), Language.DE.name(), Language.RU.name()));
-        //@formatter:on
-    }
-
-    @Test
-    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
-    public void patch_user_replace_language() {
-        String body = "[{\"op\":\"replace\",\"path\":\"/languages\",\"value\": [\"EN\",  \"UA\"]}]";
-
-        //@formatter:off
-        RestAssured
-                .given()
-                    .cookie(tokenCookie())
-                    .body(body)
-                    .accept("application/json")
-                    .contentType("application/json-patch+json")
-                .when()
-                    .patch("/api/user/{uuid}", VERIFIED_USER.toString())
-                .then()
-                    .statusCode(200)
-                    .body("languages", hasSize(2))
-                    .body("languages", containsInAnyOrder(Language.EN.name(), Language.UA.name()));
-        //@formatter:on
-    }
-
-    @Test
-    @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
-    public void patch_user_remove_language() {
-        String body = "[{\"op\":\"remove\",\"path\":\"/languages/0\"}]";
-
-        //@formatter:off
-        RestAssured
-                .given()
-                    .cookie(tokenCookie())
-                    .body(body)
-                    .accept("application/json")
-                    .contentType("application/json-patch+json")
-                .when()
-                .patch("/api/user/{uuid}", VERIFIED_USER.toString())
-                .then()
-                .statusCode(200)
-                .body("languages", contains(Language.DE.name()));
         //@formatter:on
     }
 

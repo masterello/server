@@ -1,53 +1,55 @@
 {
   "workers": [
     {
-      "uuid": "d1c822c9-0ee4-462a-a88e-7c45e3bb0e54",
-      "title": "Ms.",
-      "name": "worker3",
+      "uuid": "e4de38bf-168e-41fc-b7b1-b9d74a47529e",
+      "title": "Herr",
+      "name": "worker2",
       "lastname": "workerson",
-      "languages": ["DE", "EN"],
       "workerInfo": {
-        "description": "best vocal-coach",
-        "phone": "+49444444444",
-        "telegram": "vocal-coach-t",
-        "whatsapp": "vocal-coach-w",
-        "viber": "vocal-coach-v",
+        "description": "best electrician",
+        "phone": "+49222222222",
+        "telegram": "electrician-t",
+        "whatsapp": "electrician-w",
+        "viber": "electrician-v",
         "country": "DE",
-        "city": "BE",
+        "city": "M",
+        "languages": ["EN", "UA"],
         "services": [
           {
             "serviceId": 10,
-            "amount": 300
+            "amount": 150
           },
           {
-            "serviceId": 30,
-            "amount": 300
+            "serviceId": 20,
+            "amount": 200
           }
-        ]
+        ],
+        "registeredAt": "2024-12-13T15:00:00.111111Z"
       }
     },
     {
-      "uuid": "b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52",
-      "title": null,
-      "name": "worker5",
+      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "title": "Mr.",
+      "name": "worker1",
       "lastname": "workerson",
-      "languages": [],
       "workerInfo": {
-        "description": "not so good plumber",
-        "phone": "+49666666666",
-        "telegram": "meh-plumber-t",
-        "whatsapp": "meh-plumber-w",
-        "viber": "meh-plumber-v",
+        "description": "best plumber",
+        "phone": "+49111111111",
+        "telegram": "plumber-t",
+        "whatsapp": "plumber-w",
+        "viber": "plumber-v",
         "country": "DE",
-        "city": "BE",
+        "city": "HH",
+        "languages": ["DE", "RU"],
         "services": [
           {
             "serviceId": 10,
-            "amount": 500
+            "amount": 100
           }
-        ]
+        ],
+        "registeredAt": "2024-12-14T15:00:00.111111Z"
       }
     }
   ],
-  "count": 6
+  "count": 5
 }

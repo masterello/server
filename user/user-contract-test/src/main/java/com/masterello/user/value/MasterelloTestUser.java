@@ -27,7 +27,6 @@ public class MasterelloTestUser implements MasterelloUser {
     private City city;
     private UserStatus status;
     private boolean emailVerified;
-    private List<Language> languages;
 
     @Override
     public String getUsername() {

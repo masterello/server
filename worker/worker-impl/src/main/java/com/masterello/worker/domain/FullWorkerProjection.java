@@ -1,11 +1,9 @@
 package com.masterello.worker.domain;
 
 import com.masterello.commons.core.sort.Sortable;
-import com.masterello.user.value.Language;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -19,7 +17,6 @@ public class FullWorkerProjection {
     private String name;
     @Sortable
     private String lastname;
-    private List<Language> languages;
     @Sortable(nested = true, targetTableAlias = "wi")
     private WorkerInfo workerInfo;
 }

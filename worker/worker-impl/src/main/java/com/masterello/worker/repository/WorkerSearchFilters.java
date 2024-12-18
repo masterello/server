@@ -1,7 +1,7 @@
 package com.masterello.worker.repository;
 
 import com.masterello.user.value.City;
-import com.masterello.user.value.Language;
+import com.masterello.worker.domain.Language;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Data;

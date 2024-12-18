@@ -46,8 +46,7 @@ public class UserApiSecurityConfig {
         RequestMatcher publicEndpoints = new OrRequestMatcher(
                 new AntPathRequestMatcher("/api/user/signup"),
                 new AntPathRequestMatcher("/api/user/confirmationLink/**"),
-                new AntPathRequestMatcher("/api/user/resetPassword/**"),
-                new AntPathRequestMatcher("/api/user/supported-languages")
+                new AntPathRequestMatcher("/api/user/resetPassword/**")
         );
         AuthFilter authFilter = new AuthFilter(
                 new NegatedRequestMatcher(publicEndpoints), authService);
