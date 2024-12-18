@@ -11,11 +11,6 @@ values
     ('e8b0639f-148c-4f74-b834-bbe04072a999', 'USER'),
     ('49200ea0-3879-11ee-be56-0242ac120002', 'USER');
 
-insert into public.user_languages (user_id, language)
-values
-     ('49200ea0-3879-11ee-be56-0242ac120002', 'RU'),
-     ('49200ea0-3879-11ee-be56-0242ac120002', 'DE');
-
 insert into public.confirmation_link (uuid, user_uuid, token, expires_at)
 values
     ('7a321348-387a-11ee-be56-0242ac120002', '49200ea0-3879-11ee-be56-0242ac120002', '84e9798e-387a-11ee-be56-0242ac120002', NOW()),
