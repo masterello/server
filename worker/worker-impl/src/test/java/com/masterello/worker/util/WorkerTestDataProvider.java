@@ -2,13 +2,20 @@ package com.masterello.worker.util;
 
 
 import com.masterello.category.dto.CategoryDto;
+import com.masterello.user.value.City;
+import com.masterello.user.value.Country;
 import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.user.value.MasterelloUser;
+import com.masterello.user.value.Role;
+import com.masterello.user.value.UserStatus;
+import com.masterello.worker.domain.Language;
+import com.masterello.worker.domain.WorkerInfo;
 import io.restassured.http.Cookie;
 
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.masterello.auth.config.AuthConstants.M_TOKEN_COOKIE;
@@ -67,6 +74,8 @@ public final class WorkerTestDataProvider {
                 .title("Mr.")
                 .name("worker1")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
+                .roles(Set.of(Role.WORKER))
                 .build());
 
         workers.put(WORKER_2, MasterelloTestUser.builder()
@@ -74,6 +83,7 @@ public final class WorkerTestDataProvider {
                 .title("Herr")
                 .name("worker2")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         workers.put(WORKER_3, MasterelloTestUser.builder()
@@ -81,6 +91,7 @@ public final class WorkerTestDataProvider {
                 .title("Ms.")
                 .name("worker3")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         workers.put(WORKER_4, MasterelloTestUser.builder()
@@ -88,6 +99,7 @@ public final class WorkerTestDataProvider {
                 .title("Frau")
                 .name("worker4")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         workers.put(WORKER_5, MasterelloTestUser.builder()
@@ -95,6 +107,7 @@ public final class WorkerTestDataProvider {
                 .title(null)
                 .name("worker5")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         workers.put(WORKER_6, MasterelloTestUser.builder()
@@ -102,6 +115,7 @@ public final class WorkerTestDataProvider {
                 .title(null)
                 .name("worker6")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         workers.put(WORKER_7, MasterelloTestUser.builder()
@@ -109,6 +123,7 @@ public final class WorkerTestDataProvider {
                 .title("Mr.")
                 .name("worker7")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         workers.put(WORKER_8, MasterelloTestUser.builder()
@@ -116,8 +131,19 @@ public final class WorkerTestDataProvider {
                 .title("Mr.")
                 .name("worker8")
                 .lastname("workerson")
+                .status(UserStatus.ACTIVE)
                 .build());
 
         return workers;
+    }
+
+    public static WorkerInfo getWorkerInfo(UUID workerId) {
+        return WorkerInfo.builder()
+                .workerId(workerId)
+                .city(City.BERLIN)
+                .country(Country.GERMANY)
+                .active(true)
+                .languages(Set.of(Language.EN))
+                .build();
     }
 }

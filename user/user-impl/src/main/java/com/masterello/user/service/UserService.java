@@ -3,17 +3,21 @@ package com.masterello.user.service;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.event.UserStatusChangedEvent;
 import com.masterello.user.exception.InvalidUserUpdateException;
 import com.masterello.user.exception.SamePasswordException;
 import com.masterello.user.exception.UserAlreadyExistsException;
 import com.masterello.user.exception.UserHasRequestedRoleException;
 import com.masterello.user.exception.UserNotFoundException;
+import com.masterello.user.exception.UserStatusCannotBeUpdatedException;
 import com.masterello.user.repository.UserRepository;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
+import com.masterello.user.value.UserStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,11 +32,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class UserService implements MasterelloUserService  {
+public class UserService implements MasterelloUserService {
 
     private final UserRepository userRepository;
     private final PatchService patchService;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher publisher;
 
     @Transactional
     public MasterelloUser createUser(MasterelloUserEntity user) {
@@ -59,10 +64,10 @@ public class UserService implements MasterelloUserService  {
         MasterelloUserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found by id"));
 
-        if(!passwordEncoder.matches(oldPassword, user.getPassword())) {
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new IllegalArgumentException("Old password is not correct");
         }
-        if(passwordEncoder.matches(newPassword, user.getPassword())) {
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw new SamePasswordException("New password is same");
         }
 
@@ -125,5 +130,15 @@ public class UserService implements MasterelloUserService  {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    public void changeStatus(UUID userId, UserStatus status) {
+        MasterelloUser masterelloUser = retrieveUserByUuid(userId);
+        if (masterelloUser.getStatus() == status) {
+            throw new UserStatusCannotBeUpdatedException(status);
+        }
+        ((MasterelloUserEntity) masterelloUser).setStatus(status);
+        MasterelloUser updatedUser = userRepository.save((MasterelloUserEntity) masterelloUser);
+        publisher.publishEvent(new UserStatusChangedEvent(updatedUser));
     }
 }

@@ -44,7 +44,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         query.multiselect(selectFields);
 
         // Build predicates
-        Predicate[] predicates = getPredicates(cities, languages, serviceIds, root);
+        Predicate[] predicates = getPredicates(cities, languages, serviceIds, root, cb);
 
         // Apply predicates
         query.where(cb.and(predicates)).distinct(true);
@@ -71,7 +71,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         CriteriaBuilder ccb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Long> countQuery = ccb.createQuery(Long.class);
         Root<WorkerInfo> countRoot = countQuery.from(WorkerInfo.class);
-        var countPredicates = getPredicates(cities, languages, serviceIds, countRoot);
+        var countPredicates = getPredicates(cities, languages, serviceIds, countRoot, ccb);
         countQuery.select(ccb.countDistinct(countRoot)).where(ccb.and(countPredicates));
         Long totalElements = entityManager.createQuery(countQuery).getSingleResult();
 
@@ -87,9 +87,11 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
     }
 
     @NotNull
-    private static Predicate[] getPredicates(List<City> cities, List<Language> languages, List<Integer> serviceIds, Root<WorkerInfo> root) {
+    private static Predicate[] getPredicates(List<City> cities, List<Language> languages, List<Integer> serviceIds,
+                                             Root<WorkerInfo> root, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
 
+        predicates.add(cb.equal(root.get("active"), true));
         if (cities != null && !cities.isEmpty()) {
             predicates.add(root.get("city").in(cities));
         }

@@ -8,6 +8,7 @@ import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.dto.UserDTO;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
+import com.masterello.user.value.UserStatus;
 import io.restassured.http.Cookie;
 
 import java.time.OffsetDateTime;
@@ -50,6 +51,7 @@ public final class TestDataProvider {
                 .phone("12345677")
                 .password("pass")
                 .emailVerified(false)
+                .status(UserStatus.ACTIVE)
                 .build();
     }
 
