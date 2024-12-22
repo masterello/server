@@ -1,6 +1,8 @@
 package com.masterello.user.service;
 
 
+import com.masterello.user.dto.ResendConfirmationLinkDTO;
+import com.masterello.user.dto.VerifyUserTokenDTO;
 import com.masterello.user.exception.ConfirmationLinkNotFoundException;
 import com.masterello.user.exception.TokenExpiredException;
 import com.masterello.user.exception.UserAlreadyActivatedException;
@@ -46,7 +48,9 @@ public class ConfirmationLinkServiceTest {
 
         //WHEN
         assertThrows(ConfirmationLinkNotFoundException.class,
-                () -> confirmationLinkService.activateUser(UUID.randomUUID().toString()));
+                () -> confirmationLinkService.activateUser(VerifyUserTokenDTO.builder()
+                        .token(UUID.randomUUID().toString())
+                        .build()));
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByToken(any());
@@ -61,7 +65,9 @@ public class ConfirmationLinkServiceTest {
 
         //WHEN
         assertThrows(UserNotFoundException.class,
-                () -> confirmationLinkService.activateUser(UUID.randomUUID().toString()));
+                () -> confirmationLinkService.activateUser(VerifyUserTokenDTO.builder()
+                        .token(UUID.randomUUID().toString())
+                        .build()));
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByToken(any());
@@ -79,7 +85,9 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
 
         //WHEN
-        assertThrows(TokenExpiredException.class, () -> confirmationLinkService.activateUser(UUID.randomUUID().toString()));
+        assertThrows(TokenExpiredException.class, () -> confirmationLinkService.activateUser(VerifyUserTokenDTO.builder()
+                .token(UUID.randomUUID().toString())
+                .build()));
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByToken(any());
@@ -100,7 +108,9 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
 
         //WHEN
-        assertThrows(UserAlreadyActivatedException.class, () -> confirmationLinkService.activateUser(UUID.randomUUID().toString()));
+        assertThrows(UserAlreadyActivatedException.class, () -> confirmationLinkService.activateUser(VerifyUserTokenDTO.builder()
+                .token(UUID.randomUUID().toString())
+                .build()));
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByToken(any());
@@ -116,7 +126,9 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.saveAndFlush(any())).thenReturn(buildUser());
 
         //WHEN
-        confirmationLinkService.activateUser(UUID.randomUUID().toString());
+        confirmationLinkService.activateUser(VerifyUserTokenDTO.builder()
+                .token(UUID.randomUUID().toString())
+                .build());
 
         //THEN
         verify(confirmationLinkRepository, times(1)).findByToken(any());
@@ -132,7 +144,9 @@ public class ConfirmationLinkServiceTest {
 
         //WHEN
         assertThrows(UserNotFoundException.class,
-                () -> confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null));
+                () -> confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
+                        .userUuid(UUID.randomUUID())
+                        .build()));
 
         //THEN
         verify(userRepository, times(1)).findById(any());
@@ -148,7 +162,9 @@ public class ConfirmationLinkServiceTest {
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
+        confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
+                .userUuid(UUID.randomUUID())
+                .build());
 
         //THEN
         verify(userRepository, times(1)).findById(any());
@@ -170,7 +186,9 @@ public class ConfirmationLinkServiceTest {
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
+        confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
+                .userUuid(UUID.randomUUID())
+                .build());
 
         //THEN
         verify(userRepository, times(1)).findById(any());
@@ -191,7 +209,9 @@ public class ConfirmationLinkServiceTest {
         when(userRepository.findById(any())).thenReturn(Optional.of(user));
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
+        confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
+                .userUuid(UUID.randomUUID())
+                .build());
 
         //THEN
         verify(userRepository, times(1)).findById(any());
@@ -206,7 +226,9 @@ public class ConfirmationLinkServiceTest {
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
-        confirmationLinkService.resendConfirmationLink(UUID.randomUUID(), null);
+        confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
+                .userUuid(UUID.randomUUID())
+                .build());
 
         //THEN
         verify(userRepository, times(1)).findById(any());

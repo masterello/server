@@ -2,6 +2,8 @@ package com.masterello.user.controller;
 
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
+import com.masterello.user.dto.ResendConfirmationLinkDTO;
+import com.masterello.user.dto.VerifyUserTokenDTO;
 import io.restassured.RestAssured;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
@@ -13,6 +15,7 @@ import org.springframework.test.context.jdbc.SqlGroup;
 import java.util.Properties;
 import java.util.UUID;
 
+import static com.masterello.user.util.TestDataProvider.tokenCookie;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -28,13 +31,17 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void verifyToken_token_not_found() {
         UUID token = UUID.randomUUID();
+        VerifyUserTokenDTO tokenDTO = VerifyUserTokenDTO.builder().token(token.toString()).build();
 
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("code", token.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(tokenDTO)
                 .when()
-                    .get(BASE_URL + "/verifyUserToken")
+                    .post(BASE_URL + "/verifyUserToken")
                 .then()
                     .statusCode(404);
         //@formatter:on
@@ -43,13 +50,17 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void verifyToken_user_not_found() {
         UUID token = UUID.fromString("84e9798e-387a-11ee-be56-000000000002");
+        VerifyUserTokenDTO tokenDTO = VerifyUserTokenDTO.builder().token(token.toString()).build();
 
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("code", token.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(tokenDTO)
                 .when()
-                    .get(BASE_URL + "/verifyUserToken")
+                    .post(BASE_URL + "/verifyUserToken")
                 .then()
                     .statusCode(404);
         //@formatter:on
@@ -58,13 +69,17 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void verifyToken_user_already_verified() {
         UUID token = UUID.fromString("84e9798e-387a-11ee-be56-0242ac120002");
+        VerifyUserTokenDTO tokenDTO = VerifyUserTokenDTO.builder().token(token.toString()).build();
 
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("code", token.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(tokenDTO)
                 .when()
-                    .get(BASE_URL + "/verifyUserToken")
+                    .post(BASE_URL + "/verifyUserToken")
                 .then()
                     .statusCode(409);
         //@formatter:on
@@ -73,6 +88,7 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void verifyToken_token_expired() {
         UUID token = UUID.fromString("84e9798e-387a-11ee-be56-0242ac120099");
+        VerifyUserTokenDTO tokenDTO = VerifyUserTokenDTO.builder().token(token.toString()).build();
 
         var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
 
@@ -82,9 +98,12 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("code", token.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(tokenDTO)
                 .when()
-                    .get(BASE_URL + "/verifyUserToken")
+                    .post(BASE_URL + "/verifyUserToken")
                 .then()
                     .statusCode(400);
         //@formatter:on
@@ -93,13 +112,17 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void verifyToken() {
         UUID token = UUID.fromString("84e9798e-387a-11ee-be56-0242ac120011");
+        VerifyUserTokenDTO tokenDTO = VerifyUserTokenDTO.builder().token(token.toString()).build();
 
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("code", token.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(tokenDTO)
                 .when()
-                    .get(BASE_URL + "/verifyUserToken")
+                    .post(BASE_URL + "/verifyUserToken")
                 .then()
                     .statusCode(200);
         //@formatter:on
@@ -108,6 +131,8 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void resendToken() {
         UUID userId = UUID.fromString("e8b0639f-148c-4f74-b834-bbe04072a416");
+        ResendConfirmationLinkDTO confirmationLinkDTO = ResendConfirmationLinkDTO.builder()
+                .userUuid(userId).build();
 
         var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
 
@@ -117,7 +142,10 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userUuid", userId.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(confirmationLinkDTO)
                 .when()
                     .post(BASE_URL + "/resendToken")
                 .then()
@@ -129,10 +157,15 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
 
     @Test
     public void resendToken_user_not_found() {
+        ResendConfirmationLinkDTO confirmationLinkDTO = ResendConfirmationLinkDTO.builder()
+                .userUuid(UUID.randomUUID()).build();
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userUuid", UUID.randomUUID().toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(confirmationLinkDTO)
                 .when()
                     .post(BASE_URL + "/resendToken")
                 .then()
@@ -145,6 +178,8 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
     @Test
     public void resendToken_email_verified() {
         UUID userId = UUID.fromString("49200ea0-3879-11ee-be56-0242ac120002");
+        ResendConfirmationLinkDTO confirmationLinkDTO = ResendConfirmationLinkDTO.builder()
+                .userUuid(userId).build();
 
         var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
 
@@ -154,7 +189,10 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
         //@formatter:off
         RestAssured
                 .given()
-                    .queryParam("userUuid", userId.toString())
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(confirmationLinkDTO)
                 .when()
                     .post(BASE_URL + "/resendToken")
                 .then()
