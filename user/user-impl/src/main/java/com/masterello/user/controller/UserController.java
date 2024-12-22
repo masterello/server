@@ -6,6 +6,7 @@ import com.masterello.auth.data.AuthZRole;
 import com.masterello.commons.core.validation.dto.ValidationErrorsDTO;
 import com.masterello.commons.security.data.MasterelloAuthentication;
 import com.masterello.user.dto.AddRoleRequest;
+import com.masterello.user.dto.ChangeStatusRequestDTO;
 import com.masterello.user.dto.SignUpRequest;
 import com.masterello.user.dto.UpdatePasswordRequest;
 import com.masterello.user.dto.UserDTO;
@@ -115,5 +116,15 @@ public class UserController {
     @RequestMapping(value = "/{uuid}/password", method = RequestMethod.POST, consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
     public void updatePassword(@OwnerId @PathVariable("uuid") @Parameter(required = true) UUID userId, @Validated @RequestBody UpdatePasswordRequest request) {
         userService.updatePassword(userId, request.getOldPassword(), request.getNewPassword());
+    }
+
+
+    @AuthZRules({
+            @AuthZRule(roles = {AuthZRole.ADMIN})
+    })
+    @Operation(method = "changeStatus", tags = "user", responses = {@ApiResponse(responseCode = "200", description = "Roles updated"), @ApiResponse(responseCode = "404", description = "User is not in the system"), @ApiResponse(responseCode = "500", description = "Error(s) while retrieving user and updating"),})
+    @PostMapping(value = "/{uuid}/change-status")
+    public void changeStatus(@OwnerId @PathVariable("uuid") @Parameter(required = true) UUID userId, @RequestBody @Validated ChangeStatusRequestDTO request) {
+        userService.changeStatus(userId, request.getStatus());
     }
 }

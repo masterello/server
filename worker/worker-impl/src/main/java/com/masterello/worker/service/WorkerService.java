@@ -15,6 +15,7 @@ import com.masterello.worker.dto.PageRequestDTO;
 import com.masterello.worker.exception.InvalidSearchRequestException;
 import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
+import com.masterello.worker.exception.WorkerNotFoundException;
 import com.masterello.worker.repository.WorkerInfoRepository;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.commons.core.sort.util.SortUtil;
@@ -49,6 +50,10 @@ public class WorkerService {
             .order(PageRequestDTO.SortOrder.DESC).build();
 
     public WorkerInfo storeWorkerInfo(WorkerInfo workerInfo) {
+        Boolean active = masterelloUserService.findById(workerInfo.getWorkerId())
+                .map(MasterelloUser::isEnabled)
+                .orElseThrow(() -> new WorkerNotFoundException("Worker is not found for id: " + workerInfo.getWorkerId()));
+        workerInfo.setActive(active);
         return workerInfoRepository.save(workerInfo);
     }
 

@@ -89,4 +89,7 @@ public class WorkerInfo {
     @CreatedDate
     @Column(name = "registered_at", updatable = false)
     private Instant registeredAt;
+
+    @Column(name = "active")
+    private boolean active;
 }

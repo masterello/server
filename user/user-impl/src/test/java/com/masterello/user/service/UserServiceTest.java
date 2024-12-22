@@ -6,25 +6,28 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.commons.core.json.exception.PatchFailedException;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.event.UserStatusChangedEvent;
 import com.masterello.user.exception.InvalidUserUpdateException;
 import com.masterello.user.exception.UserAlreadyExistsException;
 import com.masterello.user.exception.UserNotFoundException;
+import com.masterello.user.exception.UserStatusCannotBeUpdatedException;
 import com.masterello.user.repository.UserRepository;
+import com.masterello.user.value.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.masterello.user.util.TestDataProvider.VERIFIED_USER;
-import static com.masterello.user.util.TestDataProvider.buildCompleteUser;
-import static com.masterello.user.util.TestDataProvider.buildUser;
+import static com.masterello.user.util.TestDataProvider.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -40,6 +43,9 @@ public class UserServiceTest {
     private PatchService patchService = new PatchService(new ObjectMapper());
     @InjectMocks
     private UserService userService;
+    @Mock
+    private ApplicationEventPublisher publisher;
+
 
     @Test
     public void retrieveUserByUuid_userNotFound() {
@@ -246,5 +252,42 @@ public class UserServiceTest {
         verify(userRepository, times(1)).findById(VERIFIED_USER);
         verify(passwordEncoder, times(1)).encode("password");
         verify(userRepository, times(1)).save(any());
+    }
+
+    @Test
+    void changeStatus_shouldThrowExceptionWhenStatusIsTheSame() {
+        UUID userId = UUID.randomUUID();
+        UserStatus status = UserStatus.ACTIVE;
+        var user = buildUser();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThrows(UserStatusCannotBeUpdatedException.class, () -> {
+            userService.changeStatus(userId, status);
+        });
+
+        verify(userRepository, never()).save(any(MasterelloUserEntity.class));
+        verify(publisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void changeStatus_shouldUpdateStatusAndPublishEvent() {
+        ArgumentCaptor<UserStatusChangedEvent> captor = ArgumentCaptor.forClass(UserStatusChangedEvent.class);
+        doNothing().when(publisher).publishEvent(captor.capture());
+
+        UUID userId = UUID.randomUUID();
+        UserStatus newStatus = UserStatus.BANNED;
+        var user = buildUser();
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        var updatedUser = buildUser();
+        updatedUser.setStatus(newStatus);
+        when(userRepository.save(user)).thenReturn(updatedUser);
+
+        userService.changeStatus(userId, newStatus);
+
+        verify(userRepository).save(user);
+        UserStatusChangedEvent capturedEvent = captor.getValue();
+        assertEquals(updatedUser, capturedEvent.getUpdatedUser());
     }
 }

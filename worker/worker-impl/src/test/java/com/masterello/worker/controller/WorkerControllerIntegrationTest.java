@@ -64,7 +64,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.WORKER})
     void storeWorkerInfo() {
-
+        when(userService.findById(WORKER_6))
+                .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
                 new WorkerServiceDTO(20, 200));
 
@@ -106,7 +107,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.ADMIN})
     void storeWorkerInfo_by_admin() {
-
+        when(userService.findById(WORKER_6))
+                .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
                 new WorkerServiceDTO(20, 200));
 

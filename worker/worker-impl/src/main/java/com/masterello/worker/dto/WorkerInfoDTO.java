@@ -30,5 +30,4 @@ public class WorkerInfoDTO {
     private List<WorkerServiceDTO> services;
     private List<Language> languages;
     private Instant registeredAt;
-
 }

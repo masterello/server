@@ -7,10 +7,12 @@ import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.dto.AddRoleRequest;
+import com.masterello.user.dto.ChangeStatusRequestDTO;
 import com.masterello.user.dto.SignUpRequest;
 import com.masterello.user.dto.UpdatePasswordRequest;
 import com.masterello.user.repository.UserRepository;
 import com.masterello.user.value.Role;
+import com.masterello.user.value.UserStatus;
 import io.restassured.RestAssured;
 import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
@@ -531,5 +533,31 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .then()
                 .statusCode(400);
         //@formatter:on
+    }
+
+    @Test
+    @AuthMocked(userId = VERIFIED_USER_2_S, roles = {AuthZRole.ADMIN})
+    public void changeStatus_successful() {
+        MasterelloUserEntity masterelloUser = userRepository.findById(VERIFIED_USER).orElseThrow();
+        assertEquals(UserStatus.ACTIVE, masterelloUser.getStatus());
+
+        ChangeStatusRequestDTO request = ChangeStatusRequestDTO.builder()
+                .status(UserStatus.BANNED).build();
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/user/{uuid}/change-status", VERIFIED_USER.toString())
+                .then()
+                    .statusCode(200);
+
+        //@formatter:on
+        masterelloUser = userRepository.findById(VERIFIED_USER).orElseThrow();
+        assertEquals(UserStatus.BANNED, masterelloUser.getStatus());
     }
 }
