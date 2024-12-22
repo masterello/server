@@ -3,6 +3,8 @@ package com.masterello.user.service;
 
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.user.dto.ResendConfirmationLinkDTO;
+import com.masterello.user.dto.VerifyUserTokenDTO;
 import com.masterello.user.exception.ConfirmationLinkNotFoundException;
 import com.masterello.user.exception.TokenExpiredException;
 import com.masterello.user.exception.UserAlreadyActivatedException;
@@ -32,8 +34,10 @@ public class ConfirmationLinkService {
     private final UserRepository userRepository;
 
     @Transactional
-    public void activateUser(String token) {
+    public void activateUser(VerifyUserTokenDTO userTokenDTO) {
+        var token = userTokenDTO.getToken();
         log.info("Activating user by token {}", token);
+
 
         var confirmationLink = confirmationLinkRepository.findByToken(token).orElseThrow(() -> {
             log.info("Confirmation link by token {} is not found", token);
@@ -65,8 +69,8 @@ public class ConfirmationLinkService {
         emailService.sendConfirmationEmail(user, verificationCode, locale);
     }
 
-    public void resendConfirmationLink(UUID userUuid, String locale) throws MessagingException, UnsupportedEncodingException {
-        var user = userRepository.findById(userUuid)
+    public void resendConfirmationLink(ResendConfirmationLinkDTO confirmationLinkDTO) throws MessagingException, UnsupportedEncodingException {
+        var user = userRepository.findById(confirmationLinkDTO.getUserUuid())
                 .orElseThrow(() -> new UserNotFoundException("user is not found"));
 
         if (user.isEmailVerified()) {
@@ -74,7 +78,7 @@ public class ConfirmationLinkService {
             return;
         }
 
-        sendConfirmationLink(user, locale);
+        sendConfirmationLink(user, confirmationLinkDTO.getLocale());
     }
 
     private void checkToken(ConfirmationLink confirmationLink, MasterelloUserEntity user) {
