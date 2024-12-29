@@ -47,3 +47,22 @@ subprojects {
         useJUnitPlatform()
     }
 }
+
+tasks.register('createMigration') {
+    doLast {
+        if (project.hasProperty("migrationName")) {
+            String fileContents = new File("$projectDir/db/src/main/resources/db/sample_migration.sql").text
+
+            String migrationName = project.getProperty("migrationName").replaceAll(" ", "_").trim()
+
+            TimeZone.setDefault(TimeZone.getTimeZone('UTC'))
+            String dateStamp = new Date().format('yyyyMMdd')
+            String timeStamp = new Date().format('HHmmss')
+            String fileName = "V" + dateStamp + "_" + timeStamp + "__" + migrationName + ".sql"
+
+            new File("$projectDir/db/src/main/resources/db/migration/1.0.0/", fileName).text = fileContents
+        } else {
+            throw new GradleException('-PmigrationName is missing')
+        }
+    }
+}
