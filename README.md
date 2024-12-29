@@ -55,3 +55,12 @@ masterello:
 
 On merge to main branch Docker image is built and pushed to DigitalOcean Container registry with two tags: version-tag and latest tag
 DigitalOcean platfrom app is configured to autodeploy on new image with tag latest.
+
+
+## Create migration changeset
+Flyway apply only specific migration changeset specified under the db/migration folder
+and does not apply any other migrations in other folders
+Different versions cac be separated (example: 1.0.0 and others)
+
+### Example:
+* Create migration: ./gradlew createMigration -PmigrationName="migration_name_separated_by_underscore"
