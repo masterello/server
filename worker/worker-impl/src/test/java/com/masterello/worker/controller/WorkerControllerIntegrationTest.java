@@ -33,6 +33,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,8 +67,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     void storeWorkerInfo() {
         when(userService.findById(WORKER_6))
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
-        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
-                new WorkerServiceDTO(20, 200));
+        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
+                new WorkerServiceDTO(20, null, null));
 
         WorkerInfoDTO info = WorkerInfoDTO.builder()
                 .description(DESCRIPTION)
@@ -98,8 +99,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("services", hasSize(2))
                     .body("registeredAt", notNullValue())
                     .body("services", containsInAnyOrder(
-                        Map.of("serviceId", 10, "amount", 100),
-                        Map.of("serviceId", 20, "amount", 200)
+                            mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
+                            mapOf("serviceId", 20, "amount", null, "details", null)
                     ));
         //@formatter:on
     }
@@ -109,8 +110,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     void storeWorkerInfo_by_admin() {
         when(userService.findById(WORKER_6))
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
-        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
-                new WorkerServiceDTO(20, 200));
+        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
+                new WorkerServiceDTO(20, 200, null));
 
         WorkerInfoDTO info = WorkerInfoDTO.builder()
                 .description(DESCRIPTION)
@@ -140,8 +141,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("viber", nullValue())
                     .body("services", hasSize(2))
                     .body("services", containsInAnyOrder(
-                            Map.of("serviceId", 10, "amount", 100),
-                            Map.of("serviceId", 20, "amount", 200)
+                            mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
+                            mapOf("serviceId", 20, "amount", 200, "details", null)
                     ));
         //@formatter:on
     }
@@ -149,8 +150,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = USER_S)
     void storeWorkerInfo_fails_for_not_worker() {
-        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100),
-                new WorkerServiceDTO(20, 200));
+        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
+                new WorkerServiceDTO(20, 200, null));
 
         WorkerInfoDTO info = WorkerInfoDTO.builder()
                 .description(DESCRIPTION)
@@ -360,8 +361,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("phone", is("new phone"))
                     .body("services", hasSize(2))
                     .body("services", containsInAnyOrder(
-                            Map.of("serviceId", 10, "amount", 150),
-                            Map.of("serviceId", 20, "amount", 12)
+                            mapOf("serviceId", 10, "amount", 150, "details", null),
+                            mapOf("serviceId", 20, "amount", 12, "details", null)
                     ));
         //@formatter:on
     }
@@ -636,4 +637,13 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         when(categoryService.getAllChildCategoriesBulk(new CategoryBulkRequest(categories, true)))
                 .thenReturn(response);
     }
+
+    private <K, V> Map<K,V> mapOf(K k1, V v1, K k2, V v2, K k3, V v3) {
+        val map = new HashMap<K, V>();
+        map.put(k1, v1);
+        map.put(k2, v2);
+        map.put(k3, v3);
+        return map;
+    }
+
 }

@@ -15,5 +15,6 @@ public class WorkerServiceEntity {
     @Column(name = "service_id")
     private Integer serviceId;
     private Integer amount;
+    private String details;
 }
 

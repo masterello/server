@@ -47,6 +47,8 @@ public final class WorkerTestDataProvider {
     public static final String PHONE = "555-35-35";
     public static final String ACCESS_TOKEN = "bg6yX_eErXRKdklESRPHpyA5SDxzIi4EuYacVX29MKCMDcm_GniWXltRhjjh6FBbpfePaDGmVE5p72cA9agNd5WveHEK4gbm9u9tA9UqntlPLMYtFFaB";
 
+    public static final String WS_DETAILS = "Price for 45 minutes with basic support. Only available on Monday at 9 am. Weekends for double price.";
+
     public static CategoryDto randomCategory(int id, int parentId) {
         return new CategoryDto(
                 UUID.randomUUID(),

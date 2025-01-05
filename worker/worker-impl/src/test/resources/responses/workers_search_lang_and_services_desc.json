@@ -17,7 +17,8 @@
         "services": [
           {
             "serviceId": 10,
-            "amount": 100
+            "amount": 100,
+            "details": "Price per minute"
           }
         ],
         "registeredAt": "2024-12-14T15:00:00.111111Z"
