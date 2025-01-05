@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class WorkerServiceDTO {
     private Integer serviceId;
     private Integer amount;
+    private String details;
 }

@@ -9,18 +9,18 @@ values
     ('dda832b4-b8e3-43df-a457-d77043b01751', 'fix sinks', '+498888888881', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'BE', '2024-12-08T15:00:00.111111Z', true),
     ('dda832b4-b8e3-43df-a457-d77043b01759', 'not active', '+498888888883', 'not_active-w', 'not_active-t', 'not_active-v', 'DE', 'BE', '2024-12-08T15:00:00.111111Z', false);
 
-insert into public.worker_services (worker_id, service_id, amount)
+insert into public.worker_services (worker_id, service_id, amount, details)
 values
-    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 10, 100),
-    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 10, 150),
-    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 20, 200),
-    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 10, 300),
-    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 30, 300),
-    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 40, 400),
-    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 15, 500),
-    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 11, 600),
-    ('dda832b4-b8e3-43df-a457-d77043b01751', 12, 700),
-    ('dda832b4-b8e3-43df-a457-d77043b01759', 10, 100);
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 10, 100, 'Price per minute'),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 10, 150, null),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 20, 200, null),
+    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 10, 300, null),
+    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 30, 300, null),
+    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 40, 400, null),
+    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 15, 500, null),
+    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 11, 600, null),
+    ('dda832b4-b8e3-43df-a457-d77043b01751', 12, 700, null),
+    ('dda832b4-b8e3-43df-a457-d77043b01759', 10, 100, null);
 
 
 insert into public.worker_languages (worker_id, language)
