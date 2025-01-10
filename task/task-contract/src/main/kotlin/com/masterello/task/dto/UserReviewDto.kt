@@ -3,14 +3,12 @@ package com.masterello.task.dto
 import java.time.OffsetDateTime
 import java.util.*
 
-data class TaskDto(
+data class UserReviewDto(
     val uuid: UUID? = null,
     val userUuid: UUID,
-    val workerUuid: UUID? = null,
-    val categoryUuid: UUID,
-    val name: String,
-    val description: String,
-    val status: TaskStatus = TaskStatus.NEW,
+    val taskUuid: UUID,
+    val userReview: String,
+    val rating: Int,
     val createdDate: OffsetDateTime?,
     val updatedDate: OffsetDateTime?
 )
