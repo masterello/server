@@ -1,5 +1,6 @@
 package com.masterello.task.service
 
+import com.masterello.commons.security.data.MasterelloAuthentication
 import com.masterello.task.dto.*
 import com.masterello.task.entity.BaseRating
 import com.masterello.task.entity.Task
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -59,6 +61,12 @@ class TaskService(private val taskRepository: TaskRepository,
 
     override fun getTasks(taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
         val tasks = taskRepository.findAll(createPageable(taskDtoRequest))
+        return createTaskPage(tasks, taskDtoRequest.page)
+    }
+
+    override fun getOpenTasksByCategoryCode(taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
+        val tasks = taskRepository.findNewTasksByCategoryCode(taskDtoRequest.categoryCode,
+            createPageable(taskDtoRequest))
         return createTaskPage(tasks, taskDtoRequest.page)
     }
 
@@ -107,12 +115,13 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Updating task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
         }
 
-        taskDto.categoryUuid?.let { task.categoryUuid = it }
+        taskDto.categoryCode?.let { task.categoryCode = it }
         taskDto.name?.let { task.name = it }
         taskDto.description?.let { task.description = it }
 
@@ -135,6 +144,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Updating task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -167,6 +177,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Unassigning task from worker with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -200,6 +211,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Worker is confirming task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -231,6 +243,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Updating task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -275,6 +288,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Completing task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -306,6 +320,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Cancelling task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isEndedTask(task.status) || task.status == TaskStatus.IN_REVIEW) {
             throw BadRequestException("Task is already cancelled or done")
@@ -383,6 +398,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Completing task review with uuid: $taskUuid by ${reviewDto.reviewerType}" }
 
         val task = getTaskOrThrow(taskUuid)
+        checkTaskOwnership(task)
 
         if (isWorker) {
             if (task.workerUuid != reviewDto.reviewerUuid) {
@@ -445,5 +461,20 @@ class TaskService(private val taskRepository: TaskRepository,
         }
 
         return userRatingRepository.saveAndFlush(taskRating)
+    }
+
+    private fun getIdFromContext(): UUID {
+        val securityContext = SecurityContextHolder.getContext()
+        val tokenData = (securityContext.authentication as? MasterelloAuthentication)?.details
+            ?: throw IllegalStateException("Authentication is not of type MasterelloAuthentication")
+
+        return tokenData.userId
+    }
+
+    private fun checkTaskOwnership(task: Task) {
+        val uuid = getIdFromContext()
+        if (task.userUuid != uuid || task.workerUuid != uuid) {
+            throw BadRequestException("Invalid update attempt")
+        }
     }
 }

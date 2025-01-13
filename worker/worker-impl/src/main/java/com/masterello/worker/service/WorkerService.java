@@ -31,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -58,8 +59,8 @@ public class WorkerService implements ReadOnlyWorkerService {
     }
 
     @Override
-    public WorkerInfo getWorkerInfo(UUID workerId) {
-        return workerInfoRepository.findById(workerId).orElse(null);
+    public Optional<WorkerInfo> getWorkerInfo(UUID workerId) {
+        return workerInfoRepository.findById(workerId);
     }
 
     public WorkerInfo updateWorkerInfo(UUID workerId, JsonPatch patch) {

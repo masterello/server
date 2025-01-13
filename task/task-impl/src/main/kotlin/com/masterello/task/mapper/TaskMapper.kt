@@ -17,7 +17,7 @@ class TaskMapper {
             description = dto.description,
             userUuid = dto.userUuid,
             workerUuid = dto.workerUuid,
-            categoryUuid = dto.categoryUuid,
+            categoryCode = dto.categoryCode,
             status = dto.status
             )
     }
@@ -35,7 +35,7 @@ class TaskMapper {
             updatedDate = task.updatedDate,
             userUuid = task.userUuid,
             workerUuid = task.workerUuid,
-            categoryUuid = task.categoryUuid,
+            categoryCode = task.categoryCode,
             status = task.status
         )
     }

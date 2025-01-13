@@ -9,7 +9,7 @@ data class TaskDto(
     val uuid: UUID? = null,
     val userUuid: UUID,
     val workerUuid: UUID? = null,
-    val categoryUuid: UUID,
+    val categoryCode: Int,
     @field:NotNull
     @field:NotBlank val name: String,
     @field:NotNull

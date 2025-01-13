@@ -27,8 +27,8 @@ data class Task(
     @Column(name = "description", length = 755)
     var description: String = "",
 
-    @Column(name = "category_uuid")
-    var categoryUuid: UUID = UUID.randomUUID(),
+    @Column(name = "category_code")
+    var categoryCode: Int = 0,
 
     @Convert(converter = TaskStatusConverter::class)
     @Column(name = "status")

@@ -10,4 +10,5 @@ interface ReadOnlyTaskService {
     fun getUserTasks(userUuid: UUID, taskDtoRequest: TaskDtoRequest): PageOfTaskDto
     fun getWorkerTasks(workerUuid: UUID, taskDtoRequest: TaskDtoRequest): PageOfTaskDto
     fun getTasks(taskDtoRequest: TaskDtoRequest): PageOfTaskDto
+    fun getOpenTasksByCategoryCode(taskDtoRequest: TaskDtoRequest): PageOfTaskDto
 }

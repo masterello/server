@@ -3,7 +3,6 @@ package com.masterello.task.controller
 import com.masterello.auth.data.AuthZRole
 import com.masterello.commons.security.validation.AuthZRule
 import com.masterello.commons.security.validation.AuthZRules
-import com.masterello.commons.security.validation.OwnerId
 import com.masterello.task.dto.*
 import com.masterello.task.exception.NotFoundException
 import com.masterello.task.service.TaskService
@@ -59,12 +58,12 @@ class TaskController {
      * Default sort is date of creation
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER]),
     )
     @Operation(summary = "Retrieve user tasks", description = "View user tasks")
     @ApiResponse(responseCode = "200", description = "Retrieve paginated user tasks")
     @PostMapping("/user/{userUuid}/search")
-    fun getUserTasks(@OwnerId @PathVariable userUuid: UUID,
+    fun getUserTasks(@PathVariable userUuid: UUID,
                      @RequestBody taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
         return taskService.getUserTasks(userUuid, taskDtoRequest)
     }
@@ -75,12 +74,12 @@ class TaskController {
      * Default sort is date of creation
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.WORKER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.WORKER])
     )
     @Operation(summary = "Retrieve worker tasks", description = "View worker tasks")
     @ApiResponse(responseCode = "200", description = "Retrieve paginated worker tasks")
     @PostMapping("/worker/{workerUuid}/search")
-    fun getWorkerTasks(@OwnerId @PathVariable workerUuid: UUID,
+    fun getWorkerTasks(@PathVariable workerUuid: UUID,
                        @RequestBody taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
         return taskService.getWorkerTasks(workerUuid, taskDtoRequest)
     }
@@ -91,13 +90,23 @@ class TaskController {
      * Default sort is date of creation
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.ADMIN]),
+        AuthZRule(roles = [AuthZRole.ADMIN])
     )
     @Operation(summary = "Retrieve paginated tasks", description = "View paginated tasks")
     @ApiResponse(responseCode = "200", description = "Retrieve paginated tasks")
     @PostMapping("/search")
     fun getTasks(@Valid @RequestBody taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
         return taskService.getTasks(taskDtoRequest)
+    }
+
+    @AuthZRules(
+        AuthZRule(roles = [AuthZRole.WORKER])
+    )
+    @Operation(summary = "Retrieve new paginated tasks by category", description = "Retrieve new paginated tasks by category code")
+    @ApiResponse(responseCode = "200", description = "Retrieve new paginated tasks by category code")
+    @PostMapping("/worker/search")
+    fun getNewTasksByCategory(@Valid @RequestBody taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
+        return taskService.getOpenTasksByCategoryCode(taskDtoRequest)
     }
 
     /**
@@ -121,13 +130,12 @@ class TaskController {
      * @return updated task
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER]),
     )
     @Operation(summary = "Update task", description = "Update task")
     @ApiResponse(responseCode = "200", description = "Update task")
-    @PostMapping("/{userUuid}/{taskUuid}/update")
-    fun updateTask(@OwnerId @PathVariable userUuid: UUID,
-                   @PathVariable taskUuid: UUID,
+    @PostMapping("/{taskUuid}/update")
+    fun updateTask(@PathVariable taskUuid: UUID,
                    @Valid @RequestBody taskDto: UpdateTaskDto): TaskDto {
         return taskService.updateTask(taskUuid, taskDto)
     }
@@ -139,12 +147,12 @@ class TaskController {
      * @return assigned task
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER]),
     )
     @Operation(summary = "Assign task", description = "Assign task to a worker")
     @ApiResponse(responseCode = "200", description = "Assign task")
-    @PostMapping("/{userUuid}/{taskUuid}/assign")
-    fun assignTask(@OwnerId @PathVariable taskUuid: UUID,
+    @PostMapping("/{taskUuid}/assign")
+    fun assignTask(@PathVariable taskUuid: UUID,
                    @RequestParam workerUUID: UUID): TaskDto {
         return taskService.assignTask(taskUuid, workerUUID)
     }
@@ -156,13 +164,12 @@ class TaskController {
      * @return Unassigned task
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.WORKER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.WORKER]),
     )
     @Operation(summary = "Unassign task", description = "Unassign task from a worker")
     @ApiResponse(responseCode = "200", description = "Unassign task")
-    @PostMapping("/{workerUuid}/{taskUuid}/unassign")
-    fun unassignTask(@OwnerId @PathVariable workerUuid: UUID,
-                     @PathVariable taskUuid: UUID): TaskDto {
+    @PostMapping("/{taskUuid}/unassign")
+    fun unassignTask(@PathVariable taskUuid: UUID): TaskDto {
         return taskService.unassignTask(taskUuid)
     }
 
@@ -174,13 +181,12 @@ class TaskController {
      * @return reassigned task
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER]),
     )
     @Operation(summary = "Reassign task", description = "Reassign task to a worker")
     @ApiResponse(responseCode = "200", description = "Reassign task")
-    @PostMapping("/{userUuid}/{taskUuid}/reassign")
-    fun reassignTask(@OwnerId @PathVariable userUuid: UUID,
-                     @PathVariable taskUuid: UUID,
+    @PostMapping("/{taskUuid}/reassign")
+    fun reassignTask(@PathVariable taskUuid: UUID,
                      @RequestParam workerUUID: UUID): TaskDto {
         return taskService.reassignTask(taskUuid, workerUUID)
     }
@@ -191,13 +197,12 @@ class TaskController {
      * @return completed task
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER, AuthZRole.WORKER]),
     )
     @Operation(summary = "Complete task", description = "Complete task")
     @ApiResponse(responseCode = "200", description = "Complete task")
-    @PostMapping("/{userUuid}/{taskUuid}/complete")
-    fun completeTask(@OwnerId @PathVariable userUuid: UUID,
-                     @PathVariable taskUuid: UUID): TaskDto {
+    @PostMapping("/{taskUuid}/complete")
+    fun completeTask(@PathVariable taskUuid: UUID): TaskDto {
         return taskService.completeTask(taskUuid)
     }
 
@@ -207,13 +212,12 @@ class TaskController {
      * @return cancel task
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.USER]),
     )
     @Operation(summary = "Cancel task", description = "Cancel task")
     @ApiResponse(responseCode = "200", description = "Cancel task")
-    @PostMapping("/{userUuid}/{taskUuid}/cancel")
-    fun cancelTask(@OwnerId @PathVariable userUuid: UUID,
-                   @PathVariable taskUuid: UUID): TaskDto {
+    @PostMapping("/{taskUuid}/cancel")
+    fun cancelTask(@PathVariable taskUuid: UUID): TaskDto {
         return taskService.cancelTask(taskUuid)
     }
 
@@ -223,13 +227,13 @@ class TaskController {
      * @return Worker Review
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.WORKER], isOwner = true),
+        AuthZRule(roles = [AuthZRole.WORKER]),
     )
     @Operation(summary = "Move task by worker to in progress", description = "Move task by worker to in progress")
     @ApiResponse(responseCode = "200", description = "Move task by worker to in progress")
     @PostMapping("/{taskUuid}/worker/{workerUuid}/confirm")
     fun confirmTaskByWorker(@PathVariable taskUuid: UUID,
-                            @OwnerId @PathVariable workerUuid: UUID): TaskDto {
+                            @PathVariable workerUuid: UUID): TaskDto {
         return taskService.confirmTask(taskUuid, workerUuid)
     }
 

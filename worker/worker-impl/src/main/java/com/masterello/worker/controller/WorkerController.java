@@ -26,7 +26,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -60,10 +59,9 @@ public class WorkerController {
     @ResponseStatus(HttpStatus.OK)
     public WorkerInfoDTO getWorkerInfo(@OwnerId @PathVariable("worker_uuid") @Parameter(required = true) UUID workerId) {
         val workerInfo = workerService.getWorkerInfo(workerId);
-        if (Objects.isNull(workerInfo)) {
-           throw new WorkerInfoNotFoundException("Worker info not found for worker " + workerId);
-        }
-        return workerInfoMapper.mapToDto(workerInfo);
+        return workerInfo
+                .map(workerInfoMapper::mapToDto)
+                .orElseThrow(() -> new WorkerInfoNotFoundException("Worker info not found for worker " + workerId));
     }
 
     @AuthZRules({

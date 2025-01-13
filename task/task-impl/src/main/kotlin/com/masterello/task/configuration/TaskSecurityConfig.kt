@@ -27,12 +27,13 @@ open class TaskSecurityConfig(private val authService: AuthService) {
                 AntPathRequestMatcher("/api/tasks/worker/search/{workerUuid}", "POST"),
                 AntPathRequestMatcher("/api/tasks/", "POST"),
                 AntPathRequestMatcher("/api/tasks/search", "POST"),
-                AntPathRequestMatcher("/api/tasks/{userUuid}/{taskUuid}/update", "POST"),
-                AntPathRequestMatcher("/api/tasks/{userUuid}/{taskUuid}/assign", "POST"),
-                AntPathRequestMatcher("/api/tasks/{userUuid}/{taskUuid}/unassign", "POST"),
-                AntPathRequestMatcher("/api/tasks/{userUuid}/{taskUuid}/reassign", "POST"),
-                AntPathRequestMatcher("/api/tasks/{userUuid}/{taskUuid}/complete", "POST"),
-                AntPathRequestMatcher("/api/tasks/{userUuid}/{taskUuid}/cancel", "POST"),
+                AntPathRequestMatcher("/api/tasks/worker/search", "POST"),
+                AntPathRequestMatcher("/api/tasks/{taskUuid}/update", "POST"),
+                AntPathRequestMatcher("/api/tasks/{taskUuid}/assign", "POST"),
+                AntPathRequestMatcher("/api/tasks/{taskUuid}/unassign", "POST"),
+                AntPathRequestMatcher("/api/tasks/{taskUuid}/reassign", "POST"),
+                AntPathRequestMatcher("/api/tasks/{taskUuid}/complete", "POST"),
+                AntPathRequestMatcher("/api/tasks/{taskUuid}/cancel", "POST"),
                 AntPathRequestMatcher("/api/tasks/worker-review", "POST"),
                 AntPathRequestMatcher("/api/tasks/user-review", "POST"),
                 AntPathRequestMatcher("/api/tasks/{taskUuid}/worker/{workerUuid}/confirm", "POST"),
@@ -41,7 +42,7 @@ open class TaskSecurityConfig(private val authService: AuthService) {
         val authFilter = AuthFilter(protectedEndpoints, authService)
 
         http
-                .securityMatcher(AntPathRequestMatcher("/api/tasks/{workerUuid}/completed/count"))
+                .securityMatcher(AntPathRequestMatcher("/api/tasks/**"))
                 .csrf { it.disable() }
                 .authorizeHttpRequests { auth ->
                     auth
