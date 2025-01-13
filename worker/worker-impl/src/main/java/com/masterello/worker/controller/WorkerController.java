@@ -12,6 +12,7 @@ import com.masterello.worker.dto.FullWorkerDTO;
 import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.dto.WorkerSearchRequest;
 import com.masterello.worker.dto.WorkerSearchResponse;
+import com.masterello.worker.exception.WorkerInfoNotFoundException;
 import com.masterello.worker.mapper.FullWorkerMapper;
 import com.masterello.worker.mapper.WorkerInfoMapper;
 import com.masterello.worker.service.WorkerService;
@@ -25,6 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -58,6 +60,9 @@ public class WorkerController {
     @ResponseStatus(HttpStatus.OK)
     public WorkerInfoDTO getWorkerInfo(@OwnerId @PathVariable("worker_uuid") @Parameter(required = true) UUID workerId) {
         val workerInfo = workerService.getWorkerInfo(workerId);
+        if (Objects.isNull(workerInfo)) {
+           throw new WorkerInfoNotFoundException("Worker info not found for worker " + workerId);
+        }
         return workerInfoMapper.mapToDto(workerInfo);
     }
 

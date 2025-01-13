@@ -12,19 +12,11 @@ CREATE TABLE IF NOT EXISTS task(
                         updated_date timestamp with time zone DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS user_task_review(
+CREATE TABLE IF NOT EXISTS task_review(
                         uuid uuid NOT NULL PRIMARY KEY,
                         task_uuid uuid NOT NULL,
-                        user_uuid uuid NOT NULL,
-                        review character varying(755),
-                        created_date timestamp with time zone DEFAULT now(),
-                        updated_date timestamp with time zone DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS worker_task_review(
-                        uuid uuid NOT NULL PRIMARY KEY,
-                        task_uuid uuid NOT NULL,
-                        worker_uuid uuid NOT NULL,
+                        reviewer_uuid uuid NOT NULL,
+                        reviewer_type integer NOT NULL,
                         review character varying(755),
                         created_date timestamp with time zone DEFAULT now(),
                         updated_date timestamp with time zone DEFAULT now()
@@ -49,8 +41,8 @@ CREATE TABLE IF NOT EXISTS user_rating(
 CREATE INDEX IF NOT EXISTS task_user_idx ON task USING btree(user_uuid);
 CREATE INDEX IF NOT EXISTS task_worker_idx ON task USING btree(worker_uuid) WHERE worker_uuid IS NOT NULL;
 
-CREATE INDEX IF NOT EXISTS worker_task_review_task_uuid_idx ON worker_task_review USING btree(task_uuid);
-CREATE INDEX IF NOT EXISTS user_task_review_task_uuid_idx ON user_task_review USING btree(task_uuid);
+CREATE INDEX IF NOT EXISTS task_review_task_uuid_idx ON task_review USING btree(task_uuid);
+CREATE INDEX IF NOT EXISTS task_review_task_uuid_reviewer_uuid_idx ON task_review USING btree(task_uuid, reviewer_uuid);
 
 CREATE INDEX IF NOT EXISTS worker_rating_task_uuid_idx ON worker_rating USING btree(task_uuid);
 CREATE INDEX IF NOT EXISTS user_rating_task_uuid_idx ON user_rating USING btree(task_uuid);

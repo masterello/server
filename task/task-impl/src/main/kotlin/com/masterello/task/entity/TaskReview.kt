@@ -1,5 +1,7 @@
 package com.masterello.task.entity
 
+import com.masterello.task.converter.TaskReviewerTypeConverter
+import com.masterello.task.dto.ReviewerType
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
@@ -7,8 +9,8 @@ import java.time.OffsetDateTime
 import java.util.*
 
 @Entity
-@Table(name = "user_task_review", schema = "public")
-data class UserTaskReview(
+@Table(name = "task_review", schema = "public")
+data class TaskReview(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     val uuid: UUID? = null,
@@ -16,8 +18,12 @@ data class UserTaskReview(
     @Column(name = "task_uuid")
     var taskUuid: UUID = UUID.randomUUID(),
 
-    @Column(name = "user_uuid")
-    var userUuid: UUID = UUID.randomUUID(),
+    @Column(name = "reviewer_uuid")
+    var reviewerUuid: UUID = UUID.randomUUID(),
+
+    @Convert(converter = TaskReviewerTypeConverter::class)
+    @Column(name = "reviewer_type")
+    var reviewerType: ReviewerType = ReviewerType.WORKER,
 
     @Column(name = "review", length = 755)
     var review: String = "",

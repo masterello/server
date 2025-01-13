@@ -1,15 +1,18 @@
 package com.masterello.task.service
 
 import com.masterello.task.dto.*
+import com.masterello.task.entity.BaseRating
+import com.masterello.task.entity.Task
 import com.masterello.task.entity.UserRating
 import com.masterello.task.entity.WorkerRating
 import com.masterello.task.exception.BadRequestException
 import com.masterello.task.exception.NotFoundException
 import com.masterello.task.mapper.TaskMapper
-import com.masterello.task.mapper.UserTaskReviewMapper
-import com.masterello.task.mapper.WorkerTaskReviewMapper
+import com.masterello.task.mapper.TaskReviewMapper
 import com.masterello.task.repository.*
+import com.masterello.worker.service.ReadOnlyWorkerService
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -18,13 +21,12 @@ import java.util.*
 
 @Service
 class TaskService(private val taskRepository: TaskRepository,
-                  private val workerTaskReviewRepository: WorkerTaskReviewRepository,
+                  private val taskReviewRepository: TaskReviewRepository,
                   private val workerRatingRepository: WorkerRatingRepository,
                   private val userRatingRepository: UserRatingRepository,
-                  private val userTaskReviewRepository: UserTaskReviewRepository,
                   private val taskMapper: TaskMapper,
-                  private val workTaskReviewMapper: WorkerTaskReviewMapper,
-                  private val userTaskReviewMapper: UserTaskReviewMapper
+                  private val taskReviewMapper: TaskReviewMapper,
+                  private val workerService: ReadOnlyWorkerService,
 ) : ReadOnlyTaskService {
     private val log = KotlinLogging.logger {}
     /**
@@ -38,57 +40,30 @@ class TaskService(private val taskRepository: TaskRepository,
      * @return a TaskDto representing the retrieved task, or null if no task is found.
      * @throws NotFoundException if no task is found for the given UUID.
      */
-    override fun getTask(taskUuid: UUID): TaskDto {
+    override fun getTask(taskUuid: UUID): TaskDto? {
         log.info { "Searching for task: $taskUuid" }
-
-        val task = taskRepository.findById(taskUuid)
-        if (task.isEmpty) {
-            throw NotFoundException("Task not found")
-        }
-        val taskDto = taskMapper.mapEntityToDto(task.get())
-        log.info { "Found a task: $taskDto" }
-        return taskDto
+        return taskRepository.findById(taskUuid)
+            .map { taskMapper.mapEntityToDto(it) }
+            .orElse(null)
     }
 
     override fun getUserTasks(userUuid: UUID, taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
-        val pageable: Pageable = createPageable(taskDtoRequest)
-        val taskPage = taskRepository.findAllByUserUuid(userUuid, pageable)
-        val tasksDto = taskPage.content.map { taskMapper.mapEntityToDto(it) }
-        return PageOfTaskDto(
-            totalPages = taskPage.totalPages,
-            totalElements = taskPage.totalElements,
-            currentPage = taskDtoRequest.page,
-            tasks = tasksDto
-        )
+        val tasks = taskRepository.findAllByUserUuid(userUuid, createPageable(taskDtoRequest))
+        return createTaskPage(tasks, taskDtoRequest.page)
     }
 
     override fun getWorkerTasks(workerUuid: UUID, taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
-        val pageable: Pageable = createPageable(taskDtoRequest)
-        val taskPage = taskRepository.findAllByWorkerUuid(workerUuid, pageable)
-        val tasksDto = taskPage.content.map { taskMapper.mapEntityToDto(it) }
-        return PageOfTaskDto(
-            totalPages = taskPage.totalPages,
-            totalElements = taskPage.totalElements,
-            currentPage = taskDtoRequest.page,
-            tasks = tasksDto
-        )
+        val tasks = taskRepository.findAllByWorkerUuid(workerUuid, createPageable(taskDtoRequest))
+        return createTaskPage(tasks, taskDtoRequest.page)
     }
 
     override fun getTasks(taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
-        val pageable: Pageable = createPageable(taskDtoRequest)
-        val taskPage = taskRepository.findAll(pageable)
-        val tasksDto = taskPage.content.map { taskMapper.mapEntityToDto(it) }
-        return PageOfTaskDto(
-            totalPages = taskPage.totalPages,
-            totalElements = taskPage.totalElements,
-            currentPage = taskDtoRequest.page,
-            tasks = tasksDto
-        )
+        val tasks = taskRepository.findAll(createPageable(taskDtoRequest))
+        return createTaskPage(tasks, taskDtoRequest.page)
     }
 
-    fun getAmountOfCompletedWorkerTasks(workerUuid: UUID): Long {
-        return taskRepository.countByWorkerUuidAndCompletedStatus(workerUuid)
-    }
+    fun getAmountOfCompletedWorkerTasks(workerUuid: UUID): Long =
+        taskRepository.countByWorkerUuidAndCompletedStatus(workerUuid)
 
     /**
      * Creates a new task in the system. If worker is not specified, then task was created
@@ -105,8 +80,10 @@ class TaskService(private val taskRepository: TaskRepository,
         val task = taskMapper.mapDtoToEntity(taskDto)
         if (task.workerUuid == null) {
             task.status = TaskStatus.NEW
-        } else {
+        } else if (workerService.getWorkerInfo(task.workerUuid) != null) {
             task.status = TaskStatus.ASSIGNED_TO_WORKER
+        } else {
+            throw BadRequestException("Worker not found")
         }
         val savedTask = taskRepository.saveAndFlush(task)
         val savedTaskDto = taskMapper.mapEntityToDto(savedTask)
@@ -129,11 +106,7 @@ class TaskService(private val taskRepository: TaskRepository,
     fun updateTask(taskUuid: UUID, taskDto: UpdateTaskDto): TaskDto {
         log.info { "Updating task with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
+        val task = getTaskOrThrow(taskUuid)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -161,11 +134,8 @@ class TaskService(private val taskRepository: TaskRepository,
     fun assignTask(taskUuid: UUID, workerUuid: UUID): TaskDto {
         log.info { "Updating task with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
+        val task = getTaskOrThrow(taskUuid)
+
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
         }
@@ -196,16 +166,13 @@ class TaskService(private val taskRepository: TaskRepository,
     fun unassignTask(taskUuid: UUID): TaskDto {
         log.info { "Unassigning task from worker with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
+        val task = getTaskOrThrow(taskUuid)
+
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
         }
 
-        if (task.status in listOf(TaskStatus.ASSIGNED_TO_WORKER, TaskStatus.NEW)) {
+        if (isValidStatusTransition(task.status, TaskStatus.NEW)) {
             log.info {"Unassigning task from worker"}
             task.status = TaskStatus.NEW
         } else {
@@ -232,11 +199,8 @@ class TaskService(private val taskRepository: TaskRepository,
     fun confirmTask(taskUuid: UUID, workerUuid: UUID): TaskDto {
         log.info { "Worker is confirming task with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
+        val task = getTaskOrThrow(taskUuid)
+
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
         }
@@ -266,13 +230,15 @@ class TaskService(private val taskRepository: TaskRepository,
     fun reassignTask(taskUuid: UUID, workerUuid: UUID): TaskDto {
         log.info { "Updating task with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
+        val task = getTaskOrThrow(taskUuid)
+
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
+        }
+
+        if (task.workerUuid == workerUuid) {
+            log.info { "current worker is already assigned, nothing to do" }
+            return taskMapper.mapEntityToDto(task)
         }
 
         if (task.workerUuid == null) {
@@ -287,8 +253,8 @@ class TaskService(private val taskRepository: TaskRepository,
         //todo: send a notification to old worker that user removed
         // this task from him and he can left a review
         } else {
-            log.error { "Task with uuid is already completed: $taskUuid" }
-            throw BadRequestException("Task is already completed")
+            log.error { "Task with uuid is new or already completed: $taskUuid" }
+            throw BadRequestException("Task is new already completed")
         }
 
         val savedTask = taskRepository.saveAndFlush(task)
@@ -308,11 +274,8 @@ class TaskService(private val taskRepository: TaskRepository,
     fun completeTask(taskUuid: UUID): TaskDto {
         log.info { "Completing task with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
+        val task = getTaskOrThrow(taskUuid)
+
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
         }
@@ -342,12 +305,9 @@ class TaskService(private val taskRepository: TaskRepository,
     fun cancelTask(taskUuid: UUID): TaskDto {
         log.info { "Cancelling task with uuid: $taskUuid" }
 
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
-        if (isEndedTask(task.status)) {
+        val task = getTaskOrThrow(taskUuid)
+
+        if (isEndedTask(task.status) || task.status == TaskStatus.IN_REVIEW) {
             throw BadRequestException("Task is already cancelled or done")
         }
 
@@ -360,96 +320,25 @@ class TaskService(private val taskRepository: TaskRepository,
         return savedTaskDto
     }
 
-    fun reviewTaskByWorker(workerReviewDto: WorkerReviewDto): WorkerReviewDto {
-        val taskUuid = workerReviewDto.taskUuid
-        log.info { "Completing worker task review with uuid: $taskUuid" }
-
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
-
-        var taskReview = workerTaskReviewRepository.findByTaskUuid(taskUuid)
-
-        if (taskReview == null) {
-            taskReview = workTaskReviewMapper.mapDtoToEntity(workerReviewDto)
-        } else {
-            log.info { "Updating worker task review for task $taskUuid" }
-            taskReview.review = workerReviewDto.workerReview
+    fun reviewTaskByWorker(reviewDto: ReviewDto): ReviewDto {
+        if (reviewDto.reviewerType == ReviewerType.USER) {
+            throw BadRequestException("Invalid reviewer type")
         }
-        if (task.workerUuid != workerReviewDto.workerUuid) {
-            throw BadRequestException("Task is assigned to another worker")
-        }
-
-        var taskRating = workerRatingRepository.findByTaskUuid(taskUuid)
-
-        if (taskRating == null) {
-            taskRating = WorkerRating(rating = workerReviewDto.rating,
-                taskUuid = workerReviewDto.taskUuid)
-        } else {
-            log.info { "Updating worker rating for task $taskUuid" }
-            taskRating.rating = workerReviewDto.rating
-        }
-
-        val workerTaskReview = workerTaskReviewRepository.saveAndFlush(taskReview)
-        val workerRating = workerRatingRepository.saveAndFlush(taskRating)
-
-        val userTaskReview = userTaskReviewRepository.findByTaskUuid(taskUuid)
-        if (userTaskReview != null) {
-            task.status = TaskStatus.DONE
-        }
-        return workTaskReviewMapper.mapEntityToDto(workerTaskReview,workerRating)
+        return reviewTask(reviewDto, true)
     }
 
-    fun reviewTaskByUser(userReviewDto: UserReviewDto): UserReviewDto {
-        val taskUuid = userReviewDto.taskUuid
-        log.info { "Completing user task review with uuid: $taskUuid" }
-
-        val task = taskRepository.findById(taskUuid)
-            .orElseThrow {
-                log.error { "Task not found for uuid: $taskUuid" }
-                NotFoundException("Task not found")
-            }
-        if (task.userUuid != userReviewDto.userUuid) {
-            throw BadRequestException("Task is assigned to another user")
+    fun reviewTaskByUser(reviewDto: ReviewDto): ReviewDto {
+        if (reviewDto.reviewerType == ReviewerType.WORKER) {
+            throw BadRequestException("Invalid reviewer type")
         }
-
-        var taskReview = userTaskReviewRepository.findByTaskUuid(taskUuid)
-
-        if (taskReview == null) {
-            taskReview = userTaskReviewMapper.mapDtoToEntity(userReviewDto)
-        } else {
-            log.info { "Updating user task review for task $taskUuid" }
-            taskReview.review = userReviewDto.userReview
-        }
-
-        var taskRating = userRatingRepository.findByTaskUuid(taskUuid)
-
-        if (taskRating == null) {
-            taskRating = UserRating(rating = userReviewDto.rating,
-                taskUuid = userReviewDto.taskUuid)
-        } else {
-            log.info { "Updating worker rating for task $taskUuid" }
-            taskRating.rating = userReviewDto.rating
-        }
-
-        val userTaskReview = userTaskReviewRepository.saveAndFlush(taskReview)
-        val userRating = userRatingRepository.saveAndFlush(taskRating)
-
-        val workerTaskReview = workerTaskReviewRepository.findByTaskUuid(taskUuid)
-        if (workerTaskReview != null) {
-            task.status = TaskStatus.DONE
-            taskRepository.saveAndFlush(task)
-        }
-
-        return userTaskReviewMapper.mapEntityToDto(userTaskReview, userRating)
+        return reviewTask(reviewDto, false)
     }
 
     private fun isValidStatusTransition(currentStatus: TaskStatus, newStatus: TaskStatus): Boolean {
         return when (currentStatus) {
             TaskStatus.NEW -> newStatus in listOf(TaskStatus.ASSIGNED_TO_WORKER, TaskStatus.CANCELLED)
-            TaskStatus.ASSIGNED_TO_WORKER -> newStatus in listOf(TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED)
+            TaskStatus.ASSIGNED_TO_WORKER -> newStatus in listOf(TaskStatus.NEW, TaskStatus.ASSIGNED_TO_WORKER,
+                TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED)
             TaskStatus.IN_PROGRESS -> newStatus in listOf(TaskStatus.ASSIGNED_TO_WORKER, TaskStatus.IN_REVIEW,
                 TaskStatus.CANCELLED)
             TaskStatus.IN_REVIEW -> newStatus == TaskStatus.DONE
@@ -458,7 +347,7 @@ class TaskService(private val taskRepository: TaskRepository,
     }
 
     private fun isEndedTask(currentStatus: TaskStatus): Boolean {
-        return currentStatus in listOf(TaskStatus.CANCELLED, TaskStatus.DONE)
+        return currentStatus in listOf(TaskStatus.IN_REVIEW, TaskStatus.CANCELLED, TaskStatus.DONE)
     }
 
     private fun createPageable(taskDtoRequest: TaskDtoRequest): Pageable {
@@ -470,5 +359,91 @@ class TaskService(private val taskRepository: TaskRepository,
         }
         val sort = if (sortOrders.isNotEmpty()) Sort.by(sortOrders) else Sort.unsorted()
         return PageRequest.of(taskDtoRequest.page, taskDtoRequest.pageSize, sort)
+    }
+
+    private fun createTaskPage(tasks: Page<Task>, currentPage: Int ): PageOfTaskDto {
+        return PageOfTaskDto(
+                totalPages = tasks.totalPages,
+        totalElements = tasks.totalElements,
+        currentPage = currentPage,
+        tasks = tasks.content.map(taskMapper::mapEntityToDto)
+        )
+    }
+
+    private fun getTaskOrThrow(taskUuid: UUID): Task {
+        return taskRepository.findById(taskUuid)
+            .orElseThrow {
+                log.error { "Task not found for uuid: $taskUuid" }
+                NotFoundException("Task not found")
+            }
+    }
+
+    private fun reviewTask(reviewDto: ReviewDto, isWorker: Boolean): ReviewDto {
+        val taskUuid = reviewDto.taskUuid
+        log.info { "Completing task review with uuid: $taskUuid by ${reviewDto.reviewerType}" }
+
+        val task = getTaskOrThrow(taskUuid)
+
+        if (isWorker) {
+            if (task.workerUuid != reviewDto.reviewerUuid) {
+                throw BadRequestException("Task is assigned to another worker")
+            }
+        } else {
+            if (task.userUuid != reviewDto.reviewerUuid) {
+                throw BadRequestException("Task is assigned to another user")
+            }
+        }
+
+        var taskReview = taskReviewRepository.findByTaskUuidAndReviewerUuid(taskUuid, reviewDto.reviewerUuid)
+
+        if (taskReview == null) {
+            taskReview = taskReviewMapper.mapDtoToEntity(reviewDto)
+        } else {
+            log.info { "Updating user task review for task $taskUuid" }
+            taskReview.review = reviewDto.review
+        }
+        val updatedTaskReview = taskReviewRepository.saveAndFlush(taskReview)
+
+        val taskReviews = taskReviewRepository.findByTaskUuid(taskUuid)
+
+        val savedRating: BaseRating = if (isWorker) {
+            makeWorkerRating(taskUuid, reviewDto)
+        } else {
+            makeUserRating(taskUuid, reviewDto)
+        }
+
+        if (taskReviews.size == 2) {
+            task.status = TaskStatus.DONE
+            taskRepository.saveAndFlush(task)
+        }
+        return taskReviewMapper.mapEntityToDto(updatedTaskReview, savedRating.rating)
+    }
+
+    private fun makeWorkerRating(taskUuid: UUID, reviewDto: ReviewDto) : WorkerRating {
+        var taskRating = workerRatingRepository.findByTaskUuid(taskUuid)
+
+        if (taskRating == null) {
+            taskRating = WorkerRating(rating = reviewDto.rating,
+                taskUuid = reviewDto.taskUuid)
+        } else {
+            log.info { "Updating worker rating for task $taskUuid" }
+            taskRating.rating = reviewDto.rating
+        }
+
+        return workerRatingRepository.saveAndFlush(taskRating)
+    }
+
+    private fun makeUserRating(taskUuid: UUID, reviewDto: ReviewDto) : UserRating {
+        var taskRating = userRatingRepository.findByTaskUuid(taskUuid)
+
+        if (taskRating == null) {
+            taskRating = UserRating(rating = reviewDto.rating,
+                taskUuid = reviewDto.taskUuid)
+        } else {
+            log.info { "Updating user rating for task $taskUuid" }
+            taskRating.rating = reviewDto.rating
+        }
+
+        return userRatingRepository.saveAndFlush(taskRating)
     }
 }

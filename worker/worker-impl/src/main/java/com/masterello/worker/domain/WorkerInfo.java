@@ -6,6 +6,7 @@ import com.masterello.user.domain.CityConverter;
 import com.masterello.user.domain.CountryConverter;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
+import com.masterello.worker.value.Worker;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -36,7 +37,7 @@ import java.util.UUID;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "worker_info", schema = "public")
-public class WorkerInfo {
+public class WorkerInfo implements Worker {
 
     @Id
     @Sortable

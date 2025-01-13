@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class WorkerService {
+public class WorkerService implements ReadOnlyWorkerService {
 
     private final WorkerInfoRepository workerInfoRepository;
     private final PatchService patchService;
@@ -57,8 +57,9 @@ public class WorkerService {
         return workerInfoRepository.save(workerInfo);
     }
 
+    @Override
     public WorkerInfo getWorkerInfo(UUID workerId) {
-        return getWorkerInfoOrThrow(workerId);
+        return workerInfoRepository.findById(workerId).orElse(null);
     }
 
     public WorkerInfo updateWorkerInfo(UUID workerId, JsonPatch patch) {

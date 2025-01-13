@@ -29,6 +29,10 @@ project(':auth-contract-test').projectDir = new File('auth/auth-contract-test')
 
 include 'worker-impl'
 project(':worker-impl').projectDir = new File('worker/worker-impl')
+include 'worker-contract'
+project(':worker-contract').projectDir = new File('worker/worker-contract')
+include 'worker-contract-test'
+project(':worker-contract-test').projectDir = new File('worker/worker-contract-test')
 
 include 'category-impl'
 project(':category-impl').projectDir = new File('category/category-impl')
@@ -50,6 +54,4 @@ include 'task-contract'
 project(':task-contract').projectDir = new File('task/task-contract')
 include 'task-contract-test'
 project(':task-contract-test').projectDir = new File('task/task-contract-test')
-//include 'worker:worker-contract'
-//include 'worker:worker-contract-test'
 

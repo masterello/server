@@ -6,27 +6,23 @@ import org.hibernate.annotations.UpdateTimestamp
 import java.time.OffsetDateTime
 import java.util.*
 
-@Entity
-@Table(name = "worker_task_review", schema = "public")
-data class WorkerTaskReview(
+@MappedSuperclass
+abstract class BaseRating(
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    val uuid: UUID? = null,
+    open val uuid: UUID? = null,
 
-    @Column(name = "task_uuid")
-    var taskUuid: UUID = UUID.randomUUID(),
+    @Column(name = "task_uuid", nullable = false)
+    open var taskUuid: UUID = UUID.randomUUID(),
 
-    @Column(name = "worker_uuid")
-    var workerUuid: UUID = UUID.randomUUID(),
-
-    @Column(name = "review", length = 755)
-    var review: String = "",
+    @Column(name = "rating", nullable = false)
+    open var rating: Int = 1,
 
     @CreationTimestamp
     @Column(name = "created_date", insertable = false, updatable = false)
-    val createdDate: OffsetDateTime? = null,
+    open val createdDate: OffsetDateTime? = null,
 
     @UpdateTimestamp
     @Column(name = "updated_date", insertable = false, updatable = false)
-    val updatedDate: OffsetDateTime? = null
+    open val updatedDate: OffsetDateTime? = null
 )
