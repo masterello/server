@@ -5,6 +5,7 @@ dependencies {
     implementation project(':worker-impl')
     implementation project(':category-impl')
     implementation project(':file-impl')
+    implementation project(':task-impl')
     implementation project(':db')
     implementation project(':common-monitoring')
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

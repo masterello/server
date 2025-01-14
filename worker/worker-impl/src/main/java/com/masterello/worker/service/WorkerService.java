@@ -31,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -39,7 +40,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class WorkerService {
+public class WorkerService implements ReadOnlyWorkerService {
 
     private final WorkerInfoRepository workerInfoRepository;
     private final PatchService patchService;
@@ -57,8 +58,9 @@ public class WorkerService {
         return workerInfoRepository.save(workerInfo);
     }
 
-    public WorkerInfo getWorkerInfo(UUID workerId) {
-        return getWorkerInfoOrThrow(workerId);
+    @Override
+    public Optional<WorkerInfo> getWorkerInfo(UUID workerId) {
+        return workerInfoRepository.findById(workerId);
     }
 
     public WorkerInfo updateWorkerInfo(UUID workerId, JsonPatch patch) {
