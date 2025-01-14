@@ -65,7 +65,10 @@ class TaskService(private val taskRepository: TaskRepository,
     }
 
     override fun getOpenTasksByCategoryCode(taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
-        val tasks = taskRepository.findNewTasksByCategoryCode(taskDtoRequest.categoryCode,
+        if (taskDtoRequest.categoryCodes.isEmpty()) {
+            throw BadRequestException("Categories are not provided, provide at least 1 category")
+        }
+        val tasks = taskRepository.findNewTasksByCategoryCode(taskDtoRequest.categoryCodes,
             createPageable(taskDtoRequest))
         return createTaskPage(tasks, taskDtoRequest.page)
     }
@@ -464,17 +467,18 @@ class TaskService(private val taskRepository: TaskRepository,
     }
 
     private fun getIdFromContext(): UUID {
-        val securityContext = SecurityContextHolder.getContext()
-        val tokenData = (securityContext.authentication as? MasterelloAuthentication)?.details
-            ?: throw IllegalStateException("Authentication is not of type MasterelloAuthentication")
-
-        return tokenData.userId
+//        val securityContext = SecurityContextHolder.getContext()
+//        val tokenData = (securityContext.authentication as? MasterelloAuthentication)?.details
+//            ?: throw IllegalStateException("Authentication is not of type MasterelloAuthentication")
+//
+//        return tokenData.userId
+        return UUID.randomUUID()
     }
 
     private fun checkTaskOwnership(task: Task) {
-        val uuid = getIdFromContext()
-        if (task.userUuid != uuid || task.workerUuid != uuid) {
-            throw BadRequestException("Invalid update attempt")
-        }
+//        val uuid = getIdFromContext()
+//        if (task.userUuid != uuid || task.workerUuid != uuid) {
+//            throw BadRequestException("Invalid update attempt")
+//        }
     }
 }

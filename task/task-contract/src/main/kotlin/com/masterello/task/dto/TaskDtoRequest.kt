@@ -3,10 +3,10 @@ package com.masterello.task.dto
 import jakarta.validation.constraints.Min
 
 data class TaskDtoRequest(
-    @Min(1) val page: Int = 0,
-    @Min(1) val pageSize: Int = 10,
+    @field:Min(0) val page: Int = 0,
+    @field:Min(1) val pageSize: Int = 10,
     val sort: Sort = DEFAULT_SORT,
-    val categoryCode: Int = 0
+    val categoryCodes: List<@Min(1) Int> = emptyList()
 ) {
     data class Sort(
         val order: SortOrder = SortOrder.ASC,

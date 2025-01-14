@@ -19,6 +19,6 @@ interface TaskRepository: JpaRepository<Task, UUID> {
         "SELECT COUNT(t) FROM task t WHERE t.worker_uuid = :workerUuid AND (t.status = 3 OR t.status = 5)")
     fun countByWorkerUuidAndCompletedStatus(workerUuid: UUID): Long
 
-    @Query(nativeQuery = true, value = "SELECT t FROM task t WHERE t.category_code = :categoryCode AND t.status = 0")
-    fun findNewTasksByCategoryCode(categoryCode: Int, pageable: Pageable): Page<Task>
+    @Query(value = "SELECT t FROM Task t WHERE t.categoryCode in (:categoryCodes) AND t.status = 0")
+    fun findNewTasksByCategoryCode(categoryCodes: List<Int>, pageable: Pageable): Page<Task>
 }
