@@ -1,9 +1,6 @@
 package com.masterello.file.service
 
-import com.luciad.imageio.webp.WebPImageReaderSpi
-import com.luciad.imageio.webp.WebPImageWriterSpi
 import com.masterello.file.exception.FileNotProvidedException
-import jakarta.annotation.PostConstruct
 import net.coobird.thumbnailator.Thumbnails
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -14,17 +11,9 @@ import java.io.IOException
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 import javax.imageio.ImageWriteParam
-import javax.imageio.spi.IIORegistry
 
 @Service
 class ImageService {
-
-    @PostConstruct
-    fun registerWebP() {
-        val registry = IIORegistry.getDefaultInstance()
-        registry.registerServiceProvider(WebPImageReaderSpi())
-        registry.registerServiceProvider(WebPImageWriterSpi())
-    }
 
     fun createThumbnail(compressedImage: BufferedImage, size: Int): BufferedImage {
         return Thumbnails.of(compressedImage)
