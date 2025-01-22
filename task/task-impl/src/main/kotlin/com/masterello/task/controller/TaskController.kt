@@ -58,7 +58,7 @@ class TaskController {
      * Default sort is date of creation
      */
     @AuthZRules(
-        AuthZRule(roles = [AuthZRole.USER]),
+        AuthZRule(roles = [AuthZRole.USER])
     )
     @Operation(summary = "Retrieve user tasks", description = "View user tasks")
     @ApiResponse(responseCode = "200", description = "Retrieve paginated user tasks")
@@ -119,7 +119,7 @@ class TaskController {
     )
     @Operation(summary = "Create task", description = "Create task without worker assignment")
     @ApiResponse(responseCode = "200", description = "Newly created task")
-    @PostMapping("/")
+    @PostMapping
     fun createTask(@Valid @RequestBody taskDto: TaskDto): TaskDto {
         return taskService.createTask(taskDto)
     }
@@ -143,7 +143,7 @@ class TaskController {
     /**
      * Assign a task to a worker
      * @param taskUuid uuid of the task
-     * @param workerUUID uuid of the worker
+     * @param workerUuid uuid of the worker
      * @return assigned task
      */
     @AuthZRules(
@@ -153,8 +153,8 @@ class TaskController {
     @ApiResponse(responseCode = "200", description = "Assign task")
     @PostMapping("/{taskUuid}/assign")
     fun assignTask(@PathVariable taskUuid: UUID,
-                   @RequestParam workerUUID: UUID): TaskDto {
-        return taskService.assignTask(taskUuid, workerUUID)
+                   @RequestParam workerUuid: UUID): TaskDto {
+        return taskService.assignTask(taskUuid, workerUuid)
     }
 
     /**
@@ -177,7 +177,7 @@ class TaskController {
     /**
      * Reassign a task to another worker
      * @param taskUuid uuid of the task
-     * @param workerUUID uuid of the new worker
+     * @param workerUuid uuid of the new worker
      * @return reassigned task
      */
     @AuthZRules(
@@ -187,8 +187,8 @@ class TaskController {
     @ApiResponse(responseCode = "200", description = "Reassign task")
     @PostMapping("/{taskUuid}/reassign")
     fun reassignTask(@PathVariable taskUuid: UUID,
-                     @RequestParam workerUUID: UUID): TaskDto {
-        return taskService.reassignTask(taskUuid, workerUUID)
+                     @RequestParam workerUuid: UUID): TaskDto {
+        return taskService.reassignTask(taskUuid, workerUuid)
     }
 
     /**

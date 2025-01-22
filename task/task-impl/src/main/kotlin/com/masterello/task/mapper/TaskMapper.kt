@@ -13,7 +13,7 @@ class TaskMapper {
         }
 
         return Task(
-            name = dto.name.lowercase(),
+            name = dto.name,
             description = dto.description,
             userUuid = dto.userUuid,
             workerUuid = dto.workerUuid,
