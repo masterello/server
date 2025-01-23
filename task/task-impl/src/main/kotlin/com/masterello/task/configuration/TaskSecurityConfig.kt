@@ -23,9 +23,9 @@ open class TaskSecurityConfig(private val authService: AuthService) {
 
         val protectedEndpoints: RequestMatcher = OrRequestMatcher(
                 AntPathRequestMatcher("/api/tasks/{taskUuid}", "GET"),
-                AntPathRequestMatcher("/api/tasks/user/search/{userUuid}", "POST"),
-                AntPathRequestMatcher("/api/tasks/worker/search/{workerUuid}", "POST"),
-                AntPathRequestMatcher("/api/tasks/", "POST"),
+                AntPathRequestMatcher("/api/tasks/user/{userUuid}/search", "POST"),
+                AntPathRequestMatcher("/api/tasks/worker/{workerUuid}/search", "POST"),
+                AntPathRequestMatcher("/api/tasks", "POST"),
                 AntPathRequestMatcher("/api/tasks/search", "POST"),
                 AntPathRequestMatcher("/api/tasks/worker/search", "POST"),
                 AntPathRequestMatcher("/api/tasks/{taskUuid}/update", "POST"),

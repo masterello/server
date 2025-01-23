@@ -50,11 +50,13 @@ class TaskService(private val taskRepository: TaskRepository,
     }
 
     override fun getUserTasks(userUuid: UUID, taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
+        checkUserOwnership(userUuid)
         val tasks = taskRepository.findAllByUserUuid(userUuid, createPageable(taskDtoRequest))
         return createTaskPage(tasks, taskDtoRequest.page)
     }
 
     override fun getWorkerTasks(workerUuid: UUID, taskDtoRequest: TaskDtoRequest): PageOfTaskDto {
+        checkWorkerOwnership(workerUuid)
         val tasks = taskRepository.findAllByWorkerUuid(workerUuid, createPageable(taskDtoRequest))
         return createTaskPage(tasks, taskDtoRequest.page)
     }
@@ -89,9 +91,12 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Creating new task: $taskDto" }
 
         val task = taskMapper.mapDtoToEntity(taskDto)
+        if (task.userUuid != getIdFromContext()) {
+            throw BadRequestException("Attempting to assign task to a wrong user")
+        }
         if (task.workerUuid == null) {
             task.status = TaskStatus.NEW
-        } else if (workerService.getWorkerInfo(task.workerUuid) != null) {
+        } else if (workerService.getWorkerInfo(task.workerUuid).isPresent) {
             task.status = TaskStatus.ASSIGNED_TO_WORKER
         } else {
             throw BadRequestException("Worker not found")
@@ -118,7 +123,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Updating task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
-        checkTaskOwnership(task)
+        checkUserOwnership(task.userUuid)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -147,10 +152,14 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Updating task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
-        checkTaskOwnership(task)
+        checkUserOwnership(task.userUuid)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
+        }
+
+        if(task.workerUuid != null) {
+            throw BadRequestException("Task already has a worker")
         }
 
         if (isValidStatusTransition(task.status, TaskStatus.ASSIGNED_TO_WORKER)) {
@@ -158,7 +167,7 @@ class TaskService(private val taskRepository: TaskRepository,
             task.status = TaskStatus.ASSIGNED_TO_WORKER
         } else {
             throw BadRequestException("Invalid status transition from ${task.status} " +
-                    "to ${TaskStatus.ASSIGNED_TO_WORKER})")
+                    "to ${TaskStatus.ASSIGNED_TO_WORKER}")
         }
         task.workerUuid = workerUuid
 
@@ -180,7 +189,12 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Unassigning task from worker with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
-        checkTaskOwnership(task)
+
+        if (task.workerUuid == null) {
+            throw BadRequestException("Task has no worker")
+        } else {
+            checkWorkerOwnership(task.workerUuid)
+        }
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -214,7 +228,11 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Worker is confirming task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
-        checkTaskOwnership(task)
+        checkWorkerOwnership(task.workerUuid)
+
+        if (task.workerUuid == null) {
+            throw BadRequestException("Task has no worker")
+        }
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -246,7 +264,7 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Updating task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
-        checkTaskOwnership(task)
+        checkUserOwnership(task.userUuid)
 
         if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
@@ -323,9 +341,9 @@ class TaskService(private val taskRepository: TaskRepository,
         log.info { "Cancelling task with uuid: $taskUuid" }
 
         val task = getTaskOrThrow(taskUuid)
-        checkTaskOwnership(task)
+        checkUserOwnership(task.userUuid)
 
-        if (isEndedTask(task.status) || task.status == TaskStatus.IN_REVIEW) {
+        if (isEndedTask(task.status)) {
             throw BadRequestException("Task is already cancelled or done")
         }
 
@@ -431,7 +449,7 @@ class TaskService(private val taskRepository: TaskRepository,
             makeUserRating(taskUuid, reviewDto)
         }
 
-        if (taskReviews.size == 2) {
+        if (taskReviews.size >= 2) {
             task.status = TaskStatus.DONE
             taskRepository.saveAndFlush(task)
         }
@@ -476,8 +494,22 @@ class TaskService(private val taskRepository: TaskRepository,
 
     private fun checkTaskOwnership(task: Task) {
         val uuid = getIdFromContext()
-        if (task.userUuid != uuid || task.workerUuid != uuid) {
+        if (task.userUuid != uuid && task.workerUuid != uuid) {
             throw BadRequestException("Invalid update attempt")
+        }
+    }
+
+    private fun checkUserOwnership(userUuid: UUID) {
+        val uuid = getIdFromContext()
+        if (userUuid != uuid) {
+            throw BadRequestException("Invalid user request attempt")
+        }
+    }
+
+    private fun checkWorkerOwnership(workerUuid: UUID?) {
+        val uuid = getIdFromContext()
+        if (workerUuid != uuid) {
+            throw BadRequestException("Invalid worker request attempt")
         }
     }
 }

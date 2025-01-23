@@ -1,0 +1,27 @@
+server:
+  port: 8090
+  tomcat:
+    accesslog:
+      enabled: true
+      directory: "/dev"
+      prefix: stdout
+      buffered: false
+      suffix:
+      file-date-format:
+      pattern: "[ACCESS] %h %t \"%r\" %s %b"
+
+spring:
+  jpa.hibernate.ddl-auto: create
+
+masterello:
+  user:
+    email:
+      enabled: true
+      from: masterello1234@gmail.com
+      registrationSubject: Please verify your registration
+      resetPassSubject: Reset password email
+      resetExpirationMinutes: 60
+      serviceUrl: masterello.com
+      sender: Masterello
+      dailyAttempts: 3
+
