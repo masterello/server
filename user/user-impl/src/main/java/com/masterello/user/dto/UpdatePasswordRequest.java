@@ -1,5 +1,6 @@
 package com.masterello.user.dto;
 
+import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.core.validation.validator.Password;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
@@ -12,9 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UpdatePasswordRequest {
-    @NotEmpty
+    @NotEmpty(message = ErrorCodes.PASSWORD_EMPTY)
     private String oldPassword;
-    @NotEmpty
+    @NotEmpty(message = ErrorCodes.PASSWORD_EMPTY)
     @Password
     private String newPassword;
 }

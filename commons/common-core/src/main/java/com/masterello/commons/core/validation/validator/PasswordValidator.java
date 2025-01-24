@@ -1,5 +1,6 @@
 package com.masterello.commons.core.validation.validator;
 
+import com.masterello.commons.core.validation.ErrorCodes;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
@@ -25,15 +26,15 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
 
         List<BooleanSupplier> conditions = List.of(
                 () -> validateCondition(password.length() >= min && password.length() <= max,
-                        context, String.format("Password must be between %d and %d characters", min, max)),
+                        context, ErrorCodes.PASSWORD_LENGTH),
                 () -> validateCondition(password.matches(".*[A-Z].*"),
-                        context, "Password must contain at least one uppercase letter"),
+                        context, ErrorCodes.PASSWORD_UPPERCASE),
                 () -> validateCondition(password.matches(".*[a-z].*"),
-                        context, "Password must contain at least one lowercase letter"),
+                        context, ErrorCodes.PASSWORD_LOWERCASE),
                 () -> validateCondition(password.matches(".*\\d.*"),
-                        context, "Password must contain at least one digit"),
+                        context, ErrorCodes.PASSWORD_DIGIT),
                 () -> validateCondition(password.matches(".*[!@#$%^&*()].*"),
-                        context, "Password must contain at least one special character")
+                        context, ErrorCodes.PASSWORD_SPECIAL_CHAR)
         );
 
         // Evaluate all conditions and return true only if all are true
