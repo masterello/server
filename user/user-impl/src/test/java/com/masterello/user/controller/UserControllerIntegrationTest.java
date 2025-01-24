@@ -3,6 +3,7 @@ package com.masterello.user.controller;
 import com.masterello.auth.data.AuthZRole;
 import com.masterello.auth.extension.AuthMocked;
 import com.masterello.auth.service.AuthService;
+import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
 import com.masterello.user.domain.MasterelloUserEntity;
@@ -108,8 +109,14 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .statusCode(400)
                     .body("errors", hasSize(2))
                     .body("errors", containsInAnyOrder(
-                            Map.of("field", "password", "message", "Password must contain at least one special character"),
-                            Map.of("field", "password", "message", "Password must contain at least one uppercase letter")
+                            allOf(
+                                    hasEntry("field", "password"),
+                                    hasEntry("message", ErrorCodes.PASSWORD_SPECIAL_CHAR)
+                            ),
+                            allOf(
+                                    hasEntry("field", "password"),
+                                    hasEntry("message", ErrorCodes.PASSWORD_UPPERCASE)
+                            )
                     ));
         //@formatter:on
     }
@@ -324,9 +331,18 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .statusCode(400)
                          .body("errors", hasSize(3))
                          .body("errors", containsInAnyOrder(
-                                 Map.of("field", "oldPassword", "message", "must not be empty"),
-                                 Map.of("field", "newPassword", "message", "Password must contain at least one special character"),
-                                 Map.of("field", "newPassword", "message", "Password must contain at least one digit")
+                                 allOf(
+                                         hasEntry("field", "oldPassword"),
+                                         hasEntry("message", ErrorCodes.PASSWORD_EMPTY)
+                                 ),
+                                 allOf(
+                                         hasEntry("field", "newPassword"),
+                                         hasEntry("message", ErrorCodes.PASSWORD_SPECIAL_CHAR)
+                                 ),
+                                 allOf(
+                                         hasEntry("field", "newPassword"),
+                                         hasEntry("message", ErrorCodes.PASSWORD_DIGIT)
+                                 )
                     ));
 
         //@formatter:on
