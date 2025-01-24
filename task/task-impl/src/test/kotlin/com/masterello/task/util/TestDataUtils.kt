@@ -113,12 +113,16 @@ object TestDataUtils {
 
     fun getUserReview(taskUuid: UUID = UUID.randomUUID(),
                   uuid: UUID = UUID.randomUUID(),
+                  workerUuid: UUID = UUID.randomUUID(),
+                  userUuid: UUID = UUID.randomUUID(),
                   rating: Int = 5,
                   createdDate: OffsetDateTime = OffsetDateTime.now(),
                   updatedDate: OffsetDateTime = OffsetDateTime.now()) =
         UserRating(
             uuid = uuid,
             taskUuid = taskUuid,
+            workerUuid = workerUuid,
+            userUuid = userUuid,
             rating = rating,
             createdDate = createdDate,
             updatedDate = updatedDate
@@ -126,12 +130,16 @@ object TestDataUtils {
 
     fun getWorkerReview(taskUuid: UUID = UUID.randomUUID(),
                         uuid: UUID = UUID.randomUUID(),
+                        workerUuid: UUID = UUID.randomUUID(),
+                        userUuid: UUID = UUID.randomUUID(),
                         rating: Int = 5,
                         createdDate: OffsetDateTime = OffsetDateTime.now(),
                         updatedDate: OffsetDateTime = OffsetDateTime.now()) =
         WorkerRating(
             uuid = uuid,
             taskUuid = taskUuid,
+            workerUuid = workerUuid,
+            userUuid = userUuid,
             rating = rating,
             createdDate = createdDate,
             updatedDate = updatedDate

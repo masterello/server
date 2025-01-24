@@ -15,6 +15,12 @@ abstract class BaseRating(
     @Column(name = "task_uuid", nullable = false)
     open var taskUuid: UUID = UUID.randomUUID(),
 
+    @Column(name = "user_uuid", nullable = false)
+    open var userUuid: UUID = UUID.randomUUID(),
+
+    @Column(name = "worker_uuid", nullable = false)
+    open var workerUuid: UUID = UUID.randomUUID(),
+
     @Column(name = "rating", nullable = false)
     open var rating: Int = 1,
 

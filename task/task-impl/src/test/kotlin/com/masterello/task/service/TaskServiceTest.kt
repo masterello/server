@@ -12,8 +12,6 @@ import com.masterello.task.mapper.TaskMapper
 import com.masterello.task.mapper.TaskReviewMapper
 import com.masterello.task.repository.TaskRepository
 import com.masterello.task.repository.TaskReviewRepository
-import com.masterello.task.repository.UserRatingRepository
-import com.masterello.task.repository.WorkerRatingRepository
 import com.masterello.task.test.WorkerTest
 import com.masterello.task.util.TestDataUtils
 import com.masterello.worker.service.ReadOnlyWorkerService
@@ -47,10 +45,7 @@ class TaskServiceTest {
     private lateinit var taskReviewRepository: TaskReviewRepository
 
     @Mock
-    private lateinit var workerRatingRepository: WorkerRatingRepository
-
-    @Mock
-    private lateinit var userRatingRepository: UserRatingRepository
+    private lateinit var ratingService: RatingService
 
     @Mock
     private lateinit var taskMapper: TaskMapper
@@ -984,13 +979,12 @@ class TaskServiceTest {
         val review = TestDataUtils.getReview()
 
         val task = TestDataUtils.createTask(uuid = taskUuid, userUuid = userUuid, status = TaskStatus.IN_REVIEW, workerUuid = reviewerUuid)
-        val taskReview = TestDataUtils.getWorkerReview()
+        val taskReview = TestDataUtils.getUserReview()
 
         `when`(taskRepository.findById(taskUuid)).thenReturn(Optional.of(task))
         `when`(taskReviewRepository.findByTaskUuidAndReviewerUuid(taskUuid, reviewerUuid)).thenReturn(review)
         `when`(taskReviewRepository.saveAndFlush(review)).thenReturn(review)
-        `when`(workerRatingRepository.findByTaskUuid(taskUuid)).thenReturn(taskReview)
-        `when`(workerRatingRepository.saveAndFlush(taskReview)).thenReturn(taskReview)
+        `when`(ratingService.makeUserRating(taskUuid, userUuid, reviewDto)).thenReturn(taskReview)
         `when`(taskReviewRepository.findByTaskUuid(taskUuid)).thenReturn(listOf(review))
         `when`(taskReviewMapper.mapEntityToDto(review, 5)).thenReturn(reviewDto)
         `when`(authentication.details).thenReturn(authData)
@@ -1011,13 +1005,12 @@ class TaskServiceTest {
         val review = TestDataUtils.getReview()
 
         val task = TestDataUtils.createTask(uuid = taskUuid, userUuid = reviewerUuid, status = TaskStatus.IN_REVIEW, workerUuid = reviewerUuid)
-        val taskReview = TestDataUtils.getUserReview()
+        val taskReview = TestDataUtils.getWorkerReview()
 
         `when`(taskRepository.findById(taskUuid)).thenReturn(Optional.of(task))
         `when`(taskReviewRepository.findByTaskUuidAndReviewerUuid(taskUuid, reviewerUuid)).thenReturn(review)
         `when`(taskReviewRepository.saveAndFlush(review)).thenReturn(review)
-        `when`(userRatingRepository.findByTaskUuid(taskUuid)).thenReturn(taskReview)
-        `when`(userRatingRepository.saveAndFlush(taskReview)).thenReturn(taskReview)
+        `when`(ratingService.makeWorkerRating(taskUuid, reviewerUuid, reviewDto)).thenReturn(taskReview)
         `when`(taskReviewRepository.findByTaskUuid(taskUuid)).thenReturn(listOf(review))
         `when`(taskReviewMapper.mapEntityToDto(review, 5)).thenReturn(reviewDto)
         `when`(authentication.details).thenReturn(authData)
@@ -1034,18 +1027,18 @@ class TaskServiceTest {
     fun `reviewTaskByWorker should save review when valid`() {
         val taskUuid = UUID.randomUUID()
         val reviewerUuid = UUID.randomUUID()
+        val userUuid = UUID.randomUUID()
         val reviewDto = TestDataUtils.getReviewDto(taskUuid = taskUuid, reviewerUuid = reviewerUuid)
         val review = TestDataUtils.getReview()
 
-        val task = TestDataUtils.createTask(uuid = taskUuid, workerUuid = reviewerUuid, status = TaskStatus.IN_REVIEW)
-        val taskReview = TestDataUtils.getWorkerReview()
+        val task = TestDataUtils.createTask(uuid = taskUuid, userUuid = userUuid, workerUuid = reviewerUuid, status = TaskStatus.IN_REVIEW)
+        val taskReview = TestDataUtils.getUserReview()
 
         `when`(taskRepository.findById(taskUuid)).thenReturn(Optional.of(task))
         `when`(taskReviewRepository.findByTaskUuidAndReviewerUuid(taskUuid, reviewerUuid)).thenReturn(null)
         `when`(taskReviewMapper.mapDtoToEntity(reviewDto)).thenReturn(review)
         `when`(taskReviewRepository.saveAndFlush(review)).thenReturn(review)
-        `when`(workerRatingRepository.findByTaskUuid(taskUuid)).thenReturn(null)
-        `when`(workerRatingRepository.saveAndFlush(any())).thenReturn(taskReview)
+        `when`(ratingService.makeUserRating(taskUuid, userUuid, reviewDto)).thenReturn(taskReview)
         `when`(taskReviewRepository.findByTaskUuid(taskUuid)).thenReturn(listOf(review))
         `when`(taskReviewMapper.mapEntityToDto(review, 5)).thenReturn(reviewDto)
         `when`(authentication.details).thenReturn(authData)
@@ -1067,14 +1060,13 @@ class TaskServiceTest {
         val review = TestDataUtils.getReview()
 
         val task = TestDataUtils.createTask(uuid = taskUuid, userUuid = reviewerUuid, status = TaskStatus.IN_REVIEW, workerUuid = reviewerUuid)
-        val taskReview = TestDataUtils.getUserReview()
+        val taskReview = TestDataUtils.getWorkerReview()
 
         `when`(taskRepository.findById(taskUuid)).thenReturn(Optional.of(task))
         `when`(taskReviewRepository.findByTaskUuidAndReviewerUuid(taskUuid, reviewerUuid)).thenReturn(null)
         `when`(taskReviewMapper.mapDtoToEntity(reviewDto)).thenReturn(review)
         `when`(taskReviewRepository.saveAndFlush(review)).thenReturn(review)
-        `when`(userRatingRepository.findByTaskUuid(taskUuid)).thenReturn(null)
-        `when`(userRatingRepository.saveAndFlush(any())).thenReturn(taskReview)
+        `when`(ratingService.makeWorkerRating(taskUuid, reviewerUuid, reviewDto)).thenReturn(taskReview)
         `when`(taskReviewRepository.findByTaskUuid(taskUuid)).thenReturn(listOf(review))
         `when`(taskReviewMapper.mapEntityToDto(review, 5)).thenReturn(reviewDto)
         `when`(authentication.details).thenReturn(authData)
@@ -1096,14 +1088,13 @@ class TaskServiceTest {
         val review2 = TestDataUtils.getReview()
 
         val task = TestDataUtils.createTask(uuid = taskUuid, userUuid = reviewerUuid, status = TaskStatus.IN_REVIEW, workerUuid = reviewerUuid)
-        val taskReview = TestDataUtils.getUserReview()
+        val taskReview = TestDataUtils.getWorkerReview()
 
         `when`(taskRepository.findById(taskUuid)).thenReturn(Optional.of(task))
         `when`(taskReviewRepository.findByTaskUuidAndReviewerUuid(taskUuid, reviewerUuid)).thenReturn(null)
         `when`(taskReviewMapper.mapDtoToEntity(reviewDto)).thenReturn(review)
         `when`(taskReviewRepository.saveAndFlush(review)).thenReturn(review)
-        `when`(userRatingRepository.findByTaskUuid(taskUuid)).thenReturn(null)
-        `when`(userRatingRepository.saveAndFlush(any())).thenReturn(taskReview)
+        `when`(ratingService.makeWorkerRating(taskUuid, reviewerUuid, reviewDto)).thenReturn(taskReview)
         `when`(taskReviewRepository.findByTaskUuid(taskUuid)).thenReturn(listOf(review, review2))
         `when`(taskReviewMapper.mapEntityToDto(review, 5)).thenReturn(reviewDto)
         `when`(authentication.details).thenReturn(authData)

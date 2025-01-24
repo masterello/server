@@ -42,7 +42,7 @@ open class TaskSecurityConfig(private val authService: AuthService) {
         val authFilter = AuthFilter(protectedEndpoints, authService)
 
         http
-                .securityMatcher(AntPathRequestMatcher("/api/tasks/**"))
+                .securityMatcher("/api/tasks/**", "/api/rating/**")
                 .csrf { it.disable() }
                 .authorizeHttpRequests { auth ->
                     auth

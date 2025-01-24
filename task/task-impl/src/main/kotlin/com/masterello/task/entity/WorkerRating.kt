@@ -9,7 +9,9 @@ import java.util.*
 data class WorkerRating(
     override val uuid: UUID? = null,
     override var taskUuid: UUID = UUID.randomUUID(),
+    override var userUuid: UUID = UUID.randomUUID(),
+    override var workerUuid: UUID = UUID.randomUUID(),
     override var rating: Int = 1,
     override val createdDate: OffsetDateTime? = null,
     override val updatedDate: OffsetDateTime? = null
-) : BaseRating(uuid, taskUuid, rating, createdDate, updatedDate)
+) : BaseRating(uuid, taskUuid, userUuid, workerUuid, rating, createdDate, updatedDate)

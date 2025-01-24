@@ -15,12 +15,12 @@ values
     ('b45fb214-7c41-4a3d-a990-b499577d46c2', 'a45fb214-7c41-4a3d-a990-b499577d46c3', 'e4de38bf-168e-41fc-b7b1-b9d74a47529e', 1, 'User reassigned task from me!', now(), now()),
     ('b45fb214-7c41-4a3d-a990-b499577d46c3', 'a99fb214-7c41-4a3d-a990-b499577d46c5', '0c018736-49e5-4611-8722-d2ecd0567fb1', 1, 'Normal', now(), now());
 
-insert into public.worker_rating(uuid, task_uuid, rating, created_date, updated_date)
+insert into public.worker_rating(uuid, task_uuid, worker_uuid, user_uuid, rating, created_date, updated_date)
 values
-    ('c45fb214-7c41-4a3d-a990-b499577d46c0', 'a45fb214-7c41-4a3d-a990-b499577d46c3', 1, now(), now()),
-    ('c45fb214-7c41-4a3d-a990-b499577d46c1', 'a45fb214-7c41-4a3d-a990-b499577d46c3', 5, now(), now());
+    ('c45fb214-7c41-4a3d-a990-b499577d46c0', 'a45fb214-7c41-4a3d-a990-b499577d46c3', 'e4de38bf-168e-41fc-b7b1-b9d74a47529e', '0c018736-49e5-4611-8722-d2ecd0567fb1', 1, now(), now()),
+    ('c45fb214-7c41-4a3d-a990-b499577d46c1', 'a45fb214-7c41-4a3d-a990-b499577d46c3', 'e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', '0c018736-49e5-4611-8722-d2ecd0567fb1', 5, now(), now());
 
- insert into public.user_rating(uuid, task_uuid, rating, created_date, updated_date)
+ insert into public.user_rating(uuid, task_uuid, user_uuid, worker_uuid, rating, created_date, updated_date)
  values
-    ('d45fb214-7c41-4a3d-a990-b499577d46c0', 'a45fb214-7c41-4a3d-a990-b499577d46c3', 5, now(), now()),
-    ('d45fb214-7c41-4a3d-a990-b499577d46c1', 'a99fb214-7c41-4a3d-a990-b499577d46c5', 4, now(), now());
+    ('d45fb214-7c41-4a3d-a990-b499577d46c0', 'a45fb214-7c41-4a3d-a990-b499577d46c3', '0c018736-49e5-4611-8722-d2ecd0567fb1', 'e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 5, now(), now()),
+    ('d45fb214-7c41-4a3d-a990-b499577d46c1', 'a99fb214-7c41-4a3d-a990-b499577d46c5', '0c018736-49e5-4611-8722-d2ecd0567fb1', 'e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 4, now(), now());

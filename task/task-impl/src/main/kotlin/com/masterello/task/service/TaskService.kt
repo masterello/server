@@ -4,8 +4,6 @@ import com.masterello.commons.security.data.MasterelloAuthentication
 import com.masterello.task.dto.*
 import com.masterello.task.entity.BaseRating
 import com.masterello.task.entity.Task
-import com.masterello.task.entity.UserRating
-import com.masterello.task.entity.WorkerRating
 import com.masterello.task.exception.BadRequestException
 import com.masterello.task.exception.NotFoundException
 import com.masterello.task.mapper.TaskMapper
@@ -24,8 +22,7 @@ import java.util.*
 @Service
 class TaskService(private val taskRepository: TaskRepository,
                   private val taskReviewRepository: TaskReviewRepository,
-                  private val workerRatingRepository: WorkerRatingRepository,
-                  private val userRatingRepository: UserRatingRepository,
+                  private val ratingService: RatingService,
                   private val taskMapper: TaskMapper,
                   private val taskReviewMapper: TaskReviewMapper,
                   private val workerService: ReadOnlyWorkerService,
@@ -444,9 +441,9 @@ class TaskService(private val taskRepository: TaskRepository,
         val taskReviews = taskReviewRepository.findByTaskUuid(taskUuid)
 
         val savedRating: BaseRating = if (isWorker) {
-            makeWorkerRating(taskUuid, reviewDto)
+            ratingService.makeUserRating(taskUuid, task.userUuid, reviewDto)
         } else {
-            makeUserRating(taskUuid, reviewDto)
+            ratingService.makeWorkerRating(taskUuid, task.workerUuid!!, reviewDto)
         }
 
         if (taskReviews.size >= 2) {
@@ -454,34 +451,6 @@ class TaskService(private val taskRepository: TaskRepository,
             taskRepository.saveAndFlush(task)
         }
         return taskReviewMapper.mapEntityToDto(updatedTaskReview, savedRating.rating)
-    }
-
-    private fun makeWorkerRating(taskUuid: UUID, reviewDto: ReviewDto) : WorkerRating {
-        var taskRating = workerRatingRepository.findByTaskUuid(taskUuid)
-
-        if (taskRating == null) {
-            taskRating = WorkerRating(rating = reviewDto.rating,
-                taskUuid = reviewDto.taskUuid)
-        } else {
-            log.info { "Updating worker rating for task $taskUuid" }
-            taskRating.rating = reviewDto.rating
-        }
-
-        return workerRatingRepository.saveAndFlush(taskRating)
-    }
-
-    private fun makeUserRating(taskUuid: UUID, reviewDto: ReviewDto) : UserRating {
-        var taskRating = userRatingRepository.findByTaskUuid(taskUuid)
-
-        if (taskRating == null) {
-            taskRating = UserRating(rating = reviewDto.rating,
-                taskUuid = reviewDto.taskUuid)
-        } else {
-            log.info { "Updating user rating for task $taskUuid" }
-            taskRating.rating = reviewDto.rating
-        }
-
-        return userRatingRepository.saveAndFlush(taskRating)
     }
 
     private fun getIdFromContext(): UUID {
