@@ -24,10 +24,10 @@ class ChatController(
         private val userService: MasterelloUserService,
 ) {
 
-    @Operation(summary = "Create chat", description = "create chat")
+    @Operation(summary = "Get Or Create chat", description = "get chat if exists or create otherwise")
     @ApiResponse(responseCode = "200", description = "Returns chat info")
     @PostMapping("")
-    fun create(@RequestBody request: GetOrCreateChatDTO): ChatDTO {
+    fun getOrCreate(@RequestBody request: GetOrCreateChatDTO): ChatDTO {
         return service.getOrCreateChat(request.workerId, request.taskId)
     }
 
