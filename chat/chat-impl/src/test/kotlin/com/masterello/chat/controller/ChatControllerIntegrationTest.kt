@@ -362,6 +362,22 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         assertEquals(expectedResponse, actualResponse)
     }
 
+    @Test
+    @AuthMocked(userId = WORKER_WITH_CHAT_S, roles = [AuthZRole.WORKER])
+    fun `test fetch history chat not found`() {
+        //@formatter:off
+        val response = RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .cookie(tokenCookie())
+                .`when`()
+                    .get("/api/chat/${UUID.randomUUID()}/history")
+                .then()
+                    .statusCode(404)
+        //@formatter:on
+    }
+
     @SneakyThrows fun readHistoryFromFile(filePath:String?): ChatHistoryDTO {
         return objectMapper.readValue(File(filePath), ChatHistoryDTO::class.java)
     }
