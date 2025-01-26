@@ -4,5 +4,5 @@ import java.util.UUID
 
 data class BulkImageResponseDto (
     val userUUID: UUID,
-    val avatarDto: AvatarDto
+    val imageDtos: List<ImageDto>
 )

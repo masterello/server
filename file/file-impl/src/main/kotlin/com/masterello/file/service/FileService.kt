@@ -74,32 +74,45 @@ open class FileService(private val fileRepository: FileRepository,
 
     override fun findImagesBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto> {
         when (fileType) {
-            FileType.AVATAR -> return findAvatarsBulk(userUuids)
+            FileType.AVATAR, FileType.PORTFOLIO -> return findImagesByTypeBulk(fileType, userUuids)
             else -> { log.error { "Unknown file type to process: $fileType" }
             throw FileTypeException("Invalid file type provided") }
         }
     }
 
-    private fun findAvatarsBulk(userUuids: List<UUID>): List<BulkImageResponseDto> {
-        val files = fileRepository.findAllIAvatarsByUserUuids(userUuids)
-        val filesByUserUuid = files.groupBy { it.userUuid }
+    private fun findImagesByTypeBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto> {
+        val files = fileRepository.findAllIAvatarsByUserUuids(fileType.code, userUuids)
+
+        val filesByUserAndUuid = files
+            .groupBy { it.userUuid }
+            .mapValues { (_, userFiles) ->
+                userFiles.groupBy { file ->
+                    file.parentImage ?: file.uuid
+                }
+            }
 
         return userUuids.mapNotNull { userUuid ->
-            val userFiles = filesByUserUuid[userUuid]
-            if (userFiles.isNullOrEmpty()) {
-                null
-            } else {
-                val avatars = AvatarDto()
-                userFiles.forEach { userFile ->
-                    val avatarLink = constructAvatarLink(userFile)
-                    when (userFile.thumbnailSize) {
-                        SMALL -> avatars.small = avatarLink
-                        MEDIUM -> avatars.medium = avatarLink
-                        LARGE -> avatars.big = avatarLink
-                        else -> avatars.original = avatarLink
+            val userFilesByUuid = filesByUserAndUuid[userUuid] ?: return@mapNotNull null
+
+            val imageDtos = userFilesByUuid.map { (_, files) ->
+                val images = ImageDto()
+
+                files.forEach { file ->
+                    val imageLink = constructImageLink(file)
+                    when (file.thumbnailSize) {
+                        SMALL -> images.small = imageLink
+                        MEDIUM -> images.medium = imageLink
+                        LARGE -> images.big = imageLink
+                        else -> images.original = imageLink
                     }
                 }
-                BulkImageResponseDto(userUuid, avatars)
+                images
+            }
+
+            if (imageDtos.isNotEmpty()) {
+                BulkImageResponseDto(userUuid, imageDtos)
+            } else {
+                null
             }
         }
     }
@@ -215,7 +228,7 @@ open class FileService(private val fileRepository: FileRepository,
         return savedEntity
     }
 
-    private fun constructAvatarLink(userFile: File): String {
+    private fun constructImageLink(userFile: File): String {
         val objectKey = "${userFile.userUuid}/${userFile.uuid}.${userFile.fileExtension}"
 
         return fileProperties.cdnLink + objectKey

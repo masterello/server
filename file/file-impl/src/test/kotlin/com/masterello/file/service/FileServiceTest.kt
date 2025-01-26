@@ -117,7 +117,7 @@ class FileServiceTest {
     fun `test findImagesBulk with avatars no data`() {
         val userUuid = UUID.randomUUID()
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid))).thenReturn(listOf())
+        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.AVATAR.code, listOf(userUuid))).thenReturn(listOf())
         val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid))
 
         assertEquals(0, result.size)
@@ -138,16 +138,43 @@ class FileServiceTest {
             fileExtension = "txt"
         )
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.AVATAR.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
         `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
         val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid, userUuid2))
 
         assertEquals(1, result.size)
         assertEquals(userUuid, result[0].userUUID)
-        assertEquals("", result[0].avatarDto.big)
-        assertEquals("", result[0].avatarDto.medium)
-        assertEquals("", result[0].avatarDto.small)
-        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].avatarDto.original)
+        assertEquals("", result[0].imageDtos[0].big)
+        assertEquals("", result[0].imageDtos[0].medium)
+        assertEquals("", result[0].imageDtos[0].small)
+        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].imageDtos[0].original)
+    }
+
+    @Test
+    fun `test findImagesBulk with portfolios`() {
+        val userUuid = UUID.randomUUID()
+        val userUuid2 = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+
+        val file = File(
+            uuid = fileUuid,
+            userUuid = userUuid,
+            fileName = "test.txt",
+            fileType = FileType.AVATAR,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.PORTFOLIO.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
+        val result = fileService.findImagesBulk(FileType.PORTFOLIO, listOf(userUuid, userUuid2))
+
+        assertEquals(1, result.size)
+        assertEquals(userUuid, result[0].userUUID)
+        assertEquals("", result[0].imageDtos[0].big)
+        assertEquals("", result[0].imageDtos[0].medium)
+        assertEquals("", result[0].imageDtos[0].small)
+        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].imageDtos[0].original)
     }
 
     @Test
