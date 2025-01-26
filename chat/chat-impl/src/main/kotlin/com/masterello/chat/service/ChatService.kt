@@ -18,7 +18,7 @@ import com.masterello.user.service.MasterelloUserService
 import com.masterello.user.value.MasterelloUser
 import com.masterello.worker.service.ReadOnlyWorkerService
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.hibernate.exception.ConstraintViolationException
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.security.core.context.SecurityContextHolder
@@ -92,7 +92,7 @@ class ChatService(
                             workerId = workerId,
                             userId = task.userUuid
                     ))
-        } catch (ex: ConstraintViolationException) {
+        } catch (ex: DataIntegrityViolationException) {
             tryToFindExistingChat(workerId, task.uuid!!)
                     ?: throw ChatCreationValidationException("Something went wrong while chat creation")
         }

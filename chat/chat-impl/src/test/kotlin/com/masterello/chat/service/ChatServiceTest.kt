@@ -28,6 +28,7 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.kotlin.whenever
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
 import java.sql.SQLException
@@ -168,7 +169,7 @@ class ChatServiceTest {
         whenever(taskService.getTask(taskId)).thenReturn(taskDto)
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(repository.save(Mockito.any(Chat::class.java)))
-                .thenThrow(ConstraintViolationException("Duplicate chat", SQLException(), "uniqueconstraint"))
+                .thenThrow(DataIntegrityViolationException("Duplicated chat"))
 
         assertThrows<ChatCreationValidationException> {
             chatService.getOrCreateChat(workerId, taskId)
