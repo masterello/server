@@ -58,8 +58,9 @@ class ChatService(
         )
     }
 
-    private fun getName(worker: MasterelloUser) : String {
-        return "${worker.name} ${worker.lastname}".trim()
+    private fun getName(user: MasterelloUser) : String {
+        return "${user.name ?: ""} ${user.lastname ?: ""}".trim()
+                .ifBlank { user.username }
     }
 
     fun getChatHistory(chatId: UUID, limit: Int, before: OffsetDateTime): ChatHistoryDTO {
