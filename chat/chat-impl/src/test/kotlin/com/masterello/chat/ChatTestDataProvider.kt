@@ -60,10 +60,6 @@ class ChatTestDataProvider {
 
                 override fun getViber(): String? = null
 
-                override fun getCountry(): Country = Country.GERMANY
-
-                override fun getCity(): City = City.BERLIN
-
                 override fun isActive(): Boolean = true
 
                 override fun getRegisteredAt(): Instant = Instant.now()

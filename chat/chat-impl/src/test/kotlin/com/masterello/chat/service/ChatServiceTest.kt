@@ -1,17 +1,21 @@
 package com.masterello.chat.service
 
 import com.masterello.auth.data.AuthData
+import com.masterello.chat.ChatTestDataProvider.Companion.buildUser
 import com.masterello.chat.ChatTestDataProvider.Companion.buildWorker
 import com.masterello.chat.domain.Chat
 import com.masterello.chat.exceptions.ChatCreationValidationException
 import com.masterello.chat.exceptions.TaskNotFoundException
 import com.masterello.chat.exceptions.UserNotFoundException
+import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.ChatRepository
+import com.masterello.chat.repository.MessageRepository
 import com.masterello.commons.security.data.MasterelloAuthentication
 import com.masterello.commons.security.exception.UnauthorisedException
 import com.masterello.task.dto.TaskDto
 import com.masterello.task.dto.TaskStatus
 import com.masterello.task.service.ReadOnlyTaskService
+import com.masterello.user.service.MasterelloUserService
 import com.masterello.worker.service.ReadOnlyWorkerService
 import org.hibernate.exception.ConstraintViolationException
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -39,6 +43,15 @@ class ChatServiceTest {
 
     @Mock
     private lateinit var workerService: ReadOnlyWorkerService
+
+    @Mock
+    private lateinit var messageRepository: MessageRepository
+
+    @Mock
+    private lateinit var messageMapper: MessageMapper
+
+    @Mock
+    private lateinit var userService: MasterelloUserService
 
     @InjectMocks
     private lateinit var chatService: ChatService
@@ -70,25 +83,42 @@ class ChatServiceTest {
 
     @Test
     fun `getOrCreateChat should return existing chat if found`() {
-        val existingChat = Chat(taskId = taskId, workerId = workerId, userId = userId)
+        val existingChat = Chat(id = UUID.randomUUID(), taskId = taskId, workerId = workerId, userId = userId)
         whenever(repository.findByWorkerIdAndTaskId(workerId, taskId)).thenReturn(existingChat)
+        whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(mapOf(
+                Pair(userId, buildUser(userId, "Name", "Lastname")),
+                Pair(workerId, buildUser(workerId, "WName", "WLastname"))
+        ))
         val taskDto = task(taskId, userId, workerId)
         whenever(taskService.getTask(taskId)).thenReturn(taskDto)
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
 
         val chat = chatService.getOrCreateChat(workerId, taskId)
 
-        assertEquals(existingChat, chat)
+        assertEquals(existingChat.id, chat.id)
+        assertEquals(existingChat.taskId, chat.taskId)
+        assertEquals(existingChat.userId, chat.userId)
+        assertEquals(existingChat.workerId, chat.workerId)
+        assertEquals("Name Lastname", chat.userName)
+        assertEquals("WName WLastname", chat.workerName)
+
         Mockito.verify(repository, Mockito.never()).save(Mockito.any())
     }
 
     @Test
     fun `getOrCreateChat should create and return new chat if none exists`() {
         val taskDto = task(taskId, userId, workerId)
+        whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(mapOf(
+                Pair(userId, buildUser(userId, "Name", "Lastname")),
+                Pair(workerId, buildUser(workerId, "WName", "WLastname"))
+        ))
         whenever(repository.findByWorkerIdAndTaskId(workerId, taskId)).thenReturn(null)
         whenever(taskService.getTask(taskId)).thenReturn(taskDto)
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
-        whenever(repository.save(Mockito.any(Chat::class.java))).thenAnswer { it.getArgument(0) }
+        whenever(repository.save(Mockito.any(Chat::class.java))).thenAnswer {
+            val chat = it.getArgument<Chat>(0)
+            Chat(UUID.randomUUID(), chat.taskId, chat.userId, chat.workerId)
+        }
 
         val chat = chatService.getOrCreateChat(workerId, taskId)
 
@@ -131,6 +161,10 @@ class ChatServiceTest {
     @Test
     fun `createChat should throw ChatCreationValidationException if constraint violation occurs`() {
         val taskDto = task(taskId, userId, workerId)
+        whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(mapOf(
+                Pair(userId, buildUser(userId, "Name", "Lastname")),
+                Pair(workerId, buildUser(workerId, "WName", "WLastname"))
+        ))
         whenever(taskService.getTask(taskId)).thenReturn(taskDto)
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(repository.save(Mockito.any(Chat::class.java)))

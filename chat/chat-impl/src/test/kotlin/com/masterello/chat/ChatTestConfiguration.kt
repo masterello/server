@@ -1,6 +1,7 @@
 package com.masterello.chat
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.ComponentScan
 
 @ComponentScan(basePackages = [
@@ -11,5 +12,6 @@ import org.springframework.context.annotation.ComponentScan
     "com.masterello.task",
     "com.masterello.commons"])
 @EnableAutoConfiguration
+@ConfigurationPropertiesScan
 class ChatTestConfiguration {
 }
