@@ -4,6 +4,7 @@ import com.masterello.file.dto.FileDto
 import com.masterello.file.dto.FileType
 import com.masterello.file.entity.File
 import org.springframework.stereotype.Service
+import java.util.*
 
 @Service
 class  FileMapper {
@@ -23,7 +24,7 @@ class  FileMapper {
     }
 
     fun mapAvatarThumbnailToFile(dto: FileDto?, type: FileType, fileName: String, fileExtension: String,
-                                 size: Int?, avatarThumbnail: Boolean): File {
+                                 size: Int?, parentImage: UUID, taskUuid: UUID?): File {
         if (dto == null) {
             throw IllegalArgumentException("FileDto cannot be null")
         }
@@ -33,8 +34,9 @@ class  FileMapper {
             fileType = type,
             fileName = fileName,
             isPublic = dto.isPublic,
-            avatarThumbnail = avatarThumbnail,
-            thumbailSize = size,
+            parentImage = parentImage,
+            taskUuid = taskUuid,
+            thumbnailSize = size,
             fileExtension = fileExtension
         )
     }

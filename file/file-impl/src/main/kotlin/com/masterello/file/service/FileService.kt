@@ -3,10 +3,7 @@ package com.masterello.file.service
 import com.masterello.file.configuration.FileProperties
 import com.masterello.file.dto.*
 import com.masterello.file.entity.File
-import com.masterello.file.exception.FileDimensionException
-import com.masterello.file.exception.FileNotProvidedException
-import com.masterello.file.exception.FileTypeException
-import com.masterello.file.exception.NotFoundException
+import com.masterello.file.exception.*
 import com.masterello.file.mapper.FileMapper
 import com.masterello.file.repository.FileRepository
 import com.masterello.file.util.FileUtil
@@ -46,12 +43,27 @@ open class FileService(private val fileRepository: FileRepository,
     fun removeFile(userUuid: UUID, fileUUID: UUID): Boolean {
         val file = fileRepository.findFileByUuidAndUserUuid(fileUUID, userUuid)
             ?: throw NotFoundException("File for user $userUuid with uuid $fileUUID is not found")
-
-        val result = storageService.removeFile(file).sdkHttpResponse().isSuccessful
-        if (result) {
-            fileRepository.delete(file)
+        when (file.fileType) {
+            in listOf(FileType.AVATAR, FileType.PORTFOLIO) -> {
+                val files = fileRepository.getAllThumbnailsByParentImageUuid(file.uuid!!)
+                files.map { storageService.removeFile(it) }
+                fileRepository.deleteAll(files)
+                return true
+            }
+            FileType.THUMBNAIL -> {
+                val files = fileRepository.getAllThumbnailsByParentImageUuid(file.parentImage!!)
+                files.map { storageService.removeFile(it) }
+                fileRepository.deleteAll(files)
+                return true
+            }
+            else -> {
+                val result = storageService.removeFile(file).sdkHttpResponse().isSuccessful
+                if (result) {
+                    fileRepository.delete(file)
+                }
+                return result
+            }
         }
-        return result
     }
 
     override fun findAllFilesByUserUuid(userUUID: UUID): List<FileDto> {
@@ -63,7 +75,7 @@ open class FileService(private val fileRepository: FileRepository,
     override fun findImagesBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto> {
         when (fileType) {
             FileType.AVATAR -> return findAvatarsBulk(userUuids)
-            else -> { log.error { "Unknown file type to process: ${fileType}" }
+            else -> { log.error { "Unknown file type to process: $fileType" }
             throw FileTypeException("Invalid file type provided") }
         }
     }
@@ -80,7 +92,7 @@ open class FileService(private val fileRepository: FileRepository,
                 val avatars = AvatarDto()
                 userFiles.forEach { userFile ->
                     val avatarLink = constructAvatarLink(userFile)
-                    when (userFile.thumbailSize) {
+                    when (userFile.thumbnailSize) {
                         SMALL -> avatars.small = avatarLink
                         MEDIUM -> avatars.medium = avatarLink
                         LARGE -> avatars.big = avatarLink
@@ -123,17 +135,19 @@ open class FileService(private val fileRepository: FileRepository,
         try {
             val file = payload.file ?: throw IllegalArgumentException("File cannot be null")
 
-            val fileNameDto = payload.fileName?.lowercase() ?: file.originalFilename?.lowercase()
+            val fileNameDto = payload.fileName?.lowercase() ?: payload.file?.originalFilename?.lowercase()
             ?: throw IllegalArgumentException("File name cannot be null or empty")
 
-            val fileNameExt = FileUtil.getFileExtension(fileNameDto)
+            val fileExtension = FileUtil.getFileExtension(fileNameDto)
 
-            val entity = fileMapper.mapFileDtoToFile(payload, payload.fileType, fileNameDto, fileNameExt)
+            val entity = fileMapper.mapFileDtoToFile(payload, payload.fileType, fileNameDto, fileExtension)
             val savedEntity = fileRepository.save(entity)
             storageService.uploadFile(savedEntity, file)
             log.info { "file ${savedEntity.uuid} uploaded successfully" }
         } catch (e: S3Exception) {
-            log.error { "Failed to upload file, $e" }
+            log.error { "Failed to upload file: ${payload.file?.originalFilename}, $e" }
+        } catch (e: Exception) {
+            log.error { "Unexpected error for file: ${payload.file?.originalFilename}, $e" }
         }
     }
 
@@ -157,10 +171,10 @@ open class FileService(private val fileRepository: FileRepository,
                 height > fileProperties.maxHeight) {
                 throw FileDimensionException("Provided image exceeds max width and height")
             } else {
-                createAndSaveCompressedImage(bufferedImage, payload)
-                createAndSaveThumbnail(bufferedImage, SMALL, payload)
-                createAndSaveThumbnail(bufferedImage, MEDIUM, payload)
-                createAndSaveThumbnail(bufferedImage, LARGE, payload)
+                val originalFile = createAndSaveCompressedImage(bufferedImage, payload)
+                createAndSaveThumbnail(bufferedImage, SMALL, payload, originalFile.uuid!!)
+                createAndSaveThumbnail(bufferedImage, MEDIUM, payload, originalFile.uuid)
+                createAndSaveThumbnail(bufferedImage, LARGE, payload, originalFile.uuid)
             }
 
         } catch (e: IOException) {
@@ -168,24 +182,23 @@ open class FileService(private val fileRepository: FileRepository,
         }
     }
 
-    private fun createAndSaveThumbnail(bufferedImage: BufferedImage, size: Int, payload: FileDto) {
+    private fun createAndSaveThumbnail(bufferedImage: BufferedImage, size: Int, payload: FileDto, parentUuid: UUID) {
         val thumbnail: BufferedImage = imageService.createThumbnail(bufferedImage, size)
 
         val originalFilename = FileUtil.getFileName(payload)
         val fileNameWithoutExtension: String = FileUtil.getFileNameWithoutExtension(originalFilename)
         val fileNameExt = "webp"
-        val isAvatar = payload.fileType == FileType.AVATAR
 
         val newImageName = "$fileNameWithoutExtension-thumbnail-$size.$fileNameExt"
 
         val entity = fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, newImageName,
-            fileNameExt, size, isAvatar)
+            fileNameExt, size, parentUuid, null)
         val savedEntity = fileRepository.save(entity)
         storageService.uploadFile(savedEntity, thumbnail)
         log.info { "saved thumbnail for user ${payload.userUuid}" }
     }
 
-    private fun createAndSaveCompressedImage(bufferedImage: BufferedImage, payload: FileDto) {
+    private fun createAndSaveCompressedImage(bufferedImage: BufferedImage, payload: FileDto): File {
         val fileName = FileUtil.getFileName(payload)
         val fileExt = "webp"
         val compressedImage = imageService.compressedImage(bufferedImage, 0.35f, fileExt)
@@ -199,6 +212,7 @@ open class FileService(private val fileRepository: FileRepository,
 
         storageService.uploadFile(savedEntity, compressedImage)
         log.info { "saved thumbnail for user ${payload.userUuid}" }
+        return savedEntity
     }
 
     private fun constructAvatarLink(userFile: File): String {

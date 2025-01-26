@@ -76,6 +76,7 @@ class FileMapperTest {
     @Test
     fun `test mapAvatarThumbnailToFile`() {
         val uuid = UUID.randomUUID()
+        val parentUUID = UUID.randomUUID()
         val userUuid = UUID.randomUUID()
         val file = FileDto(
             uuid = uuid,
@@ -89,13 +90,43 @@ class FileMapperTest {
         )
 
         val result = fileMapper.mapAvatarThumbnailToFile(file, FileType.AVATAR, "testfile", "webp",
-            112, true)
+            112, parentUUID, null)
 
         assertEquals(userUuid, result.userUuid)
         assertEquals(FileType.AVATAR, result.fileType)
         assertEquals("testfile", result.fileName)
         assertTrue(result.isPublic)
-        assertTrue(result.avatarThumbnail!!)
-        assertEquals(112, result.thumbailSize)
+        assertEquals(result.parentImage, parentUUID)
+        assertNull(result.taskUuid)
+        assertEquals(112, result.thumbnailSize)
+    }
+
+    @Test
+    fun `test mapAvatarThumbnailTaskToFile`() {
+        val uuid = UUID.randomUUID()
+        val parentUUID = UUID.randomUUID()
+        val taskUUID = UUID.randomUUID()
+        val userUuid = UUID.randomUUID()
+        val file = FileDto(
+            uuid = uuid,
+            userUuid = userUuid,
+            fileType = FileType.AVATAR,
+            fileName = "testfile",
+            isPublic = true,
+            file = null,
+            createdDate = OffsetDateTime.now(),
+            updatedDate = OffsetDateTime.now()
+        )
+
+        val result = fileMapper.mapAvatarThumbnailToFile(file, FileType.AVATAR, "testfile", "webp",
+            112, parentUUID, taskUUID)
+
+        assertEquals(userUuid, result.userUuid)
+        assertEquals(FileType.AVATAR, result.fileType)
+        assertEquals("testfile", result.fileName)
+        assertTrue(result.isPublic)
+        assertEquals(result.parentImage, parentUUID)
+        assertEquals(result.taskUuid, taskUUID)
+        assertEquals(112, result.thumbnailSize)
     }
 }
