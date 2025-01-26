@@ -310,6 +310,30 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
+    @AuthMocked(userId = VERIFIED_USER_2_S, roles = {AuthZRole.USER})
+    public void updatePassword_old_password_incorrect() {
+        String newPassword = "newPassword123!";
+        UpdatePasswordRequest request = UpdatePasswordRequest.builder()
+                .oldPassword("incorrect!123")
+                .newPassword(newPassword)
+                .build();
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/user/{uuid}/password", VERIFIED_USER_2.toString())
+                .then()
+                    .statusCode(400);
+        //@formatter:on
+
+    }
+
+    @Test
     @AuthMocked(userId = VERIFIED_USER_S, roles = {AuthZRole.USER})
     public void updatePassword_invalid() {
         String newPassword = "newPassword";

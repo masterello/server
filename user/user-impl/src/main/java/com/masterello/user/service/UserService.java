@@ -4,6 +4,7 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.event.UserStatusChangedEvent;
+import com.masterello.user.exception.IncorrectPasswordException;
 import com.masterello.user.exception.InvalidUserUpdateException;
 import com.masterello.user.exception.SamePasswordException;
 import com.masterello.user.exception.UserAlreadyExistsException;
@@ -65,7 +66,7 @@ public class UserService implements MasterelloUserService {
                 .orElseThrow(() -> new UserNotFoundException("User not found by id"));
 
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Old password is not correct");
+            throw new IncorrectPasswordException("Old password is not correct");
         }
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw new SamePasswordException("New password is same");
