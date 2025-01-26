@@ -32,7 +32,11 @@
 <body>
 <div>
     <h2>Chat</h2>
-    <input type="text" id="chatId" placeholder="Enter chat ID">
+    <input type="text" id="taskId" placeholder="Enter Task ID">
+    <input type="text" id="workerId" placeholder="Enter Worker ID">
+    <button onclick="getOrCreateChat()">Get or Create Chat</button>
+
+    <input type="text" id="chatId" placeholder="Chat ID" readonly>
     <input type="text" id="message" placeholder="Type a message">
     <button onclick="connectToChat()">Connect</button>
     <button onclick="sendMessage()">Send</button>
@@ -54,11 +58,46 @@
 <script>
     var stompClient = null;
     var messagesMap = new Map(); // Store messages as a map with id as key
+    var currentChat = null; // Store chat details
+
+    async function getOrCreateChat() {
+        const taskId = document.getElementById('taskId').value;
+        const workerId = document.getElementById('workerId').value;
+
+        if (!taskId || !workerId) {
+            alert("Please enter Task ID and Worker ID.");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    taskId: taskId,
+                    workerId: workerId
+                }),
+            });
+
+            if (response.ok) {
+                const chat = await response.json();
+                currentChat = chat; // Save the chat details for use in message processing
+                document.getElementById('chatId').value = chat.id;
+                alert(`Chat created or retrieved successfully! Chat ID: ${chat.id}`);
+            } else {
+                alert("Failed to create or retrieve chat.");
+            }
+        } catch (error) {
+            console.error("Error creating or retrieving chat:", error);
+        }
+    }
 
     function connectToChat() {
         var chatId = document.getElementById('chatId').value;
         if (!chatId) {
-            alert("Please enter a chat ID.");
+            alert("Please get or create a chat first.");
             return;
         }
 
@@ -85,6 +124,10 @@
     async function fetchChatHistory(chatId) {
         try {
             const response = await fetch(`/api/chat/${chatId}/history`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch chat messages.");
+            }
+
             const history = await response.json();
 
             history.messages.forEach(function (message) {
@@ -116,8 +159,15 @@
             var createdAtCell = row.insertCell(0);
             createdAtCell.textContent = message.createdAt;
 
-            var createdByNameCell = row.insertCell(1);
-            createdByNameCell.textContent = message.createdByName;
+            var authorCell = row.insertCell(1);
+            // Determine author name based on createdBy field
+            if (message.createdBy === currentChat.userId) {
+                authorCell.textContent = currentChat.userName;
+            } else if (message.createdBy === currentChat.workerId) {
+                authorCell.textContent = currentChat.workerName;
+            } else {
+                authorCell.textContent = "Unknown";
+            }
 
             var messageCell = row.insertCell(2);
             messageCell.textContent = message.message;
@@ -129,12 +179,13 @@
         var chatId = document.getElementById('chatId').value;
 
         if (!chatId) {
-            alert("Please enter a chat ID.");
+            alert("Please get or create a chat first.");
             return;
         }
 
         if (message) {
             stompClient.send("/ws/sendMessage/" + chatId, {}, message);
+            document.getElementById('message').value = ''; // Clear input after sending
         } else {
             alert("Please type a message.");
         }
