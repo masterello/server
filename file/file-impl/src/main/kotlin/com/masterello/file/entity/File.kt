@@ -27,11 +27,14 @@ data class File(
     @Column(name = "is_public")
     var isPublic: Boolean = false,
 
-    @Column(name = "avatar_thumbnail")
-    var avatarThumbnail: Boolean? = false,
+    @Column(name = "parent_image")
+    var parentImage: UUID? = null,
+
+    @Column(name = "task_uuid")
+    var taskUuid: UUID? = null,
 
     @Column(name = "thumbnail_size")
-    var thumbailSize: Int? = null,
+    var thumbnailSize: Int? = null,
 
     @Convert(converter = FileTypeConverter::class)
     @Column(name = "file_type")

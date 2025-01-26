@@ -1,6 +1,6 @@
 package com.masterello.file.dto
 
-data class AvatarDto(
+data class ImageDto(
     var original: String = "",
     var small: String = "",
     var medium: String = "",

@@ -1,7 +1,6 @@
 package com.masterello.file.service
 
 import com.masterello.file.configuration.FileProperties
-import com.masterello.file.dto.BulkImageSearchRequest
 import com.masterello.file.dto.FileDto
 import com.masterello.file.dto.FileType
 import com.masterello.file.entity.File
@@ -118,7 +117,7 @@ class FileServiceTest {
     fun `test findImagesBulk with avatars no data`() {
         val userUuid = UUID.randomUUID()
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid))).thenReturn(listOf())
+        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.AVATAR.code, listOf(userUuid))).thenReturn(listOf())
         val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid))
 
         assertEquals(0, result.size)
@@ -139,16 +138,43 @@ class FileServiceTest {
             fileExtension = "txt"
         )
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.AVATAR.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
         `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
         val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid, userUuid2))
 
         assertEquals(1, result.size)
         assertEquals(userUuid, result[0].userUUID)
-        assertEquals("", result[0].avatarDto.big)
-        assertEquals("", result[0].avatarDto.medium)
-        assertEquals("", result[0].avatarDto.small)
-        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].avatarDto.original)
+        assertEquals("", result[0].imageDtos[0].big)
+        assertEquals("", result[0].imageDtos[0].medium)
+        assertEquals("", result[0].imageDtos[0].small)
+        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].imageDtos[0].original)
+    }
+
+    @Test
+    fun `test findImagesBulk with portfolios`() {
+        val userUuid = UUID.randomUUID()
+        val userUuid2 = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+
+        val file = File(
+            uuid = fileUuid,
+            userUuid = userUuid,
+            fileName = "test.txt",
+            fileType = FileType.AVATAR,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.PORTFOLIO.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
+        val result = fileService.findImagesBulk(FileType.PORTFOLIO, listOf(userUuid, userUuid2))
+
+        assertEquals(1, result.size)
+        assertEquals(userUuid, result[0].userUUID)
+        assertEquals("", result[0].imageDtos[0].big)
+        assertEquals("", result[0].imageDtos[0].medium)
+        assertEquals("", result[0].imageDtos[0].small)
+        assertEquals("masterello.com/$userUuid/$fileUuid.txt", result[0].imageDtos[0].original)
     }
 
     @Test
@@ -275,8 +301,10 @@ class FileServiceTest {
             updatedDate = OffsetDateTime.now()
         )
 
+        val fileUuid = UUID.randomUUID()
+
         val entity = File(
-            uuid = UUID.randomUUID(),
+            uuid = fileUuid,
             userUuid = payload.userUuid,
             fileName = payload.fileName!!,
             fileType = payload.fileType,
@@ -295,11 +323,11 @@ class FileServiceTest {
         `when`(fileMapper.mapFileDtoToFile(payload, FileType.AVATAR, "test-compressed.webp",
             "webp")).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.webp",
-            "webp", 112, true)).thenReturn(entity)
+            "webp", 112, fileUuid, null)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.webp",
-            "webp", 224, true)).thenReturn(entity)
+            "webp", 224, fileUuid, null)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.webp",
-            "webp", 368, true)).thenReturn(entity)
+            "webp", 368, fileUuid, null)).thenReturn(entity)
         `when`(fileRepository.save(entity)).thenReturn(entity)
 
         fileService.storeFile(payload)
@@ -312,7 +340,7 @@ class FileServiceTest {
 
 
     @Test
-    fun `test storeFile uploads image file correctly and removinng old avatars`() {
+    fun `test storeFile uploads image file correctly and removing old avatars`() {
         val userUuid = UUID.randomUUID()
         val payload = FileDto(
             file = mock(),
@@ -323,8 +351,10 @@ class FileServiceTest {
             updatedDate = OffsetDateTime.now()
         )
 
+        val fileUuid = UUID.randomUUID()
+
         val entity = File(
-            uuid = UUID.randomUUID(),
+            uuid = fileUuid,
             userUuid = payload.userUuid,
             fileName = payload.fileName!!,
             fileType = payload.fileType,
@@ -344,11 +374,11 @@ class FileServiceTest {
         `when`(fileMapper.mapFileDtoToFile(payload, FileType.AVATAR, "test-compressed.webp",
             "webp")).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.webp",
-            "webp", 112, true)).thenReturn(entity)
+            "webp", 112, fileUuid, null)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.webp",
-            "webp", 224, true)).thenReturn(entity)
+            "webp", 224, fileUuid, null)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.webp",
-            "webp", 368, true)).thenReturn(entity)
+            "webp", 368, fileUuid, null)).thenReturn(entity)
         `when`(fileRepository.save(entity)).thenReturn(entity)
 
         fileService.storeFile(payload)
@@ -444,6 +474,90 @@ class FileServiceTest {
         verify(fileRepository).findFileByUuidAndUserUuid(fileUuid, userUuid)
         verify(storageService).removeFile(file)
         verify(fileRepository).delete(file)
+    }
+
+    @Test
+    fun `test removeUserFiles returns file deleted response`() {
+        val userUuid = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+        val fileUuid2 = UUID.randomUUID()
+        val expectedFileName = "test.txt"
+        val file = File(
+            uuid = fileUuid,
+            userUuid = userUuid,
+            fileName = expectedFileName,
+            fileType = FileType.AVATAR,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        val file2 = File(
+            uuid = fileUuid2,
+            userUuid = userUuid,
+            fileName = expectedFileName,
+            fileType = FileType.THUMBNAIL,
+            parentImage = fileUuid,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        val deleteResponse = mock<DeleteObjectResponse>()
+
+        `when`(fileRepository.findFileByUuidAndUserUuid(fileUuid, userUuid)).thenReturn(file)
+        `when`(fileRepository.getAllThumbnailsByParentImageUuid(fileUuid)).thenReturn(listOf(file, file2))
+        `when`(storageService.removeFile(file)).thenReturn(deleteResponse)
+        `when`(storageService.removeFile(file2)).thenReturn(deleteResponse)
+
+
+        val result = fileService.removeFile(userUuid, fileUuid)
+
+        assertTrue(result)
+        verify(fileRepository).getAllThumbnailsByParentImageUuid(fileUuid)
+        verify(storageService).removeFile(file)
+        verify(storageService).removeFile(file2)
+        verify(fileRepository).deleteAll(listOf(file, file2))
+    }
+
+    @Test
+    fun `test removeUserFiles by thumbnail returns file deleted response`() {
+        val userUuid = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+        val fileUuid2 = UUID.randomUUID()
+        val expectedFileName = "test.txt"
+        val file = File(
+            uuid = fileUuid,
+            userUuid = userUuid,
+            fileName = expectedFileName,
+            fileType = FileType.AVATAR,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        val file2 = File(
+            uuid = fileUuid2,
+            userUuid = userUuid,
+            fileName = expectedFileName,
+            fileType = FileType.THUMBNAIL,
+            parentImage = fileUuid,
+            isPublic = false,
+            fileExtension = "txt"
+        )
+
+        val deleteResponse = mock<DeleteObjectResponse>()
+
+        `when`(fileRepository.findFileByUuidAndUserUuid(fileUuid, userUuid)).thenReturn(file2)
+        `when`(fileRepository.getAllThumbnailsByParentImageUuid(fileUuid)).thenReturn(listOf(file, file2))
+        `when`(storageService.removeFile(file)).thenReturn(deleteResponse)
+        `when`(storageService.removeFile(file2)).thenReturn(deleteResponse)
+
+
+        val result = fileService.removeFile(userUuid, fileUuid)
+
+        assertTrue(result)
+        verify(fileRepository).getAllThumbnailsByParentImageUuid(fileUuid)
+        verify(storageService).removeFile(file)
+        verify(storageService).removeFile(file2)
+        verify(fileRepository).deleteAll(listOf(file, file2))
     }
 
     @Test
