@@ -7,6 +7,7 @@ import com.masterello.chat.domain.Chat
 import com.masterello.chat.exceptions.ChatCreationValidationException
 import com.masterello.chat.exceptions.TaskNotFoundException
 import com.masterello.chat.exceptions.UserNotFoundException
+import com.masterello.chat.mapper.ChatMapper
 import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.ChatRepository
 import com.masterello.chat.repository.MessageRepository
@@ -27,6 +28,7 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
+import org.mockito.Spy
 import org.mockito.kotlin.whenever
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.security.core.context.SecurityContext
@@ -50,6 +52,9 @@ class ChatServiceTest {
 
     @Mock
     private lateinit var messageMapper: MessageMapper
+
+    @Spy
+    private lateinit var chatMapper: ChatMapper
 
     @Mock
     private lateinit var userService: MasterelloUserService

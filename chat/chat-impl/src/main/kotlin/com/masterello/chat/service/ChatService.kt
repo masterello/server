@@ -7,6 +7,7 @@ import com.masterello.chat.exceptions.ChatCreationValidationException
 import com.masterello.chat.exceptions.ChatNotFoundException
 import com.masterello.chat.exceptions.TaskNotFoundException
 import com.masterello.chat.exceptions.UserNotFoundException
+import com.masterello.chat.mapper.ChatMapper
 import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.ChatRepository
 import com.masterello.chat.repository.MessageRepository
@@ -34,7 +35,8 @@ class ChatService(
         private val messageMapper: MessageMapper,
         private val taskService: ReadOnlyTaskService,
         private val userService: MasterelloUserService,
-        private val workerService: ReadOnlyWorkerService) {
+        private val workerService: ReadOnlyWorkerService,
+        private val chatMapper: ChatMapper) {
 
     private val log = KotlinLogging.logger {}
 
@@ -43,25 +45,15 @@ class ChatService(
         val task = getTask(taskId)
         validateWorker(workerId)
         validateChatRequester(requester, workerId, task)
-        val users = userService.findAllByIds(setOf(task.userUuid, workerId))
-        val user = users[task.userUuid] ?: throw UserNotFoundException("User ${task.userUuid} is not found")
-        val worker = users[workerId] ?: throw UserNotFoundException("Worker $workerId is not found")
-        val chat = tryToFindExistingChat(workerId, taskId) ?: createChat(workerId, task)
+        val chatParticipants = getChatParticipantsInfo(task, workerId)
+         val chat = tryToFindExistingChat(workerId, taskId) ?: createChat(workerId, task)
 
-        return ChatDTO(
-                id = chat.id!!,
-                taskId = chat.taskId!!,
-                userId = chat.userId!!,
-                userName = getName(user),
-                workerId = chat.workerId!!,
-                workerName = getName(worker),
-        )
+        return chatMapper.toDTO(chat, chatParticipants)
     }
 
-    private fun getName(user: MasterelloUser) : String {
-        return "${user.name ?: ""} ${user.lastname ?: ""}".trim()
-                .ifBlank { user.username }
-    }
+    private fun getChatParticipantsInfo(task: TaskDto, workerId: UUID): Map<UUID, MasterelloUser> =
+            userService.findAllByIds(setOf(task.userUuid, workerId))
+
 
     fun getChatHistory(chatId: UUID, limit: Int, before: OffsetDateTime): ChatHistoryDTO {
         val chat = chatRepository.findById(chatId)

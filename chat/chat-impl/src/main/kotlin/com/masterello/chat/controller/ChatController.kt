@@ -21,7 +21,6 @@ import java.util.UUID
 @RequestMapping("/api/chat")
 class ChatController(
         private val service: ChatService,
-        private val userService: MasterelloUserService,
 ) {
 
     @Operation(summary = "Get Or Create chat", description = "get chat if exists or create otherwise")
