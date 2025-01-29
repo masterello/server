@@ -55,3 +55,9 @@ project(':task-contract').projectDir = new File('task/task-contract')
 include 'task-contract-test'
 project(':task-contract-test').projectDir = new File('task/task-contract-test')
 
+include 'chat-impl'
+project(':chat-impl').projectDir = new File('chat/chat-impl')
+include 'chat-contract'
+project(':chat-contract').projectDir = new File('chat/chat-contract')
+include 'chat-contract-test'
+project(':chat-contract-test').projectDir = new File('chat/chat-contract-test')

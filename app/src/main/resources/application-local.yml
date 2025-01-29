@@ -8,6 +8,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
+          time_zone: UTC
           lob:
             non_contextual_creation: 'true'
     hibernate:
@@ -69,3 +70,10 @@ masterello:
   openapi:
     oAuthFlow:
       tokenUrl: http:/127.0.0.1:8090/oauth2/token
+
+logging:
+  level:
+    org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: DEBUG
+    org.springframework.web.socket.messaging.SubProtocolWebSocketHandler: DEBUG
+    org.springframework.messaging.simp: DEBUG
+

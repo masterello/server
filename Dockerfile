@@ -19,4 +19,4 @@ RUN mkdir /app
 COPY --from=build /home/gradle/src/app/build/libs/*.jar /app/spring-boot-application.jar
 
 # Define the entry point for the application
-ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-jar", "/app/spring-boot-application.jar"]
+ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-Duser.timezone=UTC", "-jar", "/app/spring-boot-application.jar"]

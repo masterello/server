@@ -28,10 +28,10 @@ public class AbstractWebIntegrationTest extends AbstractDBIntegrationTest{
     private MockMvc mockMvc;
 
     @Autowired
-    private AuthService authService;
+    protected AuthService authService;
 
     @LocalServerPort
-    private Integer port;
+    protected Integer port;
 
     @BeforeEach
     void globalSetUp() {
