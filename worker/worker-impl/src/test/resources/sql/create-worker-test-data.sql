@@ -28,7 +28,7 @@ values
      ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'RU'),
      ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'DE'),
      ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'EN'),
-     ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'UA'),
+     ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'UK'),
      ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'DE'),
      ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'EN'),
      ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'DE'),

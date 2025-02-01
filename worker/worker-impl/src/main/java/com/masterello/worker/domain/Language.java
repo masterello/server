@@ -3,7 +3,7 @@ package com.masterello.worker.domain;
 public enum Language {
     EN,  // English
     DE,  // German
-    UA,  // Ukrainian
+    UK,  // Ukrainian
     RU,  // Russian
     TR,  // Turkish
     FR,  // French
