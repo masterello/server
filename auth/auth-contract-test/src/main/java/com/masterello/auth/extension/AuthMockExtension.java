@@ -1,6 +1,7 @@
 package com.masterello.auth.extension;
 
 import com.masterello.auth.data.AuthData;
+import com.masterello.auth.data.AuthType;
 import com.masterello.auth.service.AuthService;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -34,6 +35,7 @@ public class AuthMockExtension implements BeforeEachCallback, AfterEachCallback 
                                 .userId(UUID.fromString(authMocked.userId()))
                                 .userRoles(Arrays.asList(authMocked.roles()))
                                 .emailVerified(authMocked.emailVerified())
+                                .authType(AuthType.PASSWORD)
                                 .build()));
             } else {
                 throw new IllegalStateException("AuthService mock not found in test instance or parent classes");

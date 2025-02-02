@@ -15,6 +15,7 @@ public class AuthData {
     private List<AuthZRole> userRoles;
     private UUID userId;
     private String username;
+    private AuthType authType;
 
     public List<String> getUserStringRoles() {
         return userRoles == null ? null :
