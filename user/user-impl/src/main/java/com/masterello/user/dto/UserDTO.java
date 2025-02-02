@@ -8,12 +8,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 import java.util.UUID;
 
 @Data
-@Builder
+@SuperBuilder
 public class UserDTO {
     @NotBlank
     private UUID uuid;

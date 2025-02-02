@@ -449,6 +449,8 @@ public class UserControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("uuid", is(VERIFIED_USER.toString()))
                     .body("email", is(VERIFIED_USER_EMAIL))
                     .body("name", is("test1"))
+                    .body("hasPassword", is(true))
+                    .body("currentAuthType", is("PASSWORD"))
                     .body("lastname", is("user1"));
         //@formatter:on
     }

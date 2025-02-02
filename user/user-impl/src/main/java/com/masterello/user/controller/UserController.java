@@ -7,10 +7,12 @@ import com.masterello.commons.core.validation.dto.ValidationErrorsDTO;
 import com.masterello.commons.security.data.MasterelloAuthentication;
 import com.masterello.user.dto.AddRoleRequest;
 import com.masterello.user.dto.ChangeStatusRequestDTO;
+import com.masterello.user.dto.CurrentUserDTO;
 import com.masterello.user.dto.SignUpRequest;
 import com.masterello.user.dto.UpdatePasswordRequest;
 import com.masterello.user.dto.UserDTO;
 import com.masterello.user.exception.InvalidUserUpdateException;
+import com.masterello.user.mapper.CurrentUserMapper;
 import com.masterello.user.mapper.UserMapper;
 import com.masterello.user.service.SignUpService;
 import com.masterello.user.service.UserService;
@@ -47,6 +49,7 @@ public class UserController {
     private final SignUpService signUpService;
     private final UserService userService;
     private final UserMapper userMapper;
+    private final CurrentUserMapper currentUserMapper;
 
     @RequestMapping(value = "/signup", method = RequestMethod.POST)
     @ResponseStatus(HttpStatus.CREATED)
@@ -68,11 +71,11 @@ public class UserController {
 
     @Operation(method = "retrieveCurrentUser", tags = "user", responses = {@ApiResponse(responseCode = "200", description = "Returns user"), @ApiResponse(responseCode = "404", description = "User is not in the system"), @ApiResponse(responseCode = "500", description = "Error(s) while retrieving user"),})
     @GetMapping
-    public UserDTO getCurrentUserData() {
+    public CurrentUserDTO getCurrentUserData() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         AuthData tokenData = ((MasterelloAuthentication) securityContext.getAuthentication()).getDetails();
         MasterelloUser user = userService.retrieveUserByUuid(tokenData.getUserId());
-        return userMapper.mapUserToDto(user);
+        return currentUserMapper.mapUserToDto(user, tokenData);
     }
     @AuthZRules({
             @AuthZRule(roles = {AuthZRole.USER, AuthZRole.WORKER}, isOwner = true),
