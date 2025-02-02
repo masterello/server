@@ -24,7 +24,8 @@ class FileMapperTest {
             isPublic = true,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(),
-            file = null
+            file = null,
+            taskUuid = null
         )
         val type = FileType.AVATAR
         val fileName = "testfile"
@@ -85,12 +86,13 @@ class FileMapperTest {
             fileName = "testfile",
             isPublic = true,
             file = null,
+            taskUuid = null,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
         )
 
         val result = fileMapper.mapAvatarThumbnailToFile(file, FileType.AVATAR, "testfile", "webp",
-            112, parentUUID, null)
+            112, parentUUID)
 
         assertEquals(userUuid, result.userUuid)
         assertEquals(FileType.AVATAR, result.fileType)
@@ -114,12 +116,13 @@ class FileMapperTest {
             fileName = "testfile",
             isPublic = true,
             file = null,
+            taskUuid = taskUUID,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
         )
 
         val result = fileMapper.mapAvatarThumbnailToFile(file, FileType.AVATAR, "testfile", "webp",
-            112, parentUUID, taskUUID)
+            112, parentUUID)
 
         assertEquals(userUuid, result.userUuid)
         assertEquals(FileType.AVATAR, result.fileType)

@@ -19,12 +19,13 @@ class  FileMapper {
             fileType = type,
             fileName = fileName,
             isPublic = dto.isPublic,
-            fileExtension = fileExtension
+            fileExtension = fileExtension,
+            taskUuid = dto.taskUuid
         )
     }
 
     fun mapAvatarThumbnailToFile(dto: FileDto?, type: FileType, fileName: String, fileExtension: String,
-                                 size: Int?, parentImage: UUID, taskUuid: UUID?): File {
+                                 size: Int?, parentImage: UUID): File {
         if (dto == null) {
             throw IllegalArgumentException("FileDto cannot be null")
         }
@@ -35,7 +36,7 @@ class  FileMapper {
             fileName = fileName,
             isPublic = dto.isPublic,
             parentImage = parentImage,
-            taskUuid = taskUuid,
+            taskUuid = dto.taskUuid,
             thumbnailSize = size,
             fileExtension = fileExtension
         )
@@ -50,6 +51,7 @@ class  FileMapper {
             isPublic = file.isPublic,
             createdDate = file.createdDate,
             updatedDate = file.updatedDate,
+            taskUuid = file.taskUuid,
             file = null
         )
     }

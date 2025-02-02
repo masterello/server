@@ -47,8 +47,8 @@ interface FileRepository: JpaRepository<File, UUID> {
             WHERE f2.file_type = :fileType
             AND f2.user_uuid IN(:userUuids))
     """)
-    fun findAllIAvatarsByUserUuids(@Param("fileType") fileType: Int,
-                                   @Param("userUuids") userUUID: List<UUID>): List<File>
+    fun findAllImagesByUserUuidsAndType(@Param("fileType") fileType: Int,
+                                        @Param("userUuids") userUUID: List<UUID>): List<File>
 
     @Query(nativeQuery = true, value = """
         SELECT * from files f

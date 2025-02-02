@@ -20,6 +20,7 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.http.SdkHttpResponse
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse
 import java.awt.image.BufferedImage
@@ -93,7 +94,8 @@ class FileServiceTest {
             isPublic = file.isPublic,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(),
-            file = null
+            file = null,
+            taskUuid = UUID.randomUUID()
         )
 
         `when`(fileRepository.findAllFilesByUserUuid(userUuid)).thenReturn(listOf(file))
@@ -117,7 +119,7 @@ class FileServiceTest {
     fun `test findImagesBulk with avatars no data`() {
         val userUuid = UUID.randomUUID()
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.AVATAR.code, listOf(userUuid))).thenReturn(listOf())
+        `when`(fileRepository.findAllImagesByUserUuidsAndType(FileType.AVATAR.code, listOf(userUuid))).thenReturn(listOf())
         val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid))
 
         assertEquals(0, result.size)
@@ -138,7 +140,7 @@ class FileServiceTest {
             fileExtension = "txt"
         )
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.AVATAR.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileRepository.findAllImagesByUserUuidsAndType(FileType.AVATAR.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
         `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
         val result = fileService.findImagesBulk(FileType.AVATAR, listOf(userUuid, userUuid2))
 
@@ -165,7 +167,7 @@ class FileServiceTest {
             fileExtension = "txt"
         )
 
-        `when`(fileRepository.findAllIAvatarsByUserUuids(FileType.PORTFOLIO.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
+        `when`(fileRepository.findAllImagesByUserUuidsAndType(FileType.PORTFOLIO.code, listOf(userUuid, userUuid2))).thenReturn(listOf(file))
         `when`(fileProperties.cdnLink).thenReturn("masterello.com/")
         val result = fileService.findImagesBulk(FileType.PORTFOLIO, listOf(userUuid, userUuid2))
 
@@ -197,6 +199,7 @@ class FileServiceTest {
             isPublic = file.isPublic,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(),
+            taskUuid = null,
             file = null
         )
 
@@ -230,6 +233,7 @@ class FileServiceTest {
             isPublic = file.isPublic,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(),
+            taskUuid = null,
             file = null
         )
 
@@ -249,10 +253,11 @@ class FileServiceTest {
             uuid = UUID.randomUUID(),
             userUuid = UUID.randomUUID(),
             fileType = FileType.AVATAR,
-            fileName = "testfile",
+            fileName = "testFile",
             isPublic = true,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now(),
+            taskUuid = null,
             file = null
         )
 
@@ -263,13 +268,15 @@ class FileServiceTest {
 
     @Test
     fun `test storeFile uploads document file correctly`() {
+        val multipartFile: MultipartFile = mock()
         val payload = FileDto(
-            file = mock(),
+            file = listOf(multipartFile),
             fileName = "test.txt",
             fileType = FileType.DOCUMENT,
             userUuid = UUID.randomUUID(),
             createdDate = OffsetDateTime.now(),
-            updatedDate = OffsetDateTime.now()
+            updatedDate = OffsetDateTime.now(),
+            taskUuid = UUID.randomUUID()
         )
 
         val entity = File(
@@ -278,6 +285,7 @@ class FileServiceTest {
             fileName = payload.fileName!!,
             fileType = payload.fileType,
             isPublic = false,
+            taskUuid = null,
             fileExtension = FileUtil.getFileExtension(payload.fileName!!)
         )
 
@@ -287,16 +295,18 @@ class FileServiceTest {
 
         fileService.storeFile(payload)
 
-        verify(storageService).uploadFile(entity, payload.file)
+        verify(storageService).uploadFile(entity, payload.file?.get(0))
     }
 
     @Test
     fun `test storeFile uploads image file correctly`() {
+        val multipartFile: MultipartFile = mock()
         val payload = FileDto(
-            file = mock(),
+            file = listOf(multipartFile),
             fileName = "test.jpg",
             fileType = FileType.AVATAR,
             userUuid = UUID.randomUUID(),
+            taskUuid = null,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
         )
@@ -323,11 +333,11 @@ class FileServiceTest {
         `when`(fileMapper.mapFileDtoToFile(payload, FileType.AVATAR, "test-compressed.webp",
             "webp")).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.webp",
-            "webp", 112, fileUuid, null)).thenReturn(entity)
+            "webp", 112, fileUuid)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.webp",
-            "webp", 224, fileUuid, null)).thenReturn(entity)
+            "webp", 224, fileUuid)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.webp",
-            "webp", 368, fileUuid, null)).thenReturn(entity)
+            "webp", 368, fileUuid)).thenReturn(entity)
         `when`(fileRepository.save(entity)).thenReturn(entity)
 
         fileService.storeFile(payload)
@@ -342,11 +352,13 @@ class FileServiceTest {
     @Test
     fun `test storeFile uploads image file correctly and removing old avatars`() {
         val userUuid = UUID.randomUUID()
+        val multipartFile: MultipartFile = mock()
         val payload = FileDto(
-            file = mock(),
+            file = listOf(multipartFile),
             fileName = "test.jpg",
             fileType = FileType.AVATAR,
             userUuid = userUuid,
+            taskUuid = null,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
         )
@@ -374,11 +386,11 @@ class FileServiceTest {
         `when`(fileMapper.mapFileDtoToFile(payload, FileType.AVATAR, "test-compressed.webp",
             "webp")).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-112.webp",
-            "webp", 112, fileUuid, null)).thenReturn(entity)
+            "webp", 112, fileUuid)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-224.webp",
-            "webp", 224, fileUuid, null)).thenReturn(entity)
+            "webp", 224, fileUuid)).thenReturn(entity)
         `when`(fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, "test-thumbnail-368.webp",
-            "webp", 368, fileUuid, null)).thenReturn(entity)
+            "webp", 368, fileUuid)).thenReturn(entity)
         `when`(fileRepository.save(entity)).thenReturn(entity)
 
         fileService.storeFile(payload)
@@ -393,11 +405,13 @@ class FileServiceTest {
 
     @Test
     fun `test createThumbnailsAndUploadImage throws FileDimensionException when dimensions exceed width`() {
+        val multipartFile: MultipartFile = mock()
         val payload = FileDto(
-            file = mock(),
+            file = listOf(multipartFile),
             fileName = "image.jpg",
             fileType = FileType.AVATAR,
             userUuid = UUID.randomUUID(),
+            taskUuid = null,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
         )
@@ -415,11 +429,13 @@ class FileServiceTest {
 
     @Test
     fun `test createThumbnailsAndUploadImage throws FileDimensionException when dimensions exceed height`() {
+        val multipartFile: MultipartFile = mock()
         val payload = FileDto(
-            file = mock(),
+            file = listOf(multipartFile),
             fileName = "image.jpg",
             fileType = FileType.AVATAR,
             userUuid = UUID.randomUUID(),
+            taskUuid = null,
             createdDate = OffsetDateTime.now(),
             updatedDate = OffsetDateTime.now()
         )

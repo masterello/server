@@ -70,11 +70,12 @@ class FileUtilTest {
     fun `test getFileName with FileDto containing fileName`() {
         val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
             fileName = "testfile.txt", isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
-            updatedDate = OffsetDateTime.now(), file = null)
+            updatedDate = OffsetDateTime.now(), file = null,  taskUuid = null)
         val result = FileUtil.getFileName(fileDto)
 
         assertEquals("testfile.txt", result)
     }
+
 
     @Test
     fun `test getFileName with FileDto containing MultipartFile`() {
@@ -82,7 +83,20 @@ class FileUtilTest {
         `when`(multipartFile.originalFilename).thenReturn("multipartfile.txt")
         val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
             fileName = null, isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
-            updatedDate = OffsetDateTime.now(), file = multipartFile)
+            updatedDate = OffsetDateTime.now(), file = listOf(multipartFile),  taskUuid = null)
+        val result = FileUtil.getFileName(fileDto)
+
+        assertEquals("multipartfile.txt", result)
+    }
+
+    @Test
+    fun `test getFileName with FileDto containing multiple MultipartFiles`() {
+        val multipartFile: MultipartFile = mock()
+        `when`(multipartFile.originalFilename).thenReturn("multipartfile.txt")
+        val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
+            fileName = null, isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
+            updatedDate = OffsetDateTime.now(), file = listOf(multipartFile, multipartFile, multipartFile),
+            taskUuid = null)
         val result = FileUtil.getFileName(fileDto)
 
         assertEquals("multipartfile.txt", result)
@@ -92,7 +106,7 @@ class FileUtilTest {
     fun `test getFileName throws exception`() {
         val fileDto = FileDto(uuid = UUID.randomUUID(), userUuid = UUID.randomUUID(),
             fileName = null, isPublic = true, fileType = FileType.AVATAR, createdDate = OffsetDateTime.now(),
-            updatedDate = OffsetDateTime.now(), file = null)
+            updatedDate = OffsetDateTime.now(), file = null,  taskUuid = null)
 
         val exception = assertThrows<FileNameException> {
             FileUtil.getFileName(fileDto)
