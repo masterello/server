@@ -27,8 +27,8 @@ object FileUtil {
     }
 
     fun getFileName(payload: FileDto): String {
-        return payload.fileName?.takeIf { it.isNotBlank() }
-            ?: payload.file?.originalFilename?.takeIf { it.isNotBlank() }
+        return payload.file?.get(0)?.originalFilename?.takeIf { it.isNotBlank() }
+            ?: payload.fileName?.takeIf { it.isNotBlank() }
             ?: throw FileNameException("File name is not provided")
     }
 }

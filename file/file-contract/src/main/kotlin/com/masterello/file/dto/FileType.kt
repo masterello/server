@@ -5,5 +5,6 @@ enum class FileType(val code: Int) {
     THUMBNAIL(1),
     DOCUMENT(2),
     PORTFOLIO(3),
-    CERTIFICATE(4);
+    CERTIFICATE(4),
+    TASK_REVIEW(5);
 }

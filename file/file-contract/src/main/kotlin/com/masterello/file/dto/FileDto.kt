@@ -10,7 +10,8 @@ data class FileDto(
     val fileName: String?,
     val fileType: FileType,
     val isPublic: Boolean = false,
-    val file: MultipartFile?,
+    val file: List<MultipartFile>?,
+    val taskUuid: UUID?,
     val createdDate: OffsetDateTime?,
     val updatedDate: OffsetDateTime?
 )

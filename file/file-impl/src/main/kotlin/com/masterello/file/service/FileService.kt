@@ -8,15 +8,20 @@ import com.masterello.file.mapper.FileMapper
 import com.masterello.file.repository.FileRepository
 import com.masterello.file.util.FileUtil
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import software.amazon.awssdk.services.s3.model.S3Exception
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.util.*
 
 @Service
-open class FileService(private val fileRepository: FileRepository,
+class FileService(private val fileRepository: FileRepository,
                   private val fileMapper: FileMapper,
                   private val imageService: ImageService,
                   private val fileProperties: FileProperties,
@@ -74,14 +79,14 @@ open class FileService(private val fileRepository: FileRepository,
 
     override fun findImagesBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto> {
         when (fileType) {
-            FileType.AVATAR, FileType.PORTFOLIO -> return findImagesByTypeBulk(fileType, userUuids)
+            FileType.AVATAR, FileType.PORTFOLIO, FileType.TASK_REVIEW -> return findImagesByTypeBulk(fileType, userUuids)
             else -> { log.error { "Unknown file type to process: $fileType" }
             throw FileTypeException("Invalid file type provided") }
         }
     }
 
     private fun findImagesByTypeBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto> {
-        val files = fileRepository.findAllIAvatarsByUserUuids(fileType.code, userUuids)
+        val files = fileRepository.findAllImagesByUserUuidsAndType(fileType.code, userUuids)
 
         val filesByUserAndUuid = files
             .groupBy { it.userUuid }
@@ -132,10 +137,16 @@ open class FileService(private val fileRepository: FileRepository,
     @Transactional
     fun storeFile(payload: FileDto) {
         try {
-            payload.file ?: throw FileNotProvidedException("File is not provided in the request")
+            if (payload.file.isNullOrEmpty()) {
+                throw FileNotProvidedException("File is not provided in the request")
+            }
+            if (payload.file!!.size > 1) {
+                return storeMultipleFiles(payload)
+            }
 
             when (payload.fileType) {
-                FileType.AVATAR, FileType.PORTFOLIO -> createThumbnailsAndUploadAvatar(payload)
+                FileType.AVATAR, FileType.PORTFOLIO -> createThumbnailsAndUploadImage(payload, false)
+                FileType.TASK_REVIEW -> createThumbnailsAndUploadImage(payload, true)
                 FileType.DOCUMENT, FileType.CERTIFICATE -> storeAndUploadDocument(payload)
                 else -> log.error { "Unknown file type to process: ${payload.fileType}" }
             }
@@ -144,54 +155,113 @@ open class FileService(private val fileRepository: FileRepository,
         }
     }
 
-    private fun storeAndUploadDocument(payload: FileDto) {
-        try {
-            val file = payload.file ?: throw IllegalArgumentException("File cannot be null")
-
-            val fileNameDto = payload.fileName?.lowercase() ?: payload.file?.originalFilename?.lowercase()
-            ?: throw IllegalArgumentException("File name cannot be null or empty")
-
-            val fileExtension = FileUtil.getFileExtension(fileNameDto)
-
-            val entity = fileMapper.mapFileDtoToFile(payload, payload.fileType, fileNameDto, fileExtension)
-            val savedEntity = fileRepository.save(entity)
-            storageService.uploadFile(savedEntity, file)
-            log.info { "file ${savedEntity.uuid} uploaded successfully" }
-        } catch (e: S3Exception) {
-            log.error { "Failed to upload file: ${payload.file?.originalFilename}, $e" }
-        } catch (e: Exception) {
-            log.error { "Unexpected error for file: ${payload.file?.originalFilename}, $e" }
+    @Transactional
+    fun storeMultipleFiles(payload: FileDto) {
+        runBlocking {
+            when (payload.fileType) {
+                FileType.PORTFOLIO -> createThumbnailsAndUploadImagesParallel(payload, false)
+                FileType.TASK_REVIEW -> createThumbnailsAndUploadImagesParallel(payload, true)
+                FileType.DOCUMENT, FileType.CERTIFICATE -> storeAndUploadDocumentsParallel(payload)
+                FileType.AVATAR -> throw  FileTypeException("Avatar can be uploaded within single file")
+                else -> log.error { "Unknown file type to process: ${payload.fileType}" }
+            }
         }
     }
 
-    private fun createThumbnailsAndUploadAvatar(payload: FileDto) {
-        if (payload.fileType == FileType.AVATAR) {
-            val files = fileRepository.getAllIAvatarsByUserUuid(payload.userUuid)
-
-            files.map { storageService.removeFile(it) }
-
-            fileRepository.deleteAll(files)
-            log.info { "all previous avatars were removed" }
+    private fun storeAndUploadDocument(payload: FileDto) {
+        try {
+            val file = payload.file?.get(0)!!
+            createAndSaveDocument(file, payload)
+        } catch (e: S3Exception) {
+            log.error { "Failed to upload file: ${payload.file?.get(0)?.originalFilename}, $e" }
+        } catch (e: Exception) {
+            log.error { "Unexpected error for file: ${payload.file?.get(0)?.originalFilename}, $e" }
         }
+    }
+
+    private suspend fun storeAndUploadDocumentsParallel(payload: FileDto) {
+        val files = payload.file!!
+        coroutineScope {
+            files.map { file ->
+                async {
+                    return@async try {
+                        createAndSaveDocument(file, payload)
+                    } catch (e: S3Exception) {
+                        log.error { "Failed to upload file: ${file.originalFilename}, $e" }
+                    } catch (e: Exception) {
+                        log.error { "Unexpected error for file: ${file.originalFilename}, $e" }
+                    }
+                }
+            }.awaitAll()
+        }
+    }
+
+    private fun createAndSaveDocument(file: MultipartFile, payload: FileDto) {
+        val fileNameDto = payload.fileName?.lowercase() ?: file.originalFilename?.lowercase()
+        ?: throw IllegalArgumentException("File name cannot be null or empty")
+
+        val fileExtension = FileUtil.getFileExtension(fileNameDto)
+
+        val entity = fileMapper.mapFileDtoToFile(payload, payload.fileType, fileNameDto, fileExtension)
+        val savedEntity = fileRepository.save(entity)
+        storageService.uploadFile(savedEntity, file)
+        log.info { "file ${savedEntity.uuid} uploaded successfully" }
+    }
+
+    private fun createThumbnailsAndUploadImage(payload: FileDto, isTaskReview: Boolean) {
+        val file = payload.file?.get(0)!!
+        removePreviousAvatars(payload)
+        validateTask(payload)
         return try {
-            val file = payload.file
-            val bufferedImage: BufferedImage = imageService.createBufferedImage(file)
-
-            val width = bufferedImage.width
-            val height = bufferedImage.height
-
-            if (width > fileProperties.maxWidth ||
-                height > fileProperties.maxHeight) {
-                throw FileDimensionException("Provided image exceeds max width and height")
-            } else {
-                val originalFile = createAndSaveCompressedImage(bufferedImage, payload)
-                createAndSaveThumbnail(bufferedImage, SMALL, payload, originalFile.uuid!!)
-                createAndSaveThumbnail(bufferedImage, MEDIUM, payload, originalFile.uuid)
-                createAndSaveThumbnail(bufferedImage, LARGE, payload, originalFile.uuid)
-            }
-
+            createAndSaveImageWithThumbnails(file, payload, isTaskReview)
         } catch (e: IOException) {
            log.error { "failed to store file $e" }
+        }
+    }
+
+    private suspend fun createThumbnailsAndUploadImagesParallel(payload: FileDto, isTaskReview: Boolean) {
+        val files = payload.file!!
+        coroutineScope {
+            files.map { file ->
+                async {
+                    return@async try {
+                        validateTask(payload)
+                        createAndSaveImageWithThumbnails(file, payload, isTaskReview)
+                    } catch (e: IOException) {
+                        log.error { "failed to store file $e" }
+                    }
+                }
+            }.awaitAll()
+        }
+    }
+
+    private fun removePreviousAvatars(payload: FileDto) {
+        if (payload.fileType == FileType.AVATAR) {
+            val avatars = fileRepository.getAllIAvatarsByUserUuid(payload.userUuid)
+
+            avatars.map { storageService.removeFile(it) }
+
+            fileRepository.deleteAll(avatars)
+            log.info { "all previous avatars were removed" }
+        }
+    }
+
+    private fun createAndSaveImageWithThumbnails(file: MultipartFile, payload: FileDto, isTaskReview: Boolean) {
+        val bufferedImage: BufferedImage = imageService.createBufferedImage(file)
+
+        val width = bufferedImage.width
+        val height = bufferedImage.height
+
+        if (width > fileProperties.maxWidth ||
+            height > fileProperties.maxHeight) {
+            throw FileDimensionException("Provided image exceeds max width and height")
+        } else {
+            val originalFile = createAndSaveCompressedImage(bufferedImage, payload)
+            if (!isTaskReview) {
+                createAndSaveThumbnail(bufferedImage, SMALL, payload, originalFile.uuid!!)
+                createAndSaveThumbnail(bufferedImage, MEDIUM, payload, originalFile.uuid)
+            }
+            createAndSaveThumbnail(bufferedImage, LARGE, payload, originalFile.uuid!!)
         }
     }
 
@@ -205,7 +275,7 @@ open class FileService(private val fileRepository: FileRepository,
         val newImageName = "$fileNameWithoutExtension-thumbnail-$size.$fileNameExt"
 
         val entity = fileMapper.mapAvatarThumbnailToFile(payload, FileType.THUMBNAIL, newImageName,
-            fileNameExt, size, parentUuid, null)
+            fileNameExt, size, parentUuid)
         val savedEntity = fileRepository.save(entity)
         storageService.uploadFile(savedEntity, thumbnail)
         log.info { "saved thumbnail for user ${payload.userUuid}" }
@@ -224,7 +294,7 @@ open class FileService(private val fileRepository: FileRepository,
         val savedEntity = fileRepository.save(entity)
 
         storageService.uploadFile(savedEntity, compressedImage)
-        log.info { "saved thumbnail for user ${payload.userUuid}" }
+        log.info { "saved compressed image for user ${payload.userUuid}" }
         return savedEntity
     }
 
@@ -232,5 +302,11 @@ open class FileService(private val fileRepository: FileRepository,
         val objectKey = "${userFile.userUuid}/${userFile.uuid}.${userFile.fileExtension}"
 
         return fileProperties.cdnLink + objectKey
+    }
+
+    private fun validateTask(payload: FileDto) {
+        if (payload.fileType == FileType.TASK_REVIEW  && payload.taskUuid == null) {
+            throw TaskNotProvidedException("Task uuid is not provided for the image")
+        }
     }
 }
