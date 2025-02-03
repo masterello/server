@@ -237,7 +237,50 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     }
 
     @Test
-    void getFullWorkerInfo() {
+    @AuthMocked(userId = USER_S, roles = {AuthZRole.USER})
+    void getFullWorkerInfo_withAuth() {
+        when(userService.findById(WORKER_1))
+                .thenReturn(Optional.of(MasterelloTestUser.builder()
+                        .uuid(WORKER_1)
+                        .title("Herr.")
+                        .name("Plumber")
+                        .lastname("Plumberson")
+                        .build()));
+        //@formatter:off
+        RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .cookie(tokenCookie())
+                .when()
+                    .get("/api/worker/{uuid}/full-info", WORKER_1.toString())
+                .then()
+                    .statusCode(200)
+                    .body("uuid", is(WORKER_1.toString()))
+                    .body("title", is("Herr."))
+                    .body("name", is("Plumber"))
+                    .body("lastname", is("Plumberson"))
+                    .body("workerInfo.description", is("best plumber"))
+                    .body("workerInfo.whatsapp", is("plumber-w"))
+                    .body("workerInfo.telegram", is("plumber-t"))
+                    .body("workerInfo.viber", is("plumber-v"))
+                    .body("workerInfo.phone", is("+49111111111"))
+                    .body("workerInfo.services", hasSize(1))
+                    .body("workerInfo.city", is(City.HAMBURG.getCode()))
+                    .body("workerInfo.services",hasItem(
+                            allOf(
+                                    hasEntry("serviceId", 10),
+                                    hasEntry("amount", 100)
+                            ))
+                    )
+                    .body("workerInfo.languages", hasSize(2))
+                    .body("workerInfo.languages",
+                            containsInAnyOrder(Language.RU.name(), Language.DE.name()));
+        //@formatter:on
+    }
+
+    @Test
+    void getFullWorkerInfo_asAnon() {
         when(userService.findById(WORKER_1))
                 .thenReturn(Optional.of(MasterelloTestUser.builder()
                         .uuid(WORKER_1)
@@ -259,10 +302,10 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("name", is("Plumber"))
                     .body("lastname", is("Plumberson"))
                     .body("workerInfo.description", is("best plumber"))
-                    .body("workerInfo.whatsapp", is("plumber-w"))
-                    .body("workerInfo.telegram", is("plumber-t"))
-                    .body("workerInfo.viber", is("plumber-v"))
-                    .body("workerInfo.phone", is("+49111111111"))
+                    .body("workerInfo.whatsapp", nullValue())
+                    .body("workerInfo.telegram", nullValue())
+                    .body("workerInfo.viber", nullValue())
+                    .body("workerInfo.phone", nullValue())
                     .body("workerInfo.services", hasSize(1))
                     .body("workerInfo.city", is(City.HAMBURG.getCode()))
                     .body("workerInfo.services",hasItem(
@@ -373,6 +416,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
             "ASC, workers_search_lang_and_services_asc.json",
             "DESC, workers_search_lang_and_services_desc.json"
     })
+    @AuthMocked(userId = USER_S, roles = {AuthZRole.USER})
     void searchWorkers_by_lang_and_service(PageRequestDTO.SortOrder order, String expectedResponseFileName) {
         mockCategories(listOf(), Map.of());
         mockUsers(Set.of(WORKER_1, WORKER_2, WORKER_3));
@@ -396,6 +440,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .given()
                     .accept("application/json")
                     .contentType("application/json")
+                    .cookie(tokenCookie())
                 .body(request)
                 .when()
                     .post("/api/worker/search")
@@ -424,6 +469,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
             "1, 3, workers_search_lang_desc_page_1_size_3.json",
             "2, 3, workers_search_lang_desc_page_2_size_3.json"
     })
+    @AuthMocked(userId = USER_S, roles = {AuthZRole.USER})
     void searchWorkers_by_lang_desc(int page, int pageSize, String expectedResponseFileName) {
         mockCategories(listOf(), Map.of());
         when(userService.findAllByIds(anySet())).thenReturn(getMasterelloTestUsers());
@@ -445,6 +491,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .given()
                     .accept("application/json")
                     .contentType("application/json")
+                    .cookie(tokenCookie())
                     .body(request)
                 .when()
                     .post("/api/worker/search")
@@ -464,6 +511,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
             "3, 2, workers_search_service_page_3_size_2.json",
             "4, 2, workers_search_service_page_4_size_2.json"
     })
+    @AuthMocked(userId = USER_S, roles = {AuthZRole.USER})
     void searchWorkers_by_service(int page, int pageSize, String expectedResponseFileName) {
 
         mockCategories(listOf(10), Map.of(10, List.of(randomCategory(11, 10), randomCategory(12, 10))));
@@ -490,6 +538,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .given()
                     .accept("application/json")
                     .contentType("application/json")
+                    .cookie(tokenCookie())
                     .body(request)
                 .when()
                     .post("/api/worker/search")

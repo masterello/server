@@ -1,5 +1,6 @@
 package com.masterello.worker.dto;
 
+import com.masterello.commons.security.serialization.AuthGuard;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
 import com.masterello.worker.domain.Language;
@@ -19,9 +20,13 @@ import java.util.List;
 public class WorkerInfoDTO {
 
     private String description;
+    @AuthGuard
     private String phone;
+    @AuthGuard
     private String telegram;
+    @AuthGuard
     private String whatsapp;
+    @AuthGuard
     private String viber;
     @NotNull
     private Country country;

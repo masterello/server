@@ -7,10 +7,6 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "best electrician",
-        "phone": "+49222222222",
-        "telegram": "electrician-t",
-        "whatsapp": "electrician-w",
-        "viber": "electrician-v",
         "country": "DE",
         "city": "M",
         "languages": ["EN", "UK"],
@@ -34,10 +30,6 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "best plumber",
-        "phone": "+49111111111",
-        "telegram": "plumber-t",
-        "whatsapp": "plumber-w",
-        "viber": "plumber-v",
         "country": "DE",
         "city": "HH",
         "languages": [
