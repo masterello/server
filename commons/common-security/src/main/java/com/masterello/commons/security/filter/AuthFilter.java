@@ -8,48 +8,51 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import static com.masterello.auth.config.AuthConstants.M_TOKEN_COOKIE;
 
 @RequiredArgsConstructor
 public class AuthFilter extends OncePerRequestFilter {
+    public static final AnonymousAuthenticationToken ANONYMOUS_AUTHENTICATION_TOKEN = new AnonymousAuthenticationToken("key", "anonymous",
+            AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
     private final RequestMatcher requestMatcher;
     private final AuthService authService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(!requestMatcher.matches(request)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
         Cookie cookie = WebUtils.getCookie(request, M_TOKEN_COOKIE);
-        Authentication auth;
+        boolean shouldBeAuthenticated = requestMatcher.matches(request);
 
-        if (cookie == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
-        } else {
-            // Validate token
-            Optional<MasterelloAuthentication> validatedAuth = authService.validateToken(cookie.getValue())
-                    .map(MasterelloAuthentication::new);
+        Authentication auth = getAuthenticationFromCookie(cookie);
 
-            if (validatedAuth.isPresent()) {
-                auth = validatedAuth.get();
-            } else {
+        if (auth == null) {
+            if (shouldBeAuthenticated) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid or expired token");
                 return;
             }
+            auth = ANONYMOUS_AUTHENTICATION_TOKEN;
         }
+
         SecurityContextHolder.getContext().setAuthentication(auth);
         filterChain.doFilter(request, response);
+    }
+
+    private Authentication getAuthenticationFromCookie(Cookie cookie) {
+        if (cookie == null) {
+            return null;
+        }
+
+        return authService.validateToken(cookie.getValue())
+                .map(MasterelloAuthentication::new)
+                .orElse(null);
     }
 }
