@@ -15,6 +15,7 @@ interface FileRepository: JpaRepository<File, UUID> {
     @Query(nativeQuery = true, value = """
         SELECT * from files f
         WHERE f.file_type IN (0,2) and f.user_uuid = :userUuid
+        AND f.file_status = 1
     """)
     fun findAllImagesByUserUuid(@Param("userUuid") userUUID: UUID): List<File>
 
@@ -29,12 +30,12 @@ interface FileRepository: JpaRepository<File, UUID> {
         SELECT * FROM files f
         WHERE f.file_type = :fileType
         AND f.user_uuid IN(:userUuids)
+        AND f.file_status = 1
     """)
     fun findAllImagesByUserUuidsAndType(@Param("fileType") fileType: Int,
                                         @Param("userUuids") userUUID: List<UUID>): List<File>
 
     fun findFileByUuidAndUserUuid(uuid: UUID, userUUID: UUID) : File?
-
 
     @Query(nativeQuery = true, value = """
         SELECT * from files f
@@ -42,4 +43,10 @@ interface FileRepository: JpaRepository<File, UUID> {
     """)
     fun findAllFilesByIdsAndUserUuid(@Param("userUuid") userUUID: UUID,
                                      @Param("fileIds") fileIds: List<UUID>): List<File>
+
+    @Query(nativeQuery = true, value = """
+        SELECT * from files f
+        WHERE f.file_status = 0 and f.created_date < now() - '1 day'::interval
+    """)
+    fun findNotUploadedImages(): List<File>
 }

@@ -27,6 +27,7 @@ masterello:
     max-height: 4000
     compressed-size: 1024
     bucket-name: 'masterello'
+    cleanup-cron: "0 0 0 * * ?"
   auth:
     sessionCleanup:
       batchSize: 1000

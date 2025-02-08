@@ -96,6 +96,12 @@ class FileService(private val fileRepository: FileRepository,
         return storedFiles.map { fileMapper.mapFileToDto(it) }
     }
 
+    fun cleanupNotUploadedImages() {
+        val files = fileRepository.findNotUploadedImages()
+        fileRepository.deleteAll(files)
+        log.info { "removed ${files.size} files in db" }
+    }
+
     private fun saveFile(payload: FileDto): File {
         removePreviousAvatars(payload)
         validateTask(payload)

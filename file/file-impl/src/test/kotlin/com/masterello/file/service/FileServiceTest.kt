@@ -386,4 +386,24 @@ class FileServiceTest {
             fileService.markAsUploaded(userUuid, filesToUpdate)
         }
     }
+
+
+    @Test
+    fun `should delete all not uploaded images`() {
+        val file = File(
+            uuid = UUID.randomUUID(),
+            userUuid = UUID.randomUUID(),
+            fileName = "test.png",
+            fileType = FileType.DOCUMENT,
+            isPublic = false,
+        )
+
+        val files = listOf(file, file)
+        `when`(fileRepository.findNotUploadedImages()).thenReturn(files)
+
+        fileService.cleanupNotUploadedImages()
+
+        verify(fileRepository).findNotUploadedImages()
+        verify(fileRepository).deleteAll(files)
+    }
 }
