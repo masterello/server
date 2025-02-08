@@ -1,121 +1,111 @@
 package com.masterello.file.service
 
 import com.masterello.file.configuration.FileProperties
-import com.masterello.file.dto.FileType
 import com.masterello.file.entity.File
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
-import org.mockito.Mock
+import org.mockito.*
 import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
-import org.springframework.web.multipart.MultipartFile
-import software.amazon.awssdk.core.ResponseInputStream
 import software.amazon.awssdk.services.s3.S3Client
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest
-import software.amazon.awssdk.services.s3.model.DeleteObjectResponse
-import software.amazon.awssdk.services.s3.model.GetObjectRequest
-import software.amazon.awssdk.services.s3.model.GetObjectResponse
-import software.amazon.awssdk.services.s3.model.PutObjectRequest
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.nio.file.Path
-import java.time.OffsetDateTime
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response
+import software.amazon.awssdk.services.s3.model.S3Object
 import java.util.*
-import kotlin.test.assertEquals
+
 
 @ExtendWith(MockitoExtension::class)
-class StorageServiceTest {
+internal class StorageServiceTest {
+    @Mock
+    private val s3Client: S3Client? = null
 
     @Mock
-    private lateinit var s3Client: S3Client
-
-    @Mock
-    private lateinit var fileProperties: FileProperties
+    private val fileProperties: FileProperties? = null
 
     @InjectMocks
-    private lateinit var storageService: StorageService
+    private val storageService: StorageService? = null
+
+    @Captor
+    private val listRequestCaptor: ArgumentCaptor<ListObjectsV2Request>? = null
+
+    @Captor
+    private val deleteRequestCaptor: ArgumentCaptor<DeleteObjectsRequest>? = null
 
     @Test
-    fun `test uploadFile with MultipartFile`() {
-        val file: MultipartFile = mock()
-        val inputStream: InputStream = mock()
-        `when`(file.inputStream).thenReturn(inputStream)
+    fun removeFolder_shouldDeleteAllFilesInFolder() {
+        val userUuid = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+        val bucketName = "test-bucket"
 
-        val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, null, null, 112, FileType.AVATAR, OffsetDateTime.now(), OffsetDateTime.now())
-        `when`(fileProperties.bucketName).thenReturn("test-bucket")
+        val entity: File = mock(File::class.java)
+        `when`(entity.userUuid).thenReturn(userUuid)
+        `when`(entity.uuid).thenReturn(fileUuid)
 
-        storageService.uploadFile(entity, file)
+        `when`(fileProperties!!.bucketName).thenReturn(bucketName)
 
-        verify(s3Client, times(1)).putObject(any<PutObjectRequest>(), any<Path>())
+        val s3Object = S3Object.builder().key("$userUuid/$fileUuid/file1.txt").build()
+        val listResponse = ListObjectsV2Response.builder().contents(s3Object).build()
+
+        `when`(
+            s3Client!!.listObjectsV2(
+                ArgumentMatchers.any(
+                    ListObjectsV2Request::class.java
+                )
+            )
+        ).thenReturn(listResponse)
+
+        val result = storageService!!.removeFolder(entity)
+
+        verify(s3Client).listObjectsV2(listRequestCaptor!!.capture())
+       assertEquals(bucketName, listRequestCaptor.value.bucket())
+       assertEquals("test-bucket/$userUuid/$fileUuid", listRequestCaptor.value.prefix())
+
+        verify(s3Client).deleteObjects(deleteRequestCaptor!!.capture())
+        assertEquals(bucketName, deleteRequestCaptor.value.bucket())
+        assertEquals(1, deleteRequestCaptor.value.delete().objects().size)
+        assertEquals("$userUuid/$fileUuid/file1.txt", deleteRequestCaptor.value.delete().objects()[0].key())
+
+        assertTrue(result)
     }
 
     @Test
-    fun `test uploadFile with BufferedImage`() {
-        val bufferedImage = BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB)
+    fun removeFolder_shouldReturnTrueWhenFolderIsEmpty() {
+        val userUuid = UUID.randomUUID()
+        val fileUuid = UUID.randomUUID()
+        val bucketName = "test-bucket"
 
-        val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, UUID.randomUUID(), null, 112, FileType.AVATAR, OffsetDateTime.now(), OffsetDateTime.now())
-        `when`(fileProperties.bucketName).thenReturn("test-bucket")
+        val entity: File = mock(File::class.java)
+        `when`(entity.userUuid).thenReturn(userUuid)
+        `when`(entity.uuid).thenReturn(fileUuid)
 
-        storageService.uploadFile(entity, bufferedImage)
+        `when`(fileProperties!!.bucketName).thenReturn(bucketName)
 
-        verify(s3Client, times(1)).putObject(any<PutObjectRequest>(), any<Path>())
-    }
+        val listResponse = ListObjectsV2Response.builder().contents(emptyList()).build()
 
-    @Test
-    fun `test uploadFile with ByteArrayOutputStream`() {
-        val byteArrayOutputStream = ByteArrayOutputStream()
+        `when`(
+            s3Client!!.listObjectsV2(
+                ArgumentMatchers.any(
+                    ListObjectsV2Request::class.java
+                )
+            )
+        ).thenReturn(listResponse)
 
-        val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, UUID.randomUUID(), null, 112, FileType.AVATAR,  OffsetDateTime.now(), OffsetDateTime.now())
-        `when`(fileProperties.bucketName).thenReturn("test-bucket")
+        val result = storageService!!.removeFolder(entity)
 
-        storageService.uploadFile(entity, byteArrayOutputStream)
-
-        verify(s3Client, times(1)).putObject(any<PutObjectRequest>(), any<Path>())
-    }
-
-    @Test
-    fun `test downloadFile`() {
-        val entity = File(UUID.randomUUID(), UUID.randomUUID(), "test.png", "png",
-            true, null, null, 112,  FileType.AVATAR, OffsetDateTime.now(), OffsetDateTime.now())
-        val mockResponseInputStream: ResponseInputStream<GetObjectResponse> = mock()
-
-        `when`(fileProperties.bucketName).thenReturn("test-bucket")
-        `when`(s3Client.getObject(any<GetObjectRequest>())).thenReturn(mockResponseInputStream)
-
-        storageService.downloadFile(entity)
-
-        verify(s3Client, times(1)).getObject(any<GetObjectRequest>())
-    }
-
-    @Test
-    fun `test removeFile deletes the file from S3`() {
-        // Given
-        val file = File(
-            uuid = UUID.randomUUID(),
-            userUuid = UUID.randomUUID(),
-            fileName = "test.jpg",
-            fileType = FileType.AVATAR,
-            isPublic = false,
-            fileExtension = "jpg"
+        verify(s3Client).listObjectsV2(
+            ArgumentMatchers.any(
+                ListObjectsV2Request::class.java
+            )
+        )
+        verify(s3Client, never()).deleteObjects(
+            ArgumentMatchers.any(
+                DeleteObjectsRequest::class.java
+            )
         )
 
-        val bucketName = "test-bucket"
-        `when`(fileProperties.bucketName).thenReturn(bucketName)
-        `when`(s3Client.deleteObject(any<DeleteObjectRequest>())).thenReturn(DeleteObjectResponse.builder()
-            .deleteMarker(true)
-            .versionId("1")
-            .build())
-
-        // When
-        val result = storageService.removeFile(file)
-
-        // Then
-        verify(s3Client).deleteObject(any<DeleteObjectRequest>())
-        assertEquals(result.deleteMarker(), true)
+        assertTrue(result)
     }
 }

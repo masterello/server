@@ -6,7 +6,6 @@ import com.masterello.file.dto.FileType
 import java.util.UUID
 
 interface ReadOnlyFileService {
-    fun findAllThumbnailsByUserUuid(userUUID: UUID): List<FileDto>
     fun findAllImagesByUserUuid(userUUID: UUID): List<FileDto>
     fun findAllFilesByUserUuid(userUUID: UUID): List<FileDto>
     fun findImagesBulk(fileType: FileType, userUuids: List<UUID>): List<BulkImageResponseDto>

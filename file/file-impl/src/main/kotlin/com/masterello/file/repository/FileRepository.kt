@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import java.util.UUID
+import java.util.*
 
 @Repository
 interface FileRepository: JpaRepository<File, UUID> {
@@ -14,7 +14,7 @@ interface FileRepository: JpaRepository<File, UUID> {
 
     @Query(nativeQuery = true, value = """
         SELECT * from files f
-        WHERE f.file_type IN (0,1) and f.user_uuid = :userUuid
+        WHERE f.file_type IN (0,2) and f.user_uuid = :userUuid
     """)
     fun findAllImagesByUserUuid(@Param("userUuid") userUUID: UUID): List<File>
 
@@ -22,39 +22,24 @@ interface FileRepository: JpaRepository<File, UUID> {
         SELECT * FROM files f
         WHERE f.file_type = 0
         AND f.user_uuid = :userUuid
-        OR f.parent_image IN (
-            SELECT f2.uuid 
-            FROM files f2 
-            WHERE f2.file_type = 0
-            AND f2.user_uuid = :userUuid
-        )
     """)
-    fun getAllIAvatarsByUserUuid(@Param("userUuid") userUUID: UUID): List<File>
-
-    @Query(nativeQuery = true, value = """
-        SELECT * from files f
-        WHERE (f.file_type = 1 AND f.parent_image = :parentUuid) OR f.uuid = :parentUuid
-    """)
-    fun getAllThumbnailsByParentImageUuid(@Param("parentUuid") parentUuid: UUID): List<File>
+    fun getAvatarByUserUuid(@Param("userUuid") userUUID: UUID): Optional<File>
 
     @Query(nativeQuery = true, value = """
         SELECT * FROM files f
         WHERE f.file_type = :fileType
         AND f.user_uuid IN(:userUuids)
-        OR f.parent_image IN (
-            SELECT f2.uuid 
-            FROM files f2 
-            WHERE f2.file_type = :fileType
-            AND f2.user_uuid IN(:userUuids))
     """)
     fun findAllImagesByUserUuidsAndType(@Param("fileType") fileType: Int,
                                         @Param("userUuids") userUUID: List<UUID>): List<File>
 
+    fun findFileByUuidAndUserUuid(uuid: UUID, userUUID: UUID) : File?
+
+
     @Query(nativeQuery = true, value = """
         SELECT * from files f
-        WHERE f.file_type = 1 and f.user_uuid = :userUuid
+        WHERE f.user_uuid = :userUuid and uuid in (:fileIds)
     """)
-    fun findAllThumbnailsByUserUuid(@Param("userUuid") userUUID: UUID): List<File>
-
-    fun findFileByUuidAndUserUuid(uuid: UUID, userUUID: UUID) : File?
+    fun findAllFilesByIdsAndUserUuid(@Param("userUuid") userUUID: UUID,
+                                     @Param("fileIds") fileIds: List<UUID>): List<File>
 }
