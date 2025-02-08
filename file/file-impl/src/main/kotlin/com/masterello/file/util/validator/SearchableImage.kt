@@ -1,4 +1,4 @@
-package com.masterello.file.validator
+package com.masterello.file.util.validator
 
 import jakarta.validation.Constraint
 import jakarta.validation.Payload

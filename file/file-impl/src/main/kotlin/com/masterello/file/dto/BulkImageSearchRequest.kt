@@ -1,6 +1,6 @@
 package com.masterello.file.dto
 
-import com.masterello.file.validator.SearchableImage
+import com.masterello.file.util.validator.SearchableImage
 import java.util.UUID
 
 data class BulkImageSearchRequest (

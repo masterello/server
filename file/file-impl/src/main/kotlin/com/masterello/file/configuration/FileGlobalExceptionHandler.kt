@@ -22,31 +22,6 @@ class FileGlobalExceptionHandler {
         return ResponseEntity(ex.message ?: "Unsupported file type provided to search bulk", HttpStatus.BAD_REQUEST)
     }
 
-    @ExceptionHandler(TooManyFilesProvidedException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleTooManyFilesProvidedException(ex: TooManyFilesProvidedException): ResponseEntity<String> {
-        return ResponseEntity(ex.message ?: "Too many files provided in request", HttpStatus.BAD_REQUEST)
-    }
-
-    @ExceptionHandler(FileDimensionException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleFileDimensionException(ex: FileDimensionException): ResponseEntity<String> {
-        return ResponseEntity(ex.message ?: "File dimensions are exceeding max ones", HttpStatus.BAD_REQUEST)
-    }
-
-    @ExceptionHandler(FileNameException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleFileNameException(ex: FileNameException): ResponseEntity<String> {
-        return ResponseEntity(ex.message ?: "File name is not provided in the request", HttpStatus.BAD_REQUEST)
-    }
-
-    @ExceptionHandler(FileNotProvidedException::class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleFileNotProvidedException(ex: FileNotProvidedException): ResponseEntity<String> {
-        return ResponseEntity(ex.message ?: "File is not provided in the request", HttpStatus.BAD_REQUEST)
-    }
-
-
     @ExceptionHandler(TaskNotProvidedException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleTaskNotProvidedException(ex: TaskNotProvidedException): ResponseEntity<String> {

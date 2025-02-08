@@ -19,15 +19,15 @@ private const val uuidPattern = "[0-9a-fA-F\\-]{36}"
 
 @Configuration
 @EnableWebSecurity
-open class FileSecurityConfig(private val authService: AuthService) {
+class FileSecurityConfig(private val authService: AuthService) {
 
     @Bean
     @Throws(Exception::class)
-    open fun apiFileAuthFilter(http: HttpSecurity): SecurityFilterChain {
+    fun apiFileAuthFilter(http: HttpSecurity): SecurityFilterChain {
 
         val privateEndpoints: RequestMatcher = OrRequestMatcher(
                 AntPathRequestMatcher("/api/files/upload", HttpMethod.POST.name()),                  // Authenticated: Upload file
-                AntPathRequestMatcher("/api/files/{userUuid:$uuidPattern}/{fileUuid:$uuidPattern}", HttpMethod.GET.name()), // Authenticated: Download file
+                AntPathRequestMatcher("/api/files/{userUuid:$uuidPattern}/confirm", HttpMethod.POST.name()),                  // Authenticated: Confirm file uploading
                 AntPathRequestMatcher("/api/files/{userUuid:$uuidPattern}/{fileUuid:$uuidPattern}", HttpMethod.DELETE.name()) // Authenticated: Delete file
         )
         val authFilter = AuthFilter(privateEndpoints, authService)
