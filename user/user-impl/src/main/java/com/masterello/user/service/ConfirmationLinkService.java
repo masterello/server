@@ -64,7 +64,7 @@ public class ConfirmationLinkService {
     }
 
     public void sendConfirmationLink(@NonNull MasterelloUser user, @Nullable String locale) throws MessagingException, UnsupportedEncodingException {
-        log.info("Sending confirmation link for user {}", user);
+        log.info("Sending confirmation link for user {}", user.getEmail());
         String verificationCode = checkConfirmationLinkRecord(user);
         emailService.sendConfirmationEmail(user, verificationCode, locale);
     }
