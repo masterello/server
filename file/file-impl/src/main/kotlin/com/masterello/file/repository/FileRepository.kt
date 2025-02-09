@@ -46,7 +46,7 @@ interface FileRepository: JpaRepository<File, UUID> {
 
     @Query(nativeQuery = true, value = """
         SELECT * from files f
-        WHERE f.file_status = 0 and f.created_date < now() - '1 day'::interval
+        WHERE f.file_status = 0 and f.created_date < now() - interval '1 day'
     """)
     fun findNotUploadedImages(): List<File>
 }
