@@ -38,10 +38,10 @@ data class File(
     var fileStatus: FileStatus = FileStatus.UPLOADING,
 
     @CreationTimestamp
-    @Column(name = "created_date", insertable = false, updatable = false)
+    @Column(name = "created_date", updatable = false)
     val createdDate: OffsetDateTime? = null,
 
     @UpdateTimestamp
-    @Column(name = "updated_date", insertable = false, updatable = false)
+    @Column(name = "updated_date", insertable = false)
     val updatedDate: OffsetDateTime? = null
 )
