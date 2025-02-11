@@ -98,6 +98,7 @@ class FileService(private val fileRepository: FileRepository,
 
     fun cleanupNotUploadedImages() {
         val files = fileRepository.findNotUploadedImages()
+        files.map { storageService.removeFolder(it) }
         fileRepository.deleteAll(files)
         log.info { "removed ${files.size} files in db" }
     }

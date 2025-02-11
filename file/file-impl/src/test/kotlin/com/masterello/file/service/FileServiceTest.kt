@@ -403,6 +403,7 @@ class FileServiceTest {
 
         fileService.cleanupNotUploadedImages()
 
+        verify(storageService, times(2)).removeFolder(file)
         verify(fileRepository).findNotUploadedImages()
         verify(fileRepository).deleteAll(files)
     }
