@@ -1,6 +1,7 @@
 package com.masterello.user.service;
 
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.commons.core.data.Locale;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
@@ -22,7 +23,7 @@ public class SignUpService implements AuthNService{
     private final ConfirmationLinkService confirmationLinkService;
 
     @Transactional
-    public MasterelloUser selfSignup(String email, String password, String locale){
+    public MasterelloUser selfSignup(String email, String password, Locale locale){
         MasterelloUserEntity user = MasterelloUserEntity.builder()
                 .email(email)
                 .password(passwordEncoder.encode(password))

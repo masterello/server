@@ -54,8 +54,7 @@ masterello:
     email:
       enabled: true
       from: masterello1234@gmail.com
-      subject: Please verify your registration
-      sender: Masterello
+      dailyAttempts: 100
   security:
     admin:
       username: admin@masterello.com

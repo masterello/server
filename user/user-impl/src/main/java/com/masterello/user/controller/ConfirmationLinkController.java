@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 @Slf4j
@@ -42,7 +43,7 @@ public class ConfirmationLinkController {
     })
     @PostMapping(value = "/resendToken", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Void> resendConfirmationLink(@RequestBody ResendConfirmationLinkDTO confirmationLinkDTO)
-            throws MessagingException, UnsupportedEncodingException {
+            throws MessagingException, IOException {
         confirmationLinkService.resendConfirmationLink(confirmationLinkDTO);
         return ResponseEntity.ok().build();
     }

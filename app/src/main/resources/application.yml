@@ -16,8 +16,16 @@ masterello:
     email:
       enabled: true
       from: masterello1234@gmail.com
-      registrationSubject: Please verify your registration
-      resetPassSubject: Reset password email
+      registrationSubject:
+        EN: Please verify your email
+        RU: Пожалуйста, подтвердите свой адрес электронной почты
+        DE: Bitte bestätigen Sie Ihre E-Mail-Adresse
+        UK: Будь ласка, підтвердіть свою електронну адресу
+      resetPassSubject:
+        EN: Masterello password reset request
+        RU: Запрос на сброс пароля Masterello
+        DE: Masterello-Anfrage zum Zurücksetzen des Passworts
+        UK: Запит на скидання пароля Masterello
       resetExpirationMinutes: 60
       serviceUrl: masterello.com
       sender: Masterello

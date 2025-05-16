@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 
 @Validated
 @Slf4j
@@ -44,7 +44,7 @@ public class PasswordResetController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(value = "/request", produces = {MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<Void> requestPasswordReset(@Valid @RequestBody RequestPasswordResetDTO requestPasswordReset)
-            throws MessagingException, UnsupportedEncodingException {
+            throws MessagingException, IOException {
         passwordResetService.sentPasswordResetLink(requestPasswordReset.getUserEmail(), requestPasswordReset.getLocale());
         return ResponseEntity.ok().build();
     }
