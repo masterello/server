@@ -1,5 +1,6 @@
 package com.masterello.user.util;
 
+import com.masterello.commons.core.data.Locale;
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.domain.PasswordReset;
@@ -23,7 +24,7 @@ public final class TestDataProvider {
     public static final String SENDER = "Masterello";
     public static final String SUBJECT = "Please verify your registration";
     public static final String RESET_SUBJECT = "Reset password";
-    public static final String LOCALE = "en";
+    public static final Locale LOCALE = Locale.EN;
 
     public static final String CLIENT_BEARER = "Basic Z3c6M1RaLCZdL0VyQHRicCZQQmRofDtScHNvY2tQdygo";
 

@@ -15,7 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
@@ -104,7 +104,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void sentPasswordResetLink() throws MessagingException, UnsupportedEncodingException {
+    public void sentPasswordResetLink() throws MessagingException, IOException {
         //GIVEN
         var user = buildCompleteUser();
         user.setEmailVerified(true);

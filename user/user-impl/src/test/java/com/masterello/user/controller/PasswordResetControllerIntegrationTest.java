@@ -1,5 +1,6 @@
 package com.masterello.user.controller;
 
+import com.masterello.commons.core.data.Locale;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.UserTestConfiguration;
 import com.masterello.user.domain.MasterelloUserEntity;
@@ -55,7 +56,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                     .contentType(ContentType.JSON)
                     .body(RequestPasswordResetDTO.builder()
                         .userEmail("unknown@email.com")
-                        .locale("en")
+                        .locale(Locale.EN)
                         .build())
                 .when()
                     .post(BASE_URL + "/request")
@@ -72,7 +73,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                     .contentType(ContentType.JSON)
                     .body(RequestPasswordResetDTO.builder()
                         .userEmail("not_verified_link_valid@gmail.com")
-                        .locale("en")
+                        .locale(Locale.EN)
                         .build())
                 .when()
                     .post(BASE_URL + "/request")
@@ -89,7 +90,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                     .contentType(ContentType.JSON)
                     .body(RequestPasswordResetDTO.builder()
                         .userEmail("oauth@gmail.com")
-                        .locale("en")
+                        .locale(Locale.EN)
                         .build())
                 .when()
                     .post(BASE_URL + "/request")
@@ -106,7 +107,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                     .contentType(ContentType.JSON)
                     .body(RequestPasswordResetDTO.builder()
                         .userEmail("verified2@gmail.com")
-                        .locale("en")
+                        .locale(Locale.EN)
                         .build())
                 .when()
                     .post(BASE_URL + "/request")
@@ -129,7 +130,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                     .contentType(ContentType.JSON)
                     .body(RequestPasswordResetDTO.builder()
                         .userEmail("verified@gmail.com")
-                        .locale("en")
+                        .locale(Locale.EN)
                         .build())
                 .when()
                     .post(BASE_URL + "/request")
