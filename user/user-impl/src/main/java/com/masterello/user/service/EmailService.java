@@ -26,7 +26,7 @@ import java.util.Optional;
 public class EmailService {
     private final EmailConfigProperties emailConfigProperties;
     private final ResourceLoader resourceLoader;
-    private static final String CONFIRMATION_LINK = "/user/confirm-email.html/";
+    private static final String CONFIRMATION_LINK = "/user/confirm-email/";
     private static final String RESET_PASSWORD_LINK = "/user/reset-password/";
 
     private static final String CONFIRM_EMAIL_FILE = "classpath:email-templates/${locale}/confirm-email.html";
