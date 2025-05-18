@@ -1,5 +1,6 @@
 package com.masterello.user.dto;
 
+import com.masterello.commons.core.data.Locale;
 import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.core.validation.validator.Password;
 import jakarta.validation.constraints.Email;
@@ -16,5 +17,5 @@ public class SignUpRequest {
     @NotEmpty(message = ErrorCodes.PASSWORD_EMPTY)
     @Password
     private String password;
-    private String locale;
+    private Locale locale;
 }

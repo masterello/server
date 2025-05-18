@@ -3,6 +3,7 @@ package com.masterello.user.service;
 
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
+import com.masterello.commons.core.data.Locale;
 import com.masterello.user.dto.ResendConfirmationLinkDTO;
 import com.masterello.user.dto.VerifyUserTokenDTO;
 import com.masterello.user.exception.ConfirmationLinkNotFoundException;
@@ -20,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -55,21 +56,21 @@ public class ConfirmationLinkService {
         checkToken(confirmationLink, user);
     }
 
-    public void sendConfirmationLinkSafe(@NonNull MasterelloUser user, @Nullable String locale) {
+    public void sendConfirmationLinkSafe(@NonNull MasterelloUser user, @Nullable Locale locale) {
         try {
             sendConfirmationLink(user, locale);
-        } catch (MessagingException | UnsupportedEncodingException e) {
+        } catch (MessagingException | IOException e) {
             log.error("Error sending email", e);
         }
     }
 
-    public void sendConfirmationLink(@NonNull MasterelloUser user, @Nullable String locale) throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLink(@NonNull MasterelloUser user, @Nullable Locale locale) throws MessagingException, IOException {
         log.info("Sending confirmation link for user {}", user.getEmail());
         String verificationCode = checkConfirmationLinkRecord(user);
         emailService.sendConfirmationEmail(user, verificationCode, locale);
     }
 
-    public void resendConfirmationLink(ResendConfirmationLinkDTO confirmationLinkDTO) throws MessagingException, UnsupportedEncodingException {
+    public void resendConfirmationLink(ResendConfirmationLinkDTO confirmationLinkDTO) throws MessagingException, IOException {
         var user = userRepository.findById(confirmationLinkDTO.getUserUuid())
                 .orElseThrow(() -> new UserNotFoundException("user is not found"));
 

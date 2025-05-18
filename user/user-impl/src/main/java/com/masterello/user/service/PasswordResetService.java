@@ -2,6 +2,7 @@ package com.masterello.user.service;
 
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.domain.PasswordReset;
+import com.masterello.commons.core.data.Locale;
 import com.masterello.user.exception.DailyAttemptsExceededException;
 import com.masterello.user.exception.OAuthRegistrationException;
 import com.masterello.user.exception.PasswordResetNotFoundException;
@@ -15,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,8 +32,8 @@ public class PasswordResetService {
     private final PasswordResetRepository passwordResetRepository;
 
     @Transactional
-    public void sentPasswordResetLink(String userEmail, String locale)
-            throws MessagingException, UnsupportedEncodingException {
+    public void sentPasswordResetLink(String userEmail, Locale locale)
+            throws MessagingException, IOException {
         log.info("resetting password for user");
         var user = userService.findByEmail(userEmail).orElseThrow(
                 () -> new UserNotFoundException("user is not found"));

@@ -1,5 +1,6 @@
 package com.masterello.user.service;
 
+import com.masterello.commons.core.data.Locale;
 import com.masterello.user.config.EmailConfigProperties;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Session;
@@ -12,12 +13,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.io.UnsupportedEncodingException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -30,6 +37,8 @@ import static org.mockito.Mockito.*;
 public class EmailServiceTest {
 
     @Mock
+    ResourceLoader resourceLoader;
+    @Mock
     private JavaMailSender mailSender;
     @Mock
     private EmailConfigProperties emailConfigProperties;
@@ -38,7 +47,7 @@ public class EmailServiceTest {
     private EmailService emailService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         MockHttpServletRequest mockRequest = new MockHttpServletRequest();
         ServletRequestAttributes attrs = new ServletRequestAttributes(mockRequest);
         RequestContextHolder.setRequestAttributes(attrs);
@@ -46,13 +55,18 @@ public class EmailServiceTest {
         when(emailConfigProperties.isEnabled()).thenReturn(true);
         when(emailConfigProperties.getFrom()).thenReturn(FROM);
         when(emailConfigProperties.getSender()).thenReturn(SENDER);
-        when(emailConfigProperties.getRegistrationSubject()).thenReturn(SUBJECT);
-        when(emailConfigProperties.getResetPassSubject()).thenReturn(RESET_SUBJECT);
+        when(emailConfigProperties.getRegistrationSubject()).thenReturn(Map.of(Locale.EN, SUBJECT));
+        when(emailConfigProperties.getResetPassSubject()).thenReturn(Map.of(Locale.EN, RESET_SUBJECT));
 
+        Resource resource = mock(Resource.class);
+        when(resourceLoader.getResource(any())).thenReturn(resource);
+        String fakeContent = "Fake Template Content";
+        InputStream fakeStream = new ByteArrayInputStream(fakeContent.getBytes(StandardCharsets.UTF_8));
+        when(resource.getInputStream()).thenReturn(fakeStream);
     }
 
     @Test
-    public void sendConfirmationEmail() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationEmail() throws MessagingException, IOException {
         //GIVEN
         var user = buildUser();
         var token = UUID.randomUUID().toString();
@@ -70,7 +84,7 @@ public class EmailServiceTest {
     }
 
     @Test
-    public void sendResetPasswordLink() throws MessagingException, UnsupportedEncodingException {
+    public void sendResetPasswordLink() throws MessagingException, IOException {
         //GIVEN
         var user = buildUser();
         var token = UUID.randomUUID().toString();

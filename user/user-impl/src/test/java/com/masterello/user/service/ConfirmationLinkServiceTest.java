@@ -16,7 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -154,7 +154,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void resendConfirmationLink_no_link() throws MessagingException, UnsupportedEncodingException {
+    public void resendConfirmationLink_no_link() throws MessagingException, IOException {
         //WHEN
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
@@ -175,7 +175,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void resendConfirmationLink_expired_token() throws MessagingException, UnsupportedEncodingException {
+    public void resendConfirmationLink_expired_token() throws MessagingException, IOException {
         //WHEN
         var link = buildConfirmationLink();
         link.setExpiresAt(OffsetDateTime.now().minusDays(1));
@@ -199,7 +199,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void resendConfirmationLink_already_activated_user() throws MessagingException, UnsupportedEncodingException {
+    public void resendConfirmationLink_already_activated_user() throws MessagingException, IOException {
         //WHEN
         var link = buildConfirmationLink();
         link.setExpiresAt(OffsetDateTime.now().minusDays(1));
@@ -219,7 +219,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void resendConfirmationLink() throws MessagingException, UnsupportedEncodingException {
+    public void resendConfirmationLink() throws MessagingException, IOException {
         //WHEN
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
@@ -238,7 +238,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void sendConfirmationLink_no_token() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLink_no_token() throws MessagingException, IOException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
@@ -255,7 +255,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void sendConfirmationLink_expired_token() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLink_expired_token() throws MessagingException, IOException {
         //WHEN
         var link = buildConfirmationLink();
         link.setExpiresAt(OffsetDateTime.now().minusDays(1));
@@ -275,7 +275,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void sendConfirmationLink() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLink() throws MessagingException, IOException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
@@ -290,7 +290,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void sendConfirmationLinkSafe_no_token() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLinkSafe_no_token() throws MessagingException, IOException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
         when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
@@ -307,7 +307,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void sendConfirmationLinkSafe_expired_token() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLinkSafe_expired_token() throws MessagingException, IOException {
         //WHEN
         var link = buildConfirmationLink();
         link.setExpiresAt(OffsetDateTime.now().minusDays(1));
@@ -327,7 +327,7 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void sendConfirmationLinkSafe() throws MessagingException, UnsupportedEncodingException {
+    public void sendConfirmationLinkSafe() throws MessagingException, IOException {
         //WHEN
         when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());

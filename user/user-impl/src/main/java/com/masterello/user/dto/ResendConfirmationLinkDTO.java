@@ -1,5 +1,6 @@
 package com.masterello.user.dto;
 
+import com.masterello.commons.core.data.Locale;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -18,5 +19,5 @@ public class ResendConfirmationLinkDTO {
     @NotEmpty
     private UUID userUuid;
 
-    private String locale;
+    private Locale locale;
 }
