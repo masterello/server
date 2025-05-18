@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PatchServiceTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final PatchService patchService = new PatchService(objectMapper);
+    private final PatchService patchService = new PatchService(objectMapper, null);
 
     @SneakyThrows
     @Test

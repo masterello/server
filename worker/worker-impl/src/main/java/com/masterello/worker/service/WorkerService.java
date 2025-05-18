@@ -4,21 +4,24 @@ import com.github.fge.jsonpatch.JsonPatch;
 import com.masterello.category.dto.CategoryBulkRequest;
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
+import com.masterello.commons.core.json.service.PatchService;
+import com.masterello.commons.core.sort.util.SortUtil;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
-import com.masterello.worker.domain.Language;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
+import com.masterello.worker.domain.Language;
 import com.masterello.worker.domain.WorkerInfo;
 import com.masterello.worker.dto.PageRequestDTO;
+import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.exception.InvalidSearchRequestException;
 import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
 import com.masterello.worker.exception.WorkerNotFoundException;
+import com.masterello.worker.mapper.WorkerInfoMapper;
 import com.masterello.worker.repository.WorkerInfoRepository;
-import com.masterello.commons.core.json.service.PatchService;
-import com.masterello.commons.core.sort.util.SortUtil;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -46,6 +49,8 @@ public class WorkerService implements ReadOnlyWorkerService {
     private final PatchService patchService;
     private final ReadOnlyCategoryService categoryService;
     private final MasterelloUserService masterelloUserService;
+    private final WorkerInfoMapper mapper;
+
     private static final PageRequestDTO.Sort DEFAULT_SORT = PageRequestDTO.Sort.builder()
             .fields(List.of("workerId"))
             .order(PageRequestDTO.SortOrder.DESC).build();
@@ -68,7 +73,10 @@ public class WorkerService implements ReadOnlyWorkerService {
         WorkerInfo patcherInfo;
 
         try {
-            patcherInfo = patchService.applyPatch(patch, workerInfo, WorkerInfo.class);
+            patcherInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class,
+                    WorkerInfoDTO.class, mapper::mapToDto);
+        } catch (ConstraintViolationException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new InvalidWorkerUpdateException("Error when applying update to worker info", ex);
         }

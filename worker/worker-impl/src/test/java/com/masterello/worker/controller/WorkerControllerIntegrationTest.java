@@ -78,6 +78,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .country(Country.GERMANY)
                 .city(City.BERLIN)
                 .services(services)
+                .languages(List.of(Language.EN))
                 .build();
 
         //@formatter:off
@@ -121,6 +122,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .country(Country.GERMANY)
                 .city(City.BERLIN)
                 .services(services)
+                .languages(List.of(Language.EN))
                 .build();
 
         //@formatter:off
@@ -161,6 +163,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .country(Country.GERMANY)
                 .city(City.BERLIN)
                 .services(services)
+                .languages(List.of(Language.EN))
                 .build();
 
         //@formatter:off

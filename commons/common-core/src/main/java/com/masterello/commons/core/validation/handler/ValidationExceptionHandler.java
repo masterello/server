@@ -1,5 +1,4 @@
-package com.masterello.user.config;
-
+package com.masterello.commons.core.validation.handler;
 
 import com.masterello.commons.core.validation.dto.ValidationErrorsDTO;
 import com.masterello.commons.core.validation.mapper.ValidationErrorMapper;
@@ -13,9 +12,9 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ControllerAdvice(basePackages = {"com.masterello.user"})
+@ControllerAdvice(basePackages = {"com.masterello"})
 @RequiredArgsConstructor
-class UserGlobalExceptionHandler {
+public class ValidationExceptionHandler {
 
     private final ValidationErrorMapper validationErrorMapper;
 
@@ -28,7 +27,7 @@ class UserGlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-     public ResponseEntity<ValidationErrorsDTO> handleMethodArgumentValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ValidationErrorsDTO> handleMethodArgumentValidationException(MethodArgumentNotValidException ex) {
         val response = validationErrorMapper.toValidationErrorsDTO(ex.getBindingResult());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }

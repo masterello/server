@@ -1,16 +1,23 @@
 package com.masterello.worker.dto;
 
+import com.masterello.commons.core.validation.ErrorCodes;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.Length;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class WorkerServiceDTO {
+    @NotNull(message = ErrorCodes.SERVICE_ID_EMPTY)
     private Integer serviceId;
+    @Max(value = 1000000,message = ErrorCodes.SERVICE_AMOUNT_MAX)
     private Integer amount;
+    @Length(max = 255, message = ErrorCodes.SERVICES_DETAILS_MAX_LENGTH)
     private String details;
 }
