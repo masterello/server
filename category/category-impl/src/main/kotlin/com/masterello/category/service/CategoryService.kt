@@ -28,17 +28,15 @@ class CategoryService(
     }
 
     override fun getAllChildCategoriesBulk(categoryRequest: CategoryBulkRequest): Map<Int,List<CategoryDto>> {
-        log.info { "${"Fetching all child categories for categoryCodes: {}"} ${categoryRequest.categoryCodes}" }
-        val bulkCategories = categoryRequest.categoryCodes.associateWith { code ->
-            val categories = if (categoryRequest.serviceOnly) {
-                categoryRepository.findAllServiceChildsByCategoryCode(code)
-            } else {
-                categoryRepository.findAllChildsByCategoryCode(code)
-            }
-            categories.map { categoryMapper.categoryToCategoryDto(it) }
+        log.info { "Fetching all child categories for categoryCodes: ${categoryRequest.categoryCodes}" }
+
+        return categoryRequest.categoryCodes.associateWith { code ->
+            categoryRepository.findAllChildsByCategoryCode(code)
+                    .filter { !categoryRequest.serviceOnly || it.isService == true }
+                    .map(categoryMapper::categoryToCategoryDto)
+        }.also {
+            log.info { "Fetched child categories in bulk" }
         }
-        log.info { "Fetched child categories in bulk" }
-        return bulkCategories
     }
 
     override fun getAllParentCategoriesBulk(categoryRequest: CategoryBulkRequest): Map<Int,List<CategoryDto>> {
