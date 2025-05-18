@@ -40,7 +40,7 @@ public class UserServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Spy
-    private PatchService patchService = new PatchService(new ObjectMapper());
+    private PatchService patchService = new PatchService(new ObjectMapper(), null);
     @InjectMocks
     private UserService userService;
     @Mock
