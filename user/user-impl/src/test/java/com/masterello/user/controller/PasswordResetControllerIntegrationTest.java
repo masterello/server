@@ -112,7 +112,7 @@ public class PasswordResetControllerIntegrationTest extends AbstractWebIntegrati
                 .when()
                     .post(BASE_URL + "/request")
                 .then()
-                    .statusCode(400);
+                    .statusCode(429);
         //@formatter:on
     }
 

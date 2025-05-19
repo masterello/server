@@ -1,9 +1,11 @@
 package com.masterello.user.service;
 
 
+import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.dto.ResendConfirmationLinkDTO;
 import com.masterello.user.dto.VerifyUserTokenDTO;
 import com.masterello.user.exception.ConfirmationLinkNotFoundException;
+import com.masterello.user.exception.DailyAttemptsExceededException;
 import com.masterello.user.exception.TokenExpiredException;
 import com.masterello.user.exception.UserAlreadyActivatedException;
 import com.masterello.user.exception.UserNotFoundException;
@@ -34,6 +36,9 @@ public class ConfirmationLinkServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EmailConfigProperties emailConfigProperties;
 
     @Mock
     private ConfirmationLinkRepository confirmationLinkRepository;
@@ -154,51 +159,6 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
-    public void resendConfirmationLink_no_link() throws MessagingException, IOException {
-        //WHEN
-        when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
-        when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
-
-        //WHEN
-        confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
-                .userUuid(UUID.randomUUID())
-                .build());
-
-        //THEN
-        verify(userRepository, times(1)).findById(any());
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
-        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
-    }
-
-    @Test
-    public void resendConfirmationLink_expired_token() throws MessagingException, IOException {
-        //WHEN
-        var link = buildConfirmationLink();
-        link.setExpiresAt(OffsetDateTime.now().minusDays(1));
-
-        when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
-        when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
-
-        //WHEN
-        confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
-                .userUuid(UUID.randomUUID())
-                .build());
-
-        //THEN
-        verify(userRepository, times(1)).findById(any());
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
-        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
-    }
-
-    @Test
     public void resendConfirmationLink_already_activated_user() throws MessagingException, IOException {
         //WHEN
         var link = buildConfirmationLink();
@@ -219,11 +179,32 @@ public class ConfirmationLinkServiceTest {
     }
 
     @Test
+    public void resendConfirmationLink_exceedAttempts() {
+        //WHEN
+        when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
+        when(emailConfigProperties.getDailyAttempts()).thenReturn(3);
+        when(confirmationLinkRepository.findConfirmationCountsByUserUuid(any())).thenReturn(10);
+
+        //WHEN
+        assertThrows(DailyAttemptsExceededException.class, () ->
+                confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
+                .userUuid(UUID.randomUUID())
+                .build()));
+
+        //THEN
+        verify(emailConfigProperties, times(1)).getDailyAttempts();
+        verify(confirmationLinkRepository, times(1)).findConfirmationCountsByUserUuid(any());
+        verify(userRepository, times(1)).findById(any());
+        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
+    }
+
+    @Test
     public void resendConfirmationLink() throws MessagingException, IOException {
         //WHEN
         when(userRepository.findById(any())).thenReturn(Optional.of(buildUser()));
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
+        when(emailConfigProperties.getDailyAttempts()).thenReturn(3);
+        when(confirmationLinkRepository.findConfirmationCountsByUserUuid(any())).thenReturn(1);
 
         //WHEN
         confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
@@ -231,44 +212,9 @@ public class ConfirmationLinkServiceTest {
                 .build());
 
         //THEN
+        verify(emailConfigProperties, times(1)).getDailyAttempts();
+        verify(confirmationLinkRepository, times(1)).findConfirmationCountsByUserUuid(any());
         verify(userRepository, times(1)).findById(any());
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
-        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
-    }
-
-    @Test
-    public void sendConfirmationLink_no_token() throws MessagingException, IOException {
-        //WHEN
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
-        when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
-
-        //WHEN
-        confirmationLinkService.sendConfirmationLink(buildUser(), null);
-
-        //THEN
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
-        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
-    }
-
-    @Test
-    public void sendConfirmationLink_expired_token() throws MessagingException, IOException {
-        //WHEN
-        var link = buildConfirmationLink();
-        link.setExpiresAt(OffsetDateTime.now().minusDays(1));
-
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
-        when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
-
-        //WHEN
-        confirmationLinkService.sendConfirmationLink(buildUser(), null);
-
-        //THEN
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
         verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
@@ -277,66 +223,27 @@ public class ConfirmationLinkServiceTest {
     @Test
     public void sendConfirmationLink() throws MessagingException, IOException {
         //WHEN
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
         confirmationLinkService.sendConfirmationLink(buildUser(), null);
 
         //THEN
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
         verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
+        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
         verifyNoMoreInteractions(confirmationLinkRepository, emailService);
-    }
-
-    @Test
-    public void sendConfirmationLinkSafe_no_token() throws MessagingException, IOException {
-        //WHEN
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.empty());
-        when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
-
-        //WHEN
-        confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);
-
-        //THEN
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
-        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
-    }
-
-    @Test
-    public void sendConfirmationLinkSafe_expired_token() throws MessagingException, IOException {
-        //WHEN
-        var link = buildConfirmationLink();
-        link.setExpiresAt(OffsetDateTime.now().minusDays(1));
-
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(link));
-        when(confirmationLinkRepository.saveAndFlush(any())).thenReturn(buildConfirmationLink());
-        doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
-
-        //WHEN
-        confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);
-
-        //THEN
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
-        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
-        verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
-        verifyNoMoreInteractions(userRepository, confirmationLinkRepository, emailService);
     }
 
     @Test
     public void sendConfirmationLinkSafe() throws MessagingException, IOException {
         //WHEN
-        when(confirmationLinkRepository.findByUserUuid(any())).thenReturn(Optional.of(buildConfirmationLink()));
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
 
         //WHEN
         confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);
 
         //THEN
-        verify(confirmationLinkRepository, times(1)).findByUserUuid(any());
+        verify(confirmationLinkRepository, times(1)).saveAndFlush(any());
         verify(emailService, times(1)).sendConfirmationEmail(any(), any(), isNull());
         verifyNoMoreInteractions(confirmationLinkRepository, emailService);
     }

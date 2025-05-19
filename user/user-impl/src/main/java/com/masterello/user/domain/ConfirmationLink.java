@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
 import java.time.OffsetDateTime;
@@ -27,6 +28,10 @@ public class ConfirmationLink implements Serializable {
 
     @Column(name = "token")
     private String token;
+
+    @CreationTimestamp
+    @Column(name = "creation_date")
+    private OffsetDateTime creationDate;
 
     @Column(name = "expires_at")
     private OffsetDateTime expiresAt;

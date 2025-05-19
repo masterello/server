@@ -201,4 +201,31 @@ public class ConfirmationLinkControllerIntegrationTest extends AbstractWebIntegr
 
         verifyNoInteractions(mailSender);
     }
+
+    @Test
+    public void resendToken_rate_limit() {
+        UUID userId = UUID.fromString("e8b0639f-148c-4f74-b834-bbe04072a998");
+        ResendConfirmationLinkDTO confirmationLinkDTO = ResendConfirmationLinkDTO.builder()
+                .userUuid(userId).build();
+
+        var mimeMessage = new MimeMessage(Session.getDefaultInstance(new Properties()));
+
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+        doNothing().when(mailSender).send(eq(mimeMessage));
+
+        //@formatter:off
+        RestAssured
+                .given()
+                .cookie(tokenCookie())
+                .accept("application/json")
+                .contentType("application/json")
+                .body(confirmationLinkDTO)
+                .when()
+                .post(BASE_URL + "/resendToken")
+                .then()
+                .statusCode(429);
+        //@formatter:on
+
+        verifyNoInteractions(mailSender);
+    }
 }
