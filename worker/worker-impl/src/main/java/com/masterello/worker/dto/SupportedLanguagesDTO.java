@@ -4,10 +4,10 @@ import com.masterello.worker.domain.Language;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Set;
+import java.util.List;
 
 @Data
 @Builder
 public class SupportedLanguagesDTO {
-    private Set<Language> languages;
+    private List<Language> languages;
 }

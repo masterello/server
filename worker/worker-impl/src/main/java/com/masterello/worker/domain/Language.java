@@ -1,8 +1,8 @@
 package com.masterello.worker.domain;
 
 public enum Language {
-    EN,  // English
     DE,  // German
+    EN,  // English
     UK,  // Ukrainian
     RU,  // Russian
     TR,  // Turkish

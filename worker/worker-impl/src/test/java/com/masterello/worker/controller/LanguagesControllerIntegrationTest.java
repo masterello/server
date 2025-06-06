@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.Arrays;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.is;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {WorkerTestConfiguration.class})
 public class LanguagesControllerIntegrationTest extends AbstractWebIntegrationTest {
@@ -27,7 +28,8 @@ public class LanguagesControllerIntegrationTest extends AbstractWebIntegrationTe
                     .get("/api/worker/supported-languages")
                 .then()
                     .statusCode(200)
-                    .body("languages", containsInAnyOrder(Arrays.stream(Language.values()).map(Language::name).toArray()));
+                    .body("languages", containsInAnyOrder(Arrays.stream(Language.values()).map(Language::name).toArray()))
+                    .body("languages[0]", is(Language.DE.name()));
 
         //@formatter:on
     }
