@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Set;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +20,7 @@ public class LanguagesController {
     @ResponseStatus(HttpStatus.OK)
     public SupportedLanguagesDTO getSupportedLanguages() {
         return SupportedLanguagesDTO.builder()
-                .languages(Set.of(Language.values()))
+                .languages(List.of(Language.values()))
                 .build();
     }
 
