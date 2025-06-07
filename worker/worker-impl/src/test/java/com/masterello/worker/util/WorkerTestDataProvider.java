@@ -50,6 +50,10 @@ public final class WorkerTestDataProvider {
     public static final String WS_DETAILS = "Price for 45 minutes with basic support. Only available on Monday at 9 am. Weekends for double price.";
 
     public static CategoryDto randomCategory(int id, int parentId) {
+        return randomCategory(id, parentId, true);
+    }
+
+    public static CategoryDto randomCategory(int id, int parentId, boolean active) {
         return new CategoryDto(
                 UUID.randomUUID(),
                 "random service " + id,
@@ -59,7 +63,7 @@ public final class WorkerTestDataProvider {
                 true,
                 OffsetDateTime.now(),
                 OffsetDateTime.now(),
-                true
+                active
         );
     }
 

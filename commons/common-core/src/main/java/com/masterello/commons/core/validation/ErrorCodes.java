@@ -17,5 +17,7 @@ public class ErrorCodes {
     public static final String COUNTRY_EMPTY = "error.country.empty";
     public static final String SERVICE_AMOUNT_MAX = "error.serviceAmount.max-length";
     public static final String SERVICE_ID_EMPTY = "error.serviceId.empty";
+    public static final String SERVICE_ID_NOT_FOUND = "error.serviceId.not-found";
+
     public static final String SERVICES_DETAILS_MAX_LENGTH = "error.serviceDetails.max-length";
 }

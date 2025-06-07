@@ -6,6 +6,7 @@ import com.masterello.auth.extension.AuthMocked;
 import com.masterello.category.dto.CategoryBulkRequest;
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
+import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
@@ -19,10 +20,12 @@ import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.dto.WorkerSearchRequest;
 import com.masterello.worker.dto.WorkerSearchResponse;
 import com.masterello.worker.dto.WorkerServiceDTO;
+import com.masterello.worker.validator.ServiceValidator;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
 import lombok.SneakyThrows;
 import lombok.val;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -61,6 +64,20 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     private MasterelloUserService userService;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private ServiceValidator serviceValidator;
+
+    @BeforeEach
+    void setUp() {
+        when(categoryService.getAllCategories())
+                .thenReturn(List.of(
+                        randomCategory(10, 0 ),
+                        randomCategory(15, 0),
+                        randomCategory(20, 0),
+                        randomCategory(30, 0, false)
+                ));
+        serviceValidator.init();
+    }
 
     @Test
     @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.WORKER})
@@ -102,6 +119,46 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("services", containsInAnyOrder(
                             mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
                             mapOf("serviceId", 20, "amount", null, "details", null)
+                    ));
+        //@formatter:on
+    }
+
+    @Test
+    @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.WORKER})
+    void storeWorkerInfoWithWrongServiceId() {
+        when(userService.findById(WORKER_6))
+                .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
+        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(30, 100, WS_DETAILS),
+                new WorkerServiceDTO(20, null, null));
+
+        WorkerInfoDTO info = WorkerInfoDTO.builder()
+                .description(DESCRIPTION)
+                .whatsapp(WHATSAPP)
+                .telegram(TELEGRAM)
+                .phone(PHONE)
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
+                .services(services)
+                .languages(List.of(Language.EN))
+                .build();
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .cookie(tokenCookie())
+                    .body(info)
+                .when()
+                    .put("/api/worker/{uuid}/info", WORKER_6.toString())
+                .then()
+                    .statusCode(400)
+                    .body("errors", hasSize(1))
+                    .body("errors", containsInAnyOrder(
+                            allOf(
+                                    hasEntry("field", "services[0].serviceId"),
+                                    hasEntry("message", ErrorCodes.SERVICE_ID_NOT_FOUND)
+                            )
                     ));
         //@formatter:on
     }
@@ -360,6 +417,34 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         //@formatter:on
     }
 
+     @Test
+    @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
+    void patchWorkerInfoServices_ServiceIdNotFound() {
+
+        String body = "[{\"op\":\"replace\",\"path\":\"/services\"," +
+                "\"value\":[{\"serviceId\":10, \"amount\": 250}, {\"serviceId\":35, \"amount\": 100}]}]";
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .body(body)
+                    .accept("application/json")
+                    .contentType("application/json-patch+json")
+                .when()
+                    .patch("/api/worker/{uuid}/info", WORKER_2.toString())
+                .then()
+                    .statusCode(400)
+                    .body("errors", hasSize(1))
+                    .body("errors", containsInAnyOrder(
+                            allOf(
+                                    hasEntry("field", "services[1].serviceId"),
+                                    hasEntry("message", ErrorCodes.SERVICE_ID_NOT_FOUND)
+                            )
+                    ));
+        //@formatter:on
+    }
+
     @Test
     @AuthMocked(userId = USER_S)
     void getWorkerInfo_fails_for_not_worker() {
@@ -380,7 +465,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
     void patchWorkerInfo() {
-
         String body = "[{\"op\":\"replace\",\"path\":\"/description\",\"value\":\"Not that good plumber\"}," +
                 "{\"op\":\"replace\",\"path\":\"/phone\",\"value\":\"new phone\"}," +
                 "{\"op\":\"replace\",\"path\":\"/whatsapp\",\"value\":\"new whatsapp\"}," +

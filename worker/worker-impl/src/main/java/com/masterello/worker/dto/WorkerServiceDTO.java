@@ -1,6 +1,7 @@
 package com.masterello.worker.dto;
 
 import com.masterello.commons.core.validation.ErrorCodes;
+import com.masterello.worker.validator.ServiceId;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import org.hibernate.validator.constraints.Length;
 @Builder
 public class WorkerServiceDTO {
     @NotNull(message = ErrorCodes.SERVICE_ID_EMPTY)
+    @ServiceId
     private Integer serviceId;
     @Max(value = 1000000,message = ErrorCodes.SERVICE_AMOUNT_MAX)
     private Integer amount;

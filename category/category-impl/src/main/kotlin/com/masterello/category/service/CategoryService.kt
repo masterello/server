@@ -2,18 +2,21 @@ package com.masterello.category.service
 
 import com.masterello.category.dto.CategoryBulkRequest
 import com.masterello.category.dto.CategoryDto
+import com.masterello.category.event.CategoriesChangedEvent
 import com.masterello.category.exception.CategoryAlreadyExistsException
 import com.masterello.category.exception.NotFoundException
 import com.masterello.category.mapper.CategoryMapper
 import com.masterello.category.repository.CategoryRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 class CategoryService(
         private val categoryRepository: CategoryRepository,
-        private val categoryMapper: CategoryMapper
+        private val categoryMapper: CategoryMapper,
+        val publisher: ApplicationEventPublisher,
 ) : ReadOnlyCategoryService {
 
     private val log = KotlinLogging.logger {}
@@ -116,6 +119,7 @@ class CategoryService(
         val savedCategory = categoryRepository.saveAndFlush(category)
         val savedCategoryDto = categoryMapper.categoryToCategoryDto(savedCategory)
         log.info { "Created new category: $savedCategoryDto" }
+        publisher.publishEvent(CategoriesChangedEvent(Any()))
         return savedCategoryDto
     }
 
@@ -136,6 +140,7 @@ class CategoryService(
         val savedCategory = categoryRepository.saveAndFlush(category)
         val savedCategoryDto = categoryMapper.categoryToCategoryDto(savedCategory)
         log.info { "Updated category: $savedCategoryDto" }
+        publisher.publishEvent(CategoriesChangedEvent(Any()))
         return savedCategoryDto
     }
 
@@ -147,12 +152,13 @@ class CategoryService(
                 NotFoundException("Category not found")
             }
 
-        category.active = category.active
+        category.active = category.active?.not()
         log.info { "Category status with ID: $id has been updated to: ${category.active}" }
 
         val savedCategory = categoryRepository.save(category)
         val savedCategoryDto = categoryMapper.categoryToCategoryDto(savedCategory)
         log.info { "Updated category: $savedCategoryDto" }
+        publisher.publishEvent(CategoriesChangedEvent(Any()))
         return savedCategoryDto
     }
 }
