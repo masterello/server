@@ -39,7 +39,7 @@ data class Category(
     val createdDate: OffsetDateTime? = null,
 
     @UpdateTimestamp
-    @Column(name = "updated_date", insertable = false, updatable = false)
+    @Column(name = "updated_date", insertable = false, updatable = true)
     val updatedDate: OffsetDateTime? = null,
 
     @Column(name = "active")
