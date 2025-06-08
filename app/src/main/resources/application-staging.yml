@@ -54,7 +54,7 @@ masterello:
   user:
     email:
       enabled: true
-      from: masterello1234@gmail.com
+      from: info@masterello.com
       subject: Please verify your registration
       sender: Masterello
   security:
