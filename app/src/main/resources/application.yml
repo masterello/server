@@ -15,7 +15,7 @@ masterello:
   user:
     email:
       enabled: true
-      from: masterello1234@gmail.com
+      from: info@masterello.com
       registrationSubject:
         EN: Please verify your email
         RU: Пожалуйста, подтвердите свой адрес электронной почты
