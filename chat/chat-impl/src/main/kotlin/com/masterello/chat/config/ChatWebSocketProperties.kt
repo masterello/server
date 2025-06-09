@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "masterello.chat.ws")
 data class ChatWebSocketProperties (
+        val enabled: Boolean = true,
         val clientHeartbeat: Long = 15000,
         val serverHeartbeat: Long = 15000,
         val taskSchedulerPoolSize: Int = 1,
