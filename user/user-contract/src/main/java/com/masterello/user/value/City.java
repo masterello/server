@@ -10,26 +10,26 @@ import java.util.Arrays;
 @Getter
 @RequiredArgsConstructor
 public enum City {
-    BERLIN("be"),
-    HAMBURG("hh"),
-    MUNICH("m"),
-    KOELN("ko"),
-    FRANKFURT_AM_MAIN("f"),
-    DUESSELDORF("d"),
-    STUTTGART("s"),
-    LEIPZIG("l"),
-    DORTMUND("do"),
-    BREMEN("hb"),
-    ESSEN("e"),
-    DRESDEN("dd"),
-    NUERNBERG("n"),
-    HANNOVER("h"),
-    DUISBURG("du"),
-    WUPPERTAL("w"),
-    BOCHUM("bo"),
-    BIELEFELD("bi"),
-    BONN("bn"),
-    MANNHEIM("ma");
+    BERLIN("BE"),
+    HAMBURG("HH"),
+    MUNICH("M"),
+    KOELN("KO"),
+    FRANKFURT_AM_MAIN("F"),
+    DUESSELDORF("D"),
+    STUTTGART("S"),
+    LEIPZIG("L"),
+    DORTMUND("DO"),
+    BREMEN("HB"),
+    ESSEN("E"),
+    DRESDEN("DD"),
+    NUERNBERG("N"),
+    HANNOVER("H"),
+    DUISBURG("DU"),
+    WUPPERTAL("W"),
+    BOCHUM("BO"),
+    BIELEFELD("BI"),
+    BONN("BN"),
+    MANNHEIM("MA");
 
     @JsonValue
     private final String code;
