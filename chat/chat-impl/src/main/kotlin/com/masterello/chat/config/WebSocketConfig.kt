@@ -3,6 +3,7 @@ package com.masterello.chat.config
 import com.masterello.chat.ws.interceptor.AuthHandshakeInterceptor
 import com.masterello.chat.ws.interceptor.WebSocketAuthInterceptor
 import com.masterello.chat.ws.interceptor.WebSocketErrorHandler
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.ChannelRegistration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
@@ -12,6 +13,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
 
+@ConditionalOnProperty(prefix = "masterello.chat.ws", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 @Configuration
 @EnableWebSocketMessageBroker
 class WebSocketConfig(private val authHandshakeInterceptor: AuthHandshakeInterceptor,
@@ -21,7 +23,7 @@ class WebSocketConfig(private val authHandshakeInterceptor: AuthHandshakeInterce
 
     override fun configureMessageBroker(config: MessageBrokerRegistry) {
         // Replace with external Broker when traffic increases
-                config.enableSimpleBroker("/topic") // Simple broker for sending messages to clients
+        config.enableSimpleBroker("/topic") // Simple broker for sending messages to clients
                 .setTaskScheduler(getTaskScheduler())
                 .setHeartbeatValue(longArrayOf(chatWebSocketProperties.serverHeartbeat, chatWebSocketProperties.clientHeartbeat))
         config.setApplicationDestinationPrefixes("/ws") // Prefix for messages sent to the server
@@ -42,6 +44,7 @@ class WebSocketConfig(private val authHandshakeInterceptor: AuthHandshakeInterce
                 .addEndpoint("/ws/chat")
                 .addInterceptors(authHandshakeInterceptor) // Register the interceptor
                 .withSockJS() // WebSocket connection endpoint
+
     }
 
     // Inbound Channel: Handles messages coming from WebSocket clients.
@@ -49,10 +52,10 @@ class WebSocketConfig(private val authHandshakeInterceptor: AuthHandshakeInterce
         registration
                 .interceptors(webSocketAuthInterceptor)
                 .taskExecutor()
-                    .corePoolSize(chatWebSocketProperties.inboundThreadPool.coreSize) // Minimum number of threads
-                    .maxPoolSize(chatWebSocketProperties.inboundThreadPool.maxSize) // Maximum number of threads
-                    .queueCapacity(chatWebSocketProperties.inboundThreadPool.queueCapacity) // Queue size for pending tasks
-                    .keepAliveSeconds(chatWebSocketProperties.inboundThreadPool.keepAliveSeconds) // Keep-alive time for idle threads
+                .corePoolSize(chatWebSocketProperties.inboundThreadPool.coreSize) // Minimum number of threads
+                .maxPoolSize(chatWebSocketProperties.inboundThreadPool.maxSize) // Maximum number of threads
+                .queueCapacity(chatWebSocketProperties.inboundThreadPool.queueCapacity) // Queue size for pending tasks
+                .keepAliveSeconds(chatWebSocketProperties.inboundThreadPool.keepAliveSeconds) // Keep-alive time for idle threads
     }
 
     // Outbound Channel: Sends messages to WebSocket clients.
