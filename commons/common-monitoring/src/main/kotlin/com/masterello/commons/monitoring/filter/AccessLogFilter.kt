@@ -1,4 +1,4 @@
-package com.masterello.monitoring.filter
+package com.masterello.commons.monitoring.filter
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest

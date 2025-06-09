@@ -1,8 +1,8 @@
 package com.masterello.user.service;
 
-import com.masterello.monitoring.AlertLevel;
-import com.masterello.monitoring.AlertMessage;
-import com.masterello.monitoring.slack.service.SlackAlertSender;
+import com.masterello.commons.monitoring.AlertLevel;
+import com.masterello.commons.monitoring.AlertMessage;
+import com.masterello.commons.monitoring.AlertSender;
 import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.exception.RequestFoundException;
 import com.masterello.user.mapper.SupportRequestMapper;
@@ -21,7 +21,7 @@ public class SupportService {
 
     private final SupportRequestMapper supportRequestMapper;
     private final SupportRequestRepository supportRequestRepository;
-    private final SlackAlertSender slackAlertSender;
+    private final AlertSender slackAlertSender;
 
     public void storeSupportRequest(SupportRequestDTO request) {
         log.info("Received new support request");

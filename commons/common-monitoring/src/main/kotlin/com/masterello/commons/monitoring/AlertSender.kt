@@ -1,4 +1,4 @@
-package com.masterello.monitoring
+package com.masterello.commons.monitoring
 
 interface AlertSender {
     fun sendAlert(message: AlertMessage)

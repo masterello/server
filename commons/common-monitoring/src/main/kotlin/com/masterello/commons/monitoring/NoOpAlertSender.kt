@@ -1,4 +1,4 @@
-package com.masterello.monitoring
+package com.masterello.commons.monitoring
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component

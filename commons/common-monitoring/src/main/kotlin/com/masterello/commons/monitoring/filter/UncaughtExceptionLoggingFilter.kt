@@ -1,4 +1,4 @@
-package com.masterello.monitoring.filter
+package com.masterello.commons.monitoring.filter
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.FilterChain

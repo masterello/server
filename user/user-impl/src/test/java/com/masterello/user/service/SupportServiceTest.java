@@ -1,5 +1,6 @@
 package com.masterello.user.service;
 
+import com.masterello.commons.monitoring.AlertSender;
 import com.masterello.user.dto.SupportRequestDTO;
 import com.masterello.user.exception.RequestFoundException;
 import com.masterello.user.mapper.SupportRequestMapper;
@@ -31,6 +32,9 @@ public class SupportServiceTest {
 
     @Mock
     private SupportRequestMapper supportRequestMapper;
+
+    @Mock
+    private AlertSender alertSender;
 
     @InjectMocks
     private SupportService supportService;
