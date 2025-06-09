@@ -37,6 +37,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.masterello.auth.config.AuthConstants.M_TOKEN_COOKIE;
+import static com.masterello.auth.config.AuthConstants.R_TOKEN_COOKIE;
 import static com.masterello.auth.utils.AuthTestDataProvider.*;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -262,7 +263,7 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
 
         introspectResponse
                 .body("active", is(true))
-                .body("userId", is(USER_1_ID.toString()))
+                .body("userId", is(USER_1_ID))
                 .body("username", is(USER_1_EMAIL))
                 .body("emailVerified", is(true))
                 .body("userStatus", is(UserStatus.ACTIVE.name()))
@@ -283,6 +284,44 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
         introspectResponseAfterLogout
                 .body("active", is(false));
     }
+
+    @Test
+    void test_logout_withRefreshToken() {
+        LoginRequest request = new LoginRequest(USER_1_EMAIL, USER_1_PASS);
+
+        // Login and extract tokens
+        ValidatableResponse loginResponse = login(request);
+        AccessTokenResponse tokens = loginResponse.extract().as(AccessTokenResponse.class);
+
+        // Introspect refresh token before logout
+        ValidatableResponse introspectResponse = getIntrospectResponse(tokens.getAccessToken());
+
+        introspectResponse
+                .body("active", is(true))
+                .body("userId", is(USER_1_ID))
+                .body("username", is(USER_1_EMAIL))
+                .body("emailVerified", is(true))
+                .body("userStatus", is(UserStatus.ACTIVE.name()))
+                .body("roles", hasSize(1))
+                .body("roles", hasItem(Role.USER.name()));
+
+        // Perform logout using refresh token cookie
+        RestAssured
+                .given()
+                    .header("Authorization", CLIENT_BEARER)
+                    .cookie(R_TOKEN_COOKIE, tokens.getRefreshToken())
+                .when()
+                    .post("/oauth2/logout")
+                .then()
+                    .statusCode(200);
+
+        // Introspect refresh token after logout to confirm it's invalidated
+        ValidatableResponse refreshIntrospectAfter = getIntrospectResponse(tokens.getRefreshToken());
+
+        refreshIntrospectAfter
+                .body("active", is(false));
+    }
+
 
     @Test
     void refreshToken_invalidatesOldAccessToken() {
