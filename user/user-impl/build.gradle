@@ -2,6 +2,7 @@
 dependencies {
     implementation project(':common-core')
     implementation project(':common-security')
+    implementation project(':common-monitoring')
     implementation project(':user-contract')
     implementation project(':auth-contract')
 

@@ -8,5 +8,6 @@ data class AlertMessage(val level: AlertLevel, val message: String, val stackTra
 
 enum class AlertLevel {
     ERROR,
-    WARN
+    WARN,
+    INFO
 }

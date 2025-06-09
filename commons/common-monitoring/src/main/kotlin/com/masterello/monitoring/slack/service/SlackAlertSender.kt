@@ -79,6 +79,7 @@ class SlackAlertSender(@Qualifier("slackRestTemplate") private val restTemplate:
         return when (alertLevel) {
             AlertLevel.ERROR -> "#FF0000"
             AlertLevel.WARN -> "#FFA500"
+            AlertLevel.INFO -> "#00FFA5"
         }
     }
 
@@ -86,6 +87,7 @@ class SlackAlertSender(@Qualifier("slackRestTemplate") private val restTemplate:
         return when (alertLevel) {
             AlertLevel.ERROR -> ":this-is-fine:"
             AlertLevel.WARN -> ":warning:"
+            AlertLevel.INFO -> ":dove_of_peace:"
         }
     }
 }
