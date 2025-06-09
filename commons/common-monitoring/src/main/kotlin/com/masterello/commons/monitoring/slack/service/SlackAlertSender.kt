@@ -1,10 +1,10 @@
-package com.masterello.monitoring.slack.service
+package com.masterello.commons.monitoring.slack.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.masterello.monitoring.AlertLevel
-import com.masterello.monitoring.AlertMessage
-import com.masterello.monitoring.AlertSender
-import com.masterello.monitoring.slack.config.SlackProperties
+import com.masterello.commons.monitoring.AlertLevel
+import com.masterello.commons.monitoring.AlertMessage
+import com.masterello.commons.monitoring.AlertSender
+import com.masterello.commons.monitoring.slack.config.SlackProperties
 import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -79,6 +79,7 @@ class SlackAlertSender(@Qualifier("slackRestTemplate") private val restTemplate:
         return when (alertLevel) {
             AlertLevel.ERROR -> "#FF0000"
             AlertLevel.WARN -> "#FFA500"
+            AlertLevel.INFO -> "#00FFA5"
         }
     }
 
@@ -86,6 +87,7 @@ class SlackAlertSender(@Qualifier("slackRestTemplate") private val restTemplate:
         return when (alertLevel) {
             AlertLevel.ERROR -> ":this-is-fine:"
             AlertLevel.WARN -> ":warning:"
+            AlertLevel.INFO -> ":dove_of_peace:"
         }
     }
 }

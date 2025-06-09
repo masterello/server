@@ -1,4 +1,4 @@
-package com.masterello.monitoring.slack.config
+package com.masterello.commons.monitoring.slack.config
 
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

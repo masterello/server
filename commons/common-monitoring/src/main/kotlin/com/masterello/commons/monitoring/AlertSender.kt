@@ -1,4 +1,4 @@
-package com.masterello.monitoring
+package com.masterello.commons.monitoring
 
 interface AlertSender {
     fun sendAlert(message: AlertMessage)
@@ -8,5 +8,6 @@ data class AlertMessage(val level: AlertLevel, val message: String, val stackTra
 
 enum class AlertLevel {
     ERROR,
-    WARN
+    WARN,
+    INFO
 }
