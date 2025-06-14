@@ -75,4 +75,9 @@ public class PasswordValidatorTest {
     void shouldPassForValidPassword() {
         assertTrue(validator.isValid("ValidPass1!", context), "Password should be valid when all criteria are met");
     }
+
+    @Test
+    void shouldPassForValidPasswordWithDot() {
+        assertTrue(validator.isValid("ValidPass1.", context), "Password should be valid when all criteria are met");
+    }
 }

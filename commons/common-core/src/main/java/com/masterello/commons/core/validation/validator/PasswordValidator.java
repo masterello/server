@@ -33,7 +33,7 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
                         context, ErrorCodes.PASSWORD_LOWERCASE),
                 () -> validateCondition(password.matches(".*\\d.*"),
                         context, ErrorCodes.PASSWORD_DIGIT),
-                () -> validateCondition(password.matches(".*[!@#$%^&*()].*"),
+                () -> validateCondition(password.matches(".*[!@#$%^&*().].*"),
                         context, ErrorCodes.PASSWORD_SPECIAL_CHAR)
         );
 
