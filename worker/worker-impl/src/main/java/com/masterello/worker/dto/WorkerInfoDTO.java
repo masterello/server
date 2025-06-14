@@ -26,7 +26,7 @@ public class WorkerInfoDTO {
     private String description;
     @AuthGuard
     @NotEmpty(message = ErrorCodes.PHONE_EMPTY)
-    @Length(min = 6, max = 15, message = ErrorCodes.PHONE_LENGTH)
+    @Length(min = 6, message = ErrorCodes.PHONE_LENGTH)
     private String phone;
     @AuthGuard
     private String telegram;
