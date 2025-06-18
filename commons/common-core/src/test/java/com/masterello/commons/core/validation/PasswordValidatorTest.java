@@ -5,6 +5,8 @@ import com.masterello.commons.core.validation.validator.PasswordValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -73,11 +75,25 @@ public class PasswordValidatorTest {
 
     @Test
     void shouldPassForValidPassword() {
-        assertTrue(validator.isValid("ValidPass1!", context), "Password should be valid when all criteria are met");
+        assertTrue(validator.isValid("ValidPass1[", context), "Password should be valid when all criteria are met");
     }
 
     @Test
     void shouldPassForValidPasswordWithDot() {
         assertTrue(validator.isValid("ValidPass1.", context), "Password should be valid when all criteria are met");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "!", "@", "#", "$", "%", "^", "&", "*", "(", ")", ",", ".", "?", "\"", ":", "{", "}",
+            "|", "<", ">", "_", "-", "+", "=", "~", "`", "\\", "/", "]", "[", ";", "'"
+    })
+    void shouldPassForEachAllowedSpecialCharacter(String specialChar) {
+        String base = "Valid1Pass"; // 10 chars, meets all other conditions
+        String password = base + specialChar;
+        assertTrue(
+                validator.isValid(password, context),
+                "Password should be valid with special character: " + specialChar
+        );
     }
 }
