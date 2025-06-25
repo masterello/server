@@ -45,7 +45,7 @@ spring:
 masterello:
   auth:
     token:
-      access-token-ttl: 5m
+      access-token-ttl: 1h
       refresh-token-ttl: 1h
     google:
       verification-url: "https://oauth2.googleapis.com"

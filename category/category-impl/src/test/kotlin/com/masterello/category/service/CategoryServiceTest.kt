@@ -7,6 +7,7 @@ import com.masterello.category.exception.CategoryAlreadyExistsException
 import com.masterello.category.exception.NotFoundException
 import com.masterello.category.mapper.CategoryMapper
 import com.masterello.category.repository.CategoryRepository
+import com.masterello.commons.async.MasterelloEventPublisher
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -16,7 +17,6 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.junit.jupiter.MockitoExtension
-import org.springframework.context.ApplicationEventPublisher
 import java.time.OffsetDateTime
 import java.util.*
 import kotlin.test.assertEquals
@@ -29,7 +29,7 @@ class CategoryServiceTest {
     private lateinit var categoryRepository: CategoryRepository
 
     @Mock
-    private lateinit var publisher: ApplicationEventPublisher
+    private lateinit var publisher: MasterelloEventPublisher
 
     @Mock
     private lateinit var categoryMapper: CategoryMapper

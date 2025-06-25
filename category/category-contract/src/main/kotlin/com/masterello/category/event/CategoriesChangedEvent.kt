@@ -1,5 +1,5 @@
 package com.masterello.category.event
 
-import org.springframework.context.ApplicationEvent
+import com.masterello.commons.async.MasterelloEvent
 
-class CategoriesChangedEvent(source: Any) : ApplicationEvent(source)
+class CategoriesChangedEvent(source: Any) : MasterelloEvent(source)

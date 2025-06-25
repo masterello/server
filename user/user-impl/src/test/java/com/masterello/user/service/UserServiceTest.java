@@ -3,6 +3,7 @@ package com.masterello.user.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatch;
+import com.masterello.commons.async.MasterelloEventPublisher;
 import com.masterello.commons.core.json.exception.PatchFailedException;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.user.domain.MasterelloUserEntity;
@@ -20,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
     @Mock
-    private ApplicationEventPublisher publisher;
+    private MasterelloEventPublisher publisher;
 
 
     @Test

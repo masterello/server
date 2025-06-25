@@ -4,3 +4,7 @@ plugins {
 bootJar {
     enabled = false  // Disable the bootJar task in non-application modules
 }
+
+dependencies {
+    implementation project(':common-async')
+}

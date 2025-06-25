@@ -1,9 +1,9 @@
 package com.masterello.user.event;
 
+import com.masterello.commons.async.MasterelloEvent;
 import com.masterello.user.value.MasterelloUser;
-import org.springframework.context.ApplicationEvent;
 
-public class UserStatusChangedEvent extends ApplicationEvent {
+public class UserStatusChangedEvent extends MasterelloEvent {
 
     public UserStatusChangedEvent(MasterelloUser updatedUser) {
         super(updatedUser);

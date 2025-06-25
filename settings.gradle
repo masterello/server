@@ -12,6 +12,8 @@ include 'common-core'
 project(':common-core').projectDir = new File('commons/common-core')
 include 'common-monitoring'
 project(':common-monitoring').projectDir = new File('commons/common-monitoring')
+include 'common-async'
+project(':common-async').projectDir = new File('commons/common-async')
 
 include 'user-impl'
 project(':user-impl').projectDir = new File('user/user-impl')

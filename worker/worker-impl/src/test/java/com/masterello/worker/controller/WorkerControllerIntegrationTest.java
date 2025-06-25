@@ -76,7 +76,6 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                         randomCategory(20, 0),
                         randomCategory(30, 0, false)
                 ));
-        serviceValidator.init();
     }
 
     @Test
