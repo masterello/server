@@ -6,6 +6,8 @@ plugins {
 dependencies {
     implementation project(":category-contract")
     implementation project(':common-security')
+    implementation project(':common-async')
+
     implementation project(':auth-contract')
 
 

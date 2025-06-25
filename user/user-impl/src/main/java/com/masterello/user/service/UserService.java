@@ -1,6 +1,7 @@
 package com.masterello.user.service;
 
 import com.github.fge.jsonpatch.JsonPatch;
+import com.masterello.commons.async.MasterelloEventPublisher;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.event.UserStatusChangedEvent;
@@ -18,7 +19,6 @@ import com.masterello.user.value.UserStatus;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +38,7 @@ public class UserService implements MasterelloUserService {
     private final UserRepository userRepository;
     private final PatchService patchService;
     private final PasswordEncoder passwordEncoder;
-    private final ApplicationEventPublisher publisher;
+    private final MasterelloEventPublisher publisher;
 
     @Transactional
     public MasterelloUser createUser(MasterelloUserEntity user) {

@@ -7,8 +7,9 @@ import com.masterello.category.exception.CategoryAlreadyExistsException
 import com.masterello.category.exception.NotFoundException
 import com.masterello.category.mapper.CategoryMapper
 import com.masterello.category.repository.CategoryRepository
+import com.masterello.commons.async.MasterelloEventPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.context.ApplicationEventPublisher
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.util.*
 
@@ -16,7 +17,7 @@ import java.util.*
 class CategoryService(
         private val categoryRepository: CategoryRepository,
         private val categoryMapper: CategoryMapper,
-        val publisher: ApplicationEventPublisher,
+        val publisher: MasterelloEventPublisher,
 ) : ReadOnlyCategoryService {
 
     private val log = KotlinLogging.logger {}
@@ -30,7 +31,7 @@ class CategoryService(
         return categoryDtos
     }
 
-    override fun getAllChildCategoriesBulk(categoryRequest: CategoryBulkRequest): Map<Int,List<CategoryDto>> {
+    override fun getAllChildCategoriesBulk(categoryRequest: CategoryBulkRequest): Map<Int, List<CategoryDto>> {
         log.info { "Fetching all child categories for categoryCodes: ${categoryRequest.categoryCodes}" }
 
         return categoryRequest.categoryCodes.associateWith { code ->
@@ -42,7 +43,7 @@ class CategoryService(
         }
     }
 
-    override fun getAllParentCategoriesBulk(categoryRequest: CategoryBulkRequest): Map<Int,List<CategoryDto>> {
+    override fun getAllParentCategoriesBulk(categoryRequest: CategoryBulkRequest): Map<Int, List<CategoryDto>> {
         log.info { "${"Fetching all parent categories for categoryCodes: {}"} ${categoryRequest.categoryCodes}" }
         val bulkCategories = categoryRequest.categoryCodes.associateWith { code ->
 
@@ -66,6 +67,7 @@ class CategoryService(
         return categoryDtos
     }
 
+    @Cacheable("getAllCategories")
     override fun getAllCategories(): List<CategoryDto> {
         log.info { "Fetching all categories" }
         val categories = categoryRepository.findAll()
@@ -112,7 +114,7 @@ class CategoryService(
 
         categoryDto.parentCode?.let { parentCode ->
             categoryRepository.findByCategoryCode(parentCode)
-                ?: throw NotFoundException("Parent category not found")
+                    ?: throw NotFoundException("Parent category not found")
         }
 
         val category = categoryMapper.categoryDtoToCategory(categoryDto)
@@ -133,7 +135,7 @@ class CategoryService(
 
         categoryDto.parentCode?.let { parentCode ->
             categoryRepository.findByCategoryCode(parentCode)
-                ?: throw NotFoundException("Parent category not found")
+                    ?: throw NotFoundException("Parent category not found")
         }
 
         categoryMapper.mergeCategories(category, categoryDto)
@@ -147,10 +149,10 @@ class CategoryService(
     fun activateCategory(id: UUID): CategoryDto {
         log.info { "Updating category status with ID: $id" }
         val category = categoryRepository.findById(id)
-            .orElseThrow {
-                log.error { "Category not found for ID: $id" }
-                NotFoundException("Category not found")
-            }
+                .orElseThrow {
+                    log.error { "Category not found for ID: $id" }
+                    NotFoundException("Category not found")
+                }
 
         category.active = category.active?.not()
         log.info { "Category status with ID: $id has been updated to: ${category.active}" }

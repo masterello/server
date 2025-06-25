@@ -2,10 +2,10 @@ package com.masterello.worker.validator;
 
 import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -17,30 +17,28 @@ import static com.masterello.commons.core.validation.ErrorCodes.SERVICE_ID_NOT_F
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ServiceValidator implements ConstraintValidator<ServiceId, Integer> {
 
     private final ReadOnlyCategoryService categoryService;
-    private volatile Set<Integer> activeCategories;
-
-    @PostConstruct
-    public void init() {
-        activeCategories = categoryService.getAllCategories().stream()
-                .filter(category -> Optional.ofNullable(category.getActive()).orElse(false))
-                .map(CategoryDto::getCategoryCode)
-                .collect(Collectors.toSet());
-    }
 
     @Override
     public boolean isValid(Integer serviceId, ConstraintValidatorContext context) {
         if (serviceId == null) {
             return addViolation(context, SERVICE_ID_EMPTY);
         }
-
-        boolean valid = activeCategories.contains(serviceId);
+        boolean valid = getActiveCategories().contains(serviceId);
         if (!valid) {
             addViolation(context, SERVICE_ID_NOT_FOUND);
         }
         return valid;
+    }
+
+    private Set<Integer> getActiveCategories() {
+        return categoryService.getAllCategories().stream()
+                .filter(category -> Optional.ofNullable(category.getActive()).orElse(false))
+                .map(CategoryDto::getCategoryCode)
+                .collect(Collectors.toSet());
     }
 
     private boolean addViolation(ConstraintValidatorContext context, String message) {

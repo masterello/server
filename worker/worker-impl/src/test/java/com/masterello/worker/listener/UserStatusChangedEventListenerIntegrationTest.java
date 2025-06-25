@@ -1,5 +1,6 @@
 package com.masterello.worker.listener;
 
+import com.masterello.commons.async.MasterelloEventPublisher;
 import com.masterello.commons.test.AbstractDBIntegrationTest;
 import com.masterello.user.event.UserStatusChangedEvent;
 import com.masterello.user.value.MasterelloTestUser;
@@ -28,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserStatusChangedEventListenerIntegrationTest extends AbstractDBIntegrationTest {
 
     @Autowired
-    private ApplicationEventPublisher publisher;
+    private MasterelloEventPublisher publisher;
     @Autowired
     private WorkerInfoRepository workerInfoRepository;
 
