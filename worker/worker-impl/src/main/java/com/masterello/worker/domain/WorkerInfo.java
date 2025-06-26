@@ -93,4 +93,7 @@ public class WorkerInfo implements Worker {
 
     @Column(name = "active")
     private boolean active;
+
+    @Column(name = "test")
+    private boolean test;
 }

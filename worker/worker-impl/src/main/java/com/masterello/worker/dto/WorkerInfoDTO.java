@@ -44,4 +44,5 @@ public class WorkerInfoDTO {
     @NotEmpty(message = ErrorCodes.LANGUAGES_EMPTY)
     private List<Language> languages;
     private Instant registeredAt;
+    private boolean test;
 }

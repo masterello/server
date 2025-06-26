@@ -40,6 +40,11 @@ public final class WorkerTestDataProvider {
     public static final UUID WORKER_7 = UUID.fromString(WORKER_7_S);
     private static final String WORKER_8_S = "dda832b4-b8e3-43df-a457-d77043b01751";
     public static final UUID WORKER_8 = UUID.fromString(WORKER_8_S);
+    public static final String WORKER_9_S = "eea832b4-b8e3-43df-a457-d77043b01759";
+    public static final UUID WORKER_9 = UUID.fromString(WORKER_9_S);
+
+    public static final String WORKER_10_S = "504bdc8b-8138-4c96-adf0-c303cda75a16";
+    public static final UUID WORKER_10 = UUID.fromString(WORKER_10_S);
 
     public static final String DESCRIPTION = "Best nogotochki in Berlin";
     public static final String WHATSAPP = "whatsap4ik";
@@ -80,6 +85,7 @@ public final class WorkerTestDataProvider {
                 .title("Mr.")
                 .name("worker1")
                 .lastname("workerson")
+                .email("worker1@email.com")
                 .status(UserStatus.ACTIVE)
                 .roles(Set.of(Role.WORKER))
                 .build());
@@ -89,6 +95,7 @@ public final class WorkerTestDataProvider {
                 .title("Herr")
                 .name("worker2")
                 .lastname("workerson")
+                .email("worker2@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -97,6 +104,7 @@ public final class WorkerTestDataProvider {
                 .title("Ms.")
                 .name("worker3")
                 .lastname("workerson")
+                .email("worker3@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -105,6 +113,7 @@ public final class WorkerTestDataProvider {
                 .title("Frau")
                 .name("worker4")
                 .lastname("workerson")
+                .email("worker4@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -113,6 +122,7 @@ public final class WorkerTestDataProvider {
                 .title(null)
                 .name("worker5")
                 .lastname("workerson")
+                .email("worker5@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -121,6 +131,7 @@ public final class WorkerTestDataProvider {
                 .title(null)
                 .name("worker6")
                 .lastname("workerson")
+                .email("worker6@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -129,6 +140,7 @@ public final class WorkerTestDataProvider {
                 .title("Mr.")
                 .name("worker7")
                 .lastname("workerson")
+                .email("worker7@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
@@ -137,9 +149,26 @@ public final class WorkerTestDataProvider {
                 .title("Mr.")
                 .name("worker8")
                 .lastname("workerson")
+                .email("worker8@email.com")
                 .status(UserStatus.ACTIVE)
                 .build());
 
+        workers.put(WORKER_9, MasterelloTestUser.builder()
+                .uuid(WORKER_9)
+                .title("Mr.")
+                .name("worker9")
+                .lastname("workerson")
+                .email("test+123@masterello.com")
+                .status(UserStatus.ACTIVE)
+                .build());
+        workers.put(WORKER_10, MasterelloTestUser.builder()
+                .uuid(WORKER_10)
+                .title("Mr.")
+                .name("worker10")
+                .lastname("workerson")
+                .email("test+12310@masterello.com")
+                .status(UserStatus.ACTIVE)
+                .build());
         return workers;
     }
 

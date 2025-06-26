@@ -3,6 +3,7 @@ package com.masterello.worker.config;
 import com.masterello.auth.service.AuthService;
 import com.masterello.commons.security.filter.AuthFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +20,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
+@EnableConfigurationProperties(WorkerConfigProperties.class)
 public class WorkerApiSecurityConfig {
 
     private final AuthService authService;

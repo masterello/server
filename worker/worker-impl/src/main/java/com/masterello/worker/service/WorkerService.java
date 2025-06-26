@@ -6,9 +6,11 @@ import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.commons.core.json.service.PatchService;
 import com.masterello.commons.core.sort.util.SortUtil;
+import com.masterello.commons.security.util.AuthContextUtil;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
 import com.masterello.user.value.MasterelloUser;
+import com.masterello.worker.config.WorkerConfigProperties;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.Language;
@@ -21,6 +23,7 @@ import com.masterello.worker.exception.WorkerInfoNotFoundException;
 import com.masterello.worker.exception.WorkerNotFoundException;
 import com.masterello.worker.mapper.WorkerInfoMapper;
 import com.masterello.worker.repository.WorkerInfoRepository;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,16 +54,24 @@ public class WorkerService implements ReadOnlyWorkerService {
     private final ReadOnlyCategoryService categoryService;
     private final MasterelloUserService masterelloUserService;
     private final WorkerInfoMapper mapper;
+    private final WorkerConfigProperties workerConfigProperties;
+    private Pattern TEST_WORKER_EMAIL;
+
+    @PostConstruct
+    public void init() {
+        this.TEST_WORKER_EMAIL = Pattern.compile(workerConfigProperties.getTestWorkerEmailPattern());
+    }
 
     private static final PageRequestDTO.Sort DEFAULT_SORT = PageRequestDTO.Sort.builder()
             .fields(List.of("workerId"))
             .order(PageRequestDTO.SortOrder.DESC).build();
 
     public WorkerInfo storeWorkerInfo(WorkerInfo workerInfo) {
-        Boolean active = masterelloUserService.findById(workerInfo.getWorkerId())
-                .map(MasterelloUser::isEnabled)
+        MasterelloUser user = masterelloUserService.findById(workerInfo.getWorkerId())
                 .orElseThrow(() -> new WorkerNotFoundException("Worker is not found for id: " + workerInfo.getWorkerId()));
-        workerInfo.setActive(active);
+
+        workerInfo.setActive(user.isEnabled());
+        workerInfo.setTest(isTestUser(user));
         return workerInfoRepository.save(workerInfo);
     }
 
@@ -88,18 +100,19 @@ public class WorkerService implements ReadOnlyWorkerService {
                 .orElseThrow(() -> new WorkerInfoNotFoundException("Worker info not found for worker " + workerId));
     }
 
-    public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<City> cities, PageRequestDTO pageRequestDTO) {
-
+    public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<City> cities,
+                                        PageRequestDTO pageRequestDTO, boolean showTestWorkers) {
+        boolean shouldShowTestWorkers = showTestWorkers && AuthContextUtil.isAdmin();
         final List<Integer> categoriesWithChildren = getCategories(serviceIds);
 
         PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
-        val workerIds = workerInfoRepository.findWorkerIdsByFilters(cities, languages, categoriesWithChildren, pageRequest);
+        val workerIds = workerInfoRepository.findWorkerIdsByFilters(cities, languages, categoriesWithChildren, shouldShowTestWorkers, pageRequest);
         val workers = workerInfoRepository.findAllByWorkerIdIn(workerIds.toSet(), pageRequest.getSort());
-        val fullWorkers = getFullWorkerProjections(workers);
+        val fullWorkers = getFullWorkerProjections(workers, shouldShowTestWorkers);
         return new FullWorkerPage(fullWorkers, workerIds.getTotalElements());
     }
 
-    private List<FullWorkerProjection> getFullWorkerProjections(List<WorkerInfo> workers) {
+    private List<FullWorkerProjection> getFullWorkerProjections(List<WorkerInfo> workers, boolean showTestWorkers) {
         Set<UUID> ids = workers.stream().map(WorkerInfo::getWorkerId).collect(Collectors.toSet());
         Map<UUID, MasterelloUser> users = masterelloUserService.findAllByIds(ids);
         return workers.stream()
@@ -115,6 +128,10 @@ public class WorkerService implements ReadOnlyWorkerService {
                 .name(masterelloUser.getName())
                 .workerInfo(workerInfo)
                 .build();
+    }
+
+    private boolean isTestUser(MasterelloUser masterelloUser) {
+        return TEST_WORKER_EMAIL.matcher(masterelloUser.getEmail()).matches();
     }
 
     public FullWorkerProjection getFullWorkerInfo(UUID workerId) {

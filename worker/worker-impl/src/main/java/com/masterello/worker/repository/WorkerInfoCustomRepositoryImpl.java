@@ -31,7 +31,8 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
     private EntityManager entityManager;
 
     @Override
-    public Page<UUID> findWorkerIdsByFilters(List<City> cities, List<Language> languages, List<Integer> serviceIds, Pageable pageable) {
+    public Page<UUID> findWorkerIdsByFilters(List<City> cities, List<Language> languages, List<Integer> serviceIds,
+                                             boolean shouldShowTestWorkers, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Object[]> query = cb.createQuery(Object[].class); // Use Object[] to select multiple columns
         Root<WorkerInfo> root = query.from(WorkerInfo.class);
@@ -44,7 +45,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         query.multiselect(selectFields);
 
         // Build predicates
-        Predicate[] predicates = getPredicates(cities, languages, serviceIds, root, cb);
+        Predicate[] predicates = getPredicates(cities, languages, serviceIds, shouldShowTestWorkers, root, cb);
 
         // Apply predicates
         query.where(cb.and(predicates)).distinct(true);
@@ -71,7 +72,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         CriteriaBuilder ccb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Long> countQuery = ccb.createQuery(Long.class);
         Root<WorkerInfo> countRoot = countQuery.from(WorkerInfo.class);
-        var countPredicates = getPredicates(cities, languages, serviceIds, countRoot, ccb);
+        var countPredicates = getPredicates(cities, languages, serviceIds, shouldShowTestWorkers, countRoot, ccb);
         countQuery.select(ccb.countDistinct(countRoot)).where(ccb.and(countPredicates));
         Long totalElements = entityManager.createQuery(countQuery).getSingleResult();
 
@@ -80,7 +81,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
 
     private List<String> getSortFields(Sort sort) {
         ArrayList<String> sortFields = sort.stream().map(Sort.Order::getProperty).collect(Collectors.toCollection(ArrayList::new));
-        if(!sortFields.contains("workerId")) {
+        if (!sortFields.contains("workerId")) {
             sortFields.add("workerId");
         }
         return sortFields;
@@ -88,10 +89,14 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
 
     @NotNull
     private static Predicate[] getPredicates(List<City> cities, List<Language> languages, List<Integer> serviceIds,
-                                             Root<WorkerInfo> root, CriteriaBuilder cb) {
+                                             boolean shouldShowTestWorkers, Root<WorkerInfo> root, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
 
         predicates.add(cb.equal(root.get("active"), true));
+        if(!shouldShowTestWorkers){
+            predicates.add(cb.equal(root.get("test"), false));
+        }
+
         if (cities != null && !cities.isEmpty()) {
             predicates.add(root.get("city").in(cities));
         }
