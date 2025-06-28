@@ -40,6 +40,8 @@ masterello:
     sessionCleanup:
       batchSize: 1000
       cron: "0 0 0 * * ?"
+  worker:
+    testWorkerEmailPattern: test.*@masterello.com
 
 spring:
   servlet:

@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.*;
 import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 
 @SqlGroup({
@@ -118,7 +119,54 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("services", containsInAnyOrder(
                             mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
                             mapOf("serviceId", 20, "amount", null, "details", null)
-                    ));
+                    ))
+                    .body("test", is(false));
+
+        //@formatter:on
+    }
+
+    @Test
+    @AuthMocked(userId = WORKER_10_S, roles = {AuthZRole.WORKER})
+    void storeTestWorkerInfo() {
+        when(userService.findById(WORKER_10))
+                .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_10)));
+        List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
+                new WorkerServiceDTO(20, null, null));
+
+        WorkerInfoDTO info = WorkerInfoDTO.builder()
+                .description(DESCRIPTION)
+                .whatsapp(WHATSAPP)
+                .telegram(TELEGRAM)
+                .phone(PHONE)
+                .country(Country.GERMANY)
+                .city(City.BERLIN)
+                .services(services)
+                .languages(List.of(Language.EN))
+                .build();
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .cookie(tokenCookie())
+                    .body(info)
+                .when()
+                    .put("/api/worker/{uuid}/info", WORKER_10_S)
+                .then()
+                    .statusCode(200)
+                    .body("description", is(DESCRIPTION))
+                    .body("whatsapp", is(WHATSAPP))
+                    .body("telegram", is(TELEGRAM))
+                    .body("phone", is(PHONE))
+                    .body("viber", nullValue())
+                    .body("services", hasSize(2))
+                    .body("registeredAt", notNullValue())
+                    .body("services", containsInAnyOrder(
+                            mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
+                            mapOf("serviceId", 20, "amount", null, "details", null)
+                    ))
+                    .body("test", is(true));
         //@formatter:on
     }
 
@@ -539,12 +587,64 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         assertEquals(expectedResponse, actualResponse);
     }
 
+    @SneakyThrows
+    @ParameterizedTest
+    @CsvSource({
+            "true, workers_search_lang_and_services_by_admin_with_test.json",
+            "false, workers_search_lang_and_services_by_admin_without_test.json"
+    })
+    @AuthMocked(userId = USER_S, roles = {AuthZRole.ADMIN})
+    void searchWorkers_by_lang_and_service_by_admin(boolean withTestWorkers, String expectedResponseFileName) {
+        mockCategories(listOf(), Map.of());
+        if(withTestWorkers) {
+            mockUsers(Set.of(WORKER_1, WORKER_2, WORKER_3, WORKER_9));
+        } else {
+            mockUsers(Set.of(WORKER_1, WORKER_2, WORKER_3));
+        }
+
+        WorkerSearchRequest request = WorkerSearchRequest.builder()
+                .languages(listOf(Language.DE, Language.EN))
+                .services(listOf(10))
+                .pageRequest(PageRequestDTO.builder()
+                        .page(1)
+                        .pageSize(10)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
+                                .fields(List.of("registeredAt", "workerId"))
+                                .build())
+                        .build())
+                .showTestWorkers(withTestWorkers)
+                .build();
+        //@formatter:off
+        String filePath = String.format("src/test/resources/responses/%s", expectedResponseFileName);
+        val expectedResponse = readWorkerFromFile(filePath);
+        val validatableResponse = RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .cookie(tokenCookie())
+                .body(request)
+                .when()
+                    .post("/api/worker/search")
+                .then()
+                    .statusCode(200);
+
+        //@formatter:on
+
+        val actualResponse = validatableResponse.extract().body().as(WorkerSearchResponse.class);
+        assertEquals(expectedResponse, actualResponse);
+    }
+
     private void mockUsers(Set<UUID> ids) {
         Map<UUID, MasterelloUser> users = getMasterelloTestUsers().entrySet().stream()
                 .filter(u -> ids.contains(u.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        when(userService.findAllByIds(ids)).thenReturn(users);
+        when(userService.findAllByIds(
+                argThat(actual ->
+                    actual != null && actual.size() == ids.size() && actual.containsAll(ids)))
+        ).thenReturn(users);
     }
+
 
     @SneakyThrows
     @ParameterizedTest

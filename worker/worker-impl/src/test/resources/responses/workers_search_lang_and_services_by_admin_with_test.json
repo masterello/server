@@ -1,0 +1,108 @@
+{
+  "workers": [
+    {
+      "uuid": "d1c822c9-0ee4-462a-a88e-7c45e3bb0e54",
+      "title": "Ms.",
+      "name": "worker3",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best vocal-coach",
+        "phone": "+49444444444",
+        "telegram": "vocal-coach-t",
+        "whatsapp": "vocal-coach-w",
+        "viber": "vocal-coach-v",
+        "country": "DE",
+        "city": "BE",
+        "languages": ["DE", "EN"],
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 300
+          },
+          {
+            "serviceId": 30,
+            "amount": 300
+          }
+        ],
+        "registeredAt": "2024-12-12T15:00:00.111111Z"
+      }
+    },
+    {
+      "uuid": "e4de38bf-168e-41fc-b7b1-b9d74a47529e",
+      "title": "Herr",
+      "name": "worker2",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best electrician",
+        "phone": "+49222222222",
+        "telegram": "electrician-t",
+        "whatsapp": "electrician-w",
+        "viber": "electrician-v",
+        "country": "DE",
+        "city": "M",
+        "languages": ["EN", "UK"],
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 150
+          },
+          {
+            "serviceId": 20,
+            "amount": 200
+          }
+        ],
+        "registeredAt": "2024-12-13T15:00:00.111111Z"
+
+      }
+    },
+    {
+      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "title": "Mr.",
+      "name": "worker1",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best plumber",
+        "phone": "+49111111111",
+        "telegram": "plumber-t",
+        "whatsapp": "plumber-w",
+        "viber": "plumber-v",
+        "country": "DE",
+        "city": "HH",
+        "languages": ["DE", "RU"],
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 100,
+            "details": "Price per minute"
+          }
+        ],
+        "registeredAt": "2024-12-14T15:00:00.111111Z"
+      }
+    },
+    {
+      "uuid": "eea832b4-b8e3-43df-a457-d77043b01759",
+      "title": "Mr.",
+      "name": "worker9",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "test",
+        "phone": "+491191919191",
+        "telegram": "test-t",
+        "whatsapp": "test-w",
+        "viber": "test-v",
+        "country": "DE",
+        "city": "BE",
+        "languages": ["DE"],
+        "test": true,
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 111
+          }
+        ],
+        "registeredAt": "2024-12-25T15:00:00.111111Z"
+      }
+    }
+  ],
+  "count": 4
+}

@@ -32,6 +32,8 @@ masterello:
       from: masterello1234@gmail.com
       subject: Please verify your registration
       sender: Masterello
+  worker:
+    testWorkerEmailPattern: test.*@masterello.com
 
 # Enable Hibernate SQL logging
 logging.level.org.hibernate.SQL: debug

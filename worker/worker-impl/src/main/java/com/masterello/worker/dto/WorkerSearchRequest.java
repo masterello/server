@@ -19,6 +19,7 @@ public class WorkerSearchRequest {
     private List<Integer> services;
     @Nullable
     private List<City> cities;
+    private boolean showTestWorkers;
     @NotNull
     @Valid
     private PageRequestDTO pageRequest;

@@ -81,7 +81,8 @@ public class WorkerController {
                 request.getLanguages(),
                 request.getServices(),
                 request.getCities(),
-                request.getPageRequest());
+                request.getPageRequest(),
+                request.isShowTestWorkers());
         List<FullWorkerDTO> workers = page.items().stream()
                 .map(fullWorkerMapper::mapToDto)
                 .toList();
