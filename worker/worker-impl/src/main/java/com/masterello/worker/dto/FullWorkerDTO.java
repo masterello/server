@@ -17,5 +17,5 @@ public class FullWorkerDTO {
     private String title;
     private String name;
     private String lastname;
-    private WorkerInfoDTO workerInfo;
+    private TranslatedWorkerInfoDTO workerInfo;
 }
