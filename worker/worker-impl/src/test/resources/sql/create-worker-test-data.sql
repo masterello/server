@@ -45,4 +45,10 @@ values
      ('eea832b4-b8e3-43df-a457-d77043b01759', 'DE'),
      ('16e71912-e454-47c7-bd66-4238af0bcb7d', 'DE');
 
+insert into public.worker_description (worker_id, language_code, text, is_original)
+values
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'RU', 'Лучший сантехник', false),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'EN', 'best plumber', true),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'DE', 'Der beste Klempner', false),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'UK', 'Найкращий сантехнік', false);
 

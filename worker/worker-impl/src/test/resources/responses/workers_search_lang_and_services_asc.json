@@ -76,6 +76,24 @@
             "details": "Price per minute"
           }
         ],
+        "descriptions": {
+          "DE": {
+            "text": "Der beste Klempner",
+            "original": false
+          },
+          "EN": {
+            "text": "best plumber",
+            "original": true
+          },
+          "RU": {
+            "text": "Лучший сантехник",
+            "original": false
+          },
+          "UK": {
+            "text": "Найкращий сантехнік",
+            "original": false
+          }
+     },
         "registeredAt": "2024-12-14T15:00:00.111111Z"
       }
     }

@@ -68,10 +68,6 @@ masterello:
   openapi:
     oAuthFlow:
       tokenUrl: http:/127.0.0.1:8090/oauth2/token
-  ai:
-    accessKey: ${AI_ACCESS_KEY}
-    endpoint: https://api.openai.com/v1
-    model: gpt-4o-mini
 
 logging:
   level:
