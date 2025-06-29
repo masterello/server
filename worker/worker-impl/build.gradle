@@ -7,7 +7,9 @@ dependencies {
     implementation project(':user-contract')
     implementation project(':auth-contract')
     implementation project(":category-contract")
+    implementation project(":ai-contract")
 
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
