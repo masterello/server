@@ -18,5 +18,6 @@ public enum Language {
     VI,  // Vietnamese
     HR,  // Croatian
     SR,  // Serbian
-    RO   // Romanian
+    RO,  // Romanian
+    ZH   // Chinese
 }
