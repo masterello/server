@@ -93,6 +93,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         List<Predicate> predicates = new ArrayList<>();
 
         predicates.add(cb.equal(root.get("active"), true));
+        predicates.add(cb.equal(root.get("verified"), true));
         if(!shouldShowTestWorkers){
             predicates.add(cb.equal(root.get("test"), false));
         }
