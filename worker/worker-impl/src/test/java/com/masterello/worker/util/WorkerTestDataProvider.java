@@ -46,6 +46,8 @@ public final class WorkerTestDataProvider {
     public static final String WORKER_10_S = "504bdc8b-8138-4c96-adf0-c303cda75a16";
     public static final UUID WORKER_10 = UUID.fromString(WORKER_10_S);
 
+    public static final String WORKER_11_S = "16e71912-e454-47c7-bd66-4238af0bcb7d";
+    public static final UUID WORKER_11 = UUID.fromString(WORKER_11_S);
     public static final String DESCRIPTION = "Best nogotochki in Berlin";
     public static final String WHATSAPP = "whatsap4ik";
     public static final String TELEGRAM = "telezhka";
@@ -168,6 +170,14 @@ public final class WorkerTestDataProvider {
                 .lastname("workerson")
                 .email("test+12310@masterello.com")
                 .status(UserStatus.ACTIVE)
+                .build());
+        workers.put(WORKER_11, MasterelloTestUser.builder()
+                .uuid(WORKER_11)
+                .title("Mr.")
+                .name("worker11")
+                .lastname("workerson")
+                .email("worker11@email.com")
+                .roles(Set.of(Role.WORKER))
                 .build());
         return workers;
     }

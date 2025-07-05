@@ -71,6 +71,7 @@ public class WorkerService implements ReadOnlyWorkerService {
                 .orElseThrow(() -> new WorkerNotFoundException("Worker is not found for id: " + workerInfo.getWorkerId()));
 
         workerInfo.setActive(user.isEnabled());
+        workerInfo.setVerified(user.isEmailVerified());
         workerInfo.setTest(isTestUser(user));
         return workerInfoRepository.save(workerInfo);
     }

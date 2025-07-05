@@ -1,6 +1,7 @@
 package com.masterello.user.service;
 
 
+import com.masterello.commons.async.MasterelloEventPublisher;
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.dto.ResendConfirmationLinkDTO;
 import com.masterello.user.dto.VerifyUserTokenDTO;
@@ -42,6 +43,9 @@ public class ConfirmationLinkServiceTest {
 
     @Mock
     private ConfirmationLinkRepository confirmationLinkRepository;
+
+    @Mock
+    private MasterelloEventPublisher publisher;
 
     @InjectMocks
     private ConfirmationLinkService confirmationLinkService;
@@ -139,6 +143,7 @@ public class ConfirmationLinkServiceTest {
         verify(confirmationLinkRepository, times(1)).findByToken(any());
         verify(userRepository, times(1)).findById(any());
         verify(userRepository, times(1)).saveAndFlush(any());
+        verify(publisher).publishEvent(any());
         verifyNoMoreInteractions(confirmationLinkRepository, userRepository);
     }
 

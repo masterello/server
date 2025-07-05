@@ -1,12 +1,14 @@
 package com.masterello.user.service;
 
 
+import com.masterello.commons.async.MasterelloEventPublisher;
+import com.masterello.commons.core.data.Locale;
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
-import com.masterello.commons.core.data.Locale;
 import com.masterello.user.dto.ResendConfirmationLinkDTO;
 import com.masterello.user.dto.VerifyUserTokenDTO;
+import com.masterello.user.event.EmailVerifiedChangedEvent;
 import com.masterello.user.exception.ConfirmationLinkNotFoundException;
 import com.masterello.user.exception.DailyAttemptsExceededException;
 import com.masterello.user.exception.TokenExpiredException;
@@ -20,6 +22,7 @@ import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
@@ -36,6 +39,7 @@ public class ConfirmationLinkService {
     private final EmailConfigProperties emailConfigProperties;
     private final ConfirmationLinkRepository confirmationLinkRepository;
     private final UserRepository userRepository;
+    private final MasterelloEventPublisher publisher;
 
     @Transactional
     public void activateUser(VerifyUserTokenDTO userTokenDTO) {
@@ -95,7 +99,8 @@ public class ConfirmationLinkService {
         if (confirmationLink.getExpiresAt().isAfter(OffsetDateTime.now())) {
             log.info("token is valid, switching user to activated state");
             user.setEmailVerified(true);
-            userRepository.saveAndFlush(user);
+            val updatedUser = userRepository.saveAndFlush(user);
+            publisher.publishEvent(new EmailVerifiedChangedEvent(updatedUser));
         } else {
             log.info("token for user with uuid {} is expired", user.getUuid());
             throw new TokenExpiredException("token is expired");
