@@ -1,6 +1,6 @@
 * The input may contain the same message in multiple languages.
-* Detect all the complete meaningful messages in different languages
-* Extract the first complete message from the input
+* Split the input into messages by language
+* Extract the first message
 * keep formatting (whitespaces, new lines, emojis)
 * Non-message text or metadata should not be included in the output.
 * If the input does not match the expected structure (e.g., no identifiable message), output an error with a relevant message field.

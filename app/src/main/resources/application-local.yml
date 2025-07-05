@@ -68,6 +68,13 @@ masterello:
   openapi:
     oAuthFlow:
       tokenUrl: http:/127.0.0.1:8090/oauth2/token
+  worker:
+    ai:
+      prompts:
+        detect-language:
+          id: pmpt_68692d13cf3481909d9f1c24b4b6cfe70a6dbf58e26ed355
+        translate:
+          id: pmpt_686936e1fdbc8197a5de3c2f260577b501d484eb5ae93302
 
 logging:
   level:

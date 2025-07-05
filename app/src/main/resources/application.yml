@@ -45,7 +45,7 @@ masterello:
   ai:
     accessKey: ${AI_ACCESS_KEY}
     endpoint: https://api.openai.com/v1
-    model: gpt-4o-mini
+    model: o3-mini
 
 spring:
   servlet:
