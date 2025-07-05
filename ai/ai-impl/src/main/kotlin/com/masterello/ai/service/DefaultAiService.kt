@@ -22,11 +22,11 @@ class DefaultAiService(
     override fun <T> process(prompt: AiPrompt, responseType: Class<T>): Mono<T> {
         val request = ChatRequest(
                 model = aiConfigProperties.model,
-                messages = listOf(
-                        Message("system", prompt.systemMessage),
-                        Message("user", prompt.userMessage)
+                messages = listOfNotNull(
+                        prompt.systemMessage?.let { Message("system", it) },
+                        prompt.userMessage?.let { Message("user", it) }
                 ),
-                temperature = 0.2
+                temperature = 0.0
         )
 
         return openAIWebClient.post()

@@ -40,7 +40,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -96,9 +95,9 @@ public class WorkerService implements ReadOnlyWorkerService {
 
             if (StringUtils.isNotBlank(newDescription)) {
                 log.info("Request translations for worker: {}", workerId);
-                translationService.translateText(
+                translationService.detectLanguageAndTranslateText(
                         newDescription,
-                        (translationResponse) -> storeTranslations(workerId, newDescription, translationResponse),
+                        (translationResponse) -> storeTranslations(workerId, translationResponse),
                         (error) -> log.error("Translation failed for worker {}", workerId, error)
                 );
             }
@@ -107,24 +106,16 @@ public class WorkerService implements ReadOnlyWorkerService {
 
     private void storeTranslations(
             UUID workerId,
-            String originalDescription,
-            TranslationService.TranslationResponse translationResponse) {
-        log.info("Update description translations for worker: {}, translated to: {}, original language: {}", workerId,
-                translationResponse.translations().keySet(), translationResponse.originalLanguage());
-        Set<WorkerDescriptionEntity> allDescriptions = translationResponse.translations()
-                .entrySet().stream()
+            TranslationService.TranslatedMessages translationResponse) {
+        log.info("Update description translations for worker: {}", workerId);
+        Set<WorkerDescriptionEntity> allDescriptions = translationResponse.messages().stream()
                 .map(translation -> new WorkerDescriptionEntity(
                         workerId,
-                        translation.getKey(),
-                        translation.getValue(),
-                        false
-                ))
-                .collect(Collectors.toCollection(HashSet::new));
-        allDescriptions.add(new WorkerDescriptionEntity(
-                workerId,
-                translationResponse.originalLanguage(),
-                originalDescription,
-                true));
+                        translation.language(),
+                        translation.message(),
+                        translation.original()
+                )).collect(Collectors.toSet());
+
         workerDescriptionRepository.saveAll(allDescriptions);
     }
 
