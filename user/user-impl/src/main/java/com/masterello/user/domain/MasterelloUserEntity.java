@@ -2,19 +2,40 @@ package com.masterello.user.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.masterello.commons.core.json.Patchable;
-import com.masterello.user.value.*;
-import jakarta.persistence.*;
+import com.masterello.user.value.City;
+import com.masterello.user.value.Country;
+import com.masterello.user.value.MasterelloUser;
+import com.masterello.user.value.Role;
+import com.masterello.user.value.UserStatus;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.lang.Nullable;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -70,6 +91,14 @@ public class MasterelloUserEntity implements MasterelloUser {
     @Column(name = "email_verified")
     @Builder.Default
     private boolean emailVerified = false;
+
+    @CreatedDate
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 
     /**
      * username is expected by spring framework to be a unique user identifier
