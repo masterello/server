@@ -2,10 +2,14 @@ package com.masterello.worker.domain;
 
 import com.masterello.commons.core.json.Patchable;
 import com.masterello.commons.core.sort.Sortable;
+import com.masterello.translation.aspect.TrackedForTranslation;
+import com.masterello.translation.aspect.Translated;
+import com.masterello.translation.aspect.TranslatedCollection;
 import com.masterello.user.domain.CityConverter;
 import com.masterello.user.domain.CountryConverter;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
+import com.masterello.worker.event.DescriptionChangedEvent;
 import com.masterello.worker.value.Worker;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -36,6 +40,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @SuperBuilder
 @EntityListeners(AuditingEntityListener.class)
+@TrackedForTranslation
 @Table(name = "worker_info", schema = "public")
 public class WorkerInfo implements Worker {
 
@@ -45,6 +50,7 @@ public class WorkerInfo implements Worker {
     private UUID workerId;
 
     @Patchable
+    @Translated(event = DescriptionChangedEvent.class)
     @Column(name = "description")
     private String description;
 
@@ -81,6 +87,7 @@ public class WorkerInfo implements Worker {
     @Column(name = "viber")
     private String viber;
 
+    @TranslatedCollection
     @Patchable
     @ElementCollection(targetClass = WorkerServiceEntity.class, fetch = FetchType.EAGER)
     @CollectionTable(name = "worker_services", joinColumns = @JoinColumn(name = "worker_id"))

@@ -23,7 +23,6 @@ import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
 import com.masterello.worker.exception.WorkerNotFoundException;
 import com.masterello.worker.mapper.TranslatedWorkerInfoMapper;
-import com.masterello.worker.mapper.TranslationLanguageMapper;
 import com.masterello.worker.mapper.WorkerInfoMapper;
 import com.masterello.worker.repository.WorkerDescriptionRepository;
 import com.masterello.worker.repository.WorkerInfoRepository;
@@ -32,7 +31,6 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -42,7 +40,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -63,9 +60,7 @@ public class WorkerService implements ReadOnlyWorkerService {
     private final WorkerInfoMapper mapper;
     private final TranslatedWorkerInfoMapper translatedWorkerInfoMapper;
     private final WorkerConfigProperties workerConfigProperties;
-    private final WorkerTranslationService workerTranslationService;
     private final WorkerDescriptionRepository workerDescriptionRepository;
-    private final TranslationLanguageMapper languageMapper;
 
     private Pattern TEST_WORKER_EMAIL;
 
@@ -85,48 +80,7 @@ public class WorkerService implements ReadOnlyWorkerService {
         workerInfo.setActive(user.isEnabled());
         workerInfo.setVerified(user.isEmailVerified());
         workerInfo.setTest(isTestUser(user));
-        updateDescriptionTranslationIfNeeded(workerInfo.getWorkerId(), workerInfo.getDescription());
         return workerInfoRepository.saveAndFlush(workerInfo);
-    }
-
-    private void updateDescriptionTranslationIfNeeded(UUID workerId, String newDescription) {
-        if (hasDescriptionChanged(workerId, newDescription)) {
-            log.info("Description has changed for worker: {}", workerId);
-            log.info("Cleanup all translations for worker: {}", workerId);
-            workerDescriptionRepository.deleteAllByWorkerId(workerId);
-
-            if (StringUtils.isNotBlank(newDescription)) {
-                log.info("Request translations for worker: {}", workerId);
-                workerTranslationService.detectLanguageAndTranslateText(
-                        newDescription,
-                        (translationResponse) -> storeTranslations(workerId, translationResponse),
-                        (error) -> log.error("Translation failed for worker {}", workerId, error)
-                );
-            }
-        }
-    }
-
-    private void storeTranslations(
-            UUID workerId,
-            WorkerTranslationService.TranslatedMessages translationResponse) {
-        log.info("Update description translations for worker: {}", workerId);
-        Set<WorkerDescriptionEntity> allDescriptions = translationResponse.messages().stream()
-                .map(translation -> new WorkerDescriptionEntity(
-                        workerId,
-                        languageMapper.translationLanguageToWorkerLanguage(translation.language()),
-                        translation.message(),
-                        translation.original()
-                )).collect(Collectors.toSet());
-
-        workerDescriptionRepository.saveAll(allDescriptions);
-    }
-
-
-    private boolean hasDescriptionChanged(UUID workerId, String newDescription) {
-        String existingDescription = workerInfoRepository.findById(workerId)
-                .map(WorkerInfo::getDescription)
-                .orElse(null);
-        return !Objects.equals(existingDescription, newDescription);
     }
 
     @Override
@@ -145,7 +99,6 @@ public class WorkerService implements ReadOnlyWorkerService {
         } catch (Exception ex) {
             throw new InvalidWorkerUpdateException("Error when applying update to worker info", ex);
         }
-        updateDescriptionTranslationIfNeeded(workerInfo.getWorkerId(), patcherInfo.getDescription());
         return workerInfoRepository.saveAndFlush(patcherInfo);
     }
 

@@ -1,8 +1,6 @@
 package com.masterello.worker.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.masterello.ai.model.AiPrompt;
-import com.masterello.ai.service.AiService;
 import com.masterello.auth.data.AuthZRole;
 import com.masterello.auth.extension.AuthMocked;
 import com.masterello.category.dto.CategoryBulkRequest;
@@ -10,6 +8,7 @@ import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
+import com.masterello.translation.service.TranslationService;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
@@ -22,7 +21,6 @@ import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.dto.WorkerSearchRequest;
 import com.masterello.worker.dto.WorkerSearchResponse;
 import com.masterello.worker.dto.WorkerServiceDTO;
-import com.masterello.worker.service.WorkerTranslationService;
 import com.masterello.worker.validator.ServiceValidator;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
@@ -37,7 +35,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
-import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.util.HashMap;
@@ -52,7 +49,8 @@ import static com.masterello.worker.util.WorkerTestDataProvider.*;
 import static org.hamcrest.Matchers.*;
 import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 
 @SqlGroup({
@@ -71,7 +69,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Autowired
     private ServiceValidator serviceValidator;
     @Autowired
-    private AiService aiService;
+    private TranslationService aiService;
 
     @BeforeEach
     void setUp() {
@@ -222,8 +220,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, 200, null));
-        when(aiService.process(org.mockito.ArgumentMatchers.any(AiPrompt.class), eq(WorkerTranslationService.TranslationResponse.class)))
-                .thenReturn(Mono.empty());
+//        when(aiService.process(org.mockito.ArgumentMatchers.any(AiPrompt.class), eq(WorkerTranslationService.TranslationResponse.class)))
+//                .thenReturn(Mono.empty());
         WorkerInfoDTO info = WorkerInfoDTO.builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)
