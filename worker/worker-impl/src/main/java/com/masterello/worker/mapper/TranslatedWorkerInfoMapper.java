@@ -2,10 +2,10 @@ package com.masterello.worker.mapper;
 
 import com.masterello.worker.domain.Language;
 import com.masterello.worker.domain.TranslatedWorkerInfoProjection;
-import com.masterello.worker.domain.TranslationLanguage;
 import com.masterello.worker.domain.WorkerDescriptionEntity;
 import com.masterello.worker.domain.WorkerInfo;
 import com.masterello.worker.domain.WorkerServiceEntity;
+import com.masterello.worker.domain.WorkerTranslationLanguage;
 import com.masterello.worker.dto.TranslatedWorkerInfoDTO;
 import com.masterello.worker.dto.WorkerDescriptionDTO;
 import com.masterello.worker.dto.WorkerServiceDTO;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
         uses = {WorkerServiceMapper.class, WorkerDescriptionMapper.class})
 public interface TranslatedWorkerInfoMapper {
     @Mapping(target = "descriptions", source = "descriptionEntitySet")
-    TranslatedWorkerInfoProjection mapToTranslatedWorkerInfo(WorkerInfo workerInfo, Map<TranslationLanguage, WorkerDescriptionEntity> descriptionEntitySet);
+    TranslatedWorkerInfoProjection mapToTranslatedWorkerInfo(WorkerInfo workerInfo, Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptionEntitySet);
 
     @Mappings({
             @Mapping(target = "languages", source = "languages", qualifiedByName = "setToSortedList"),
@@ -58,7 +58,7 @@ public interface TranslatedWorkerInfoMapper {
     }
 
     @Named("mapToSortedDescriptions")
-    default Map<TranslationLanguage, WorkerDescriptionDTO> mapToSortedDescriptions(Map<TranslationLanguage, WorkerDescriptionEntity> input) {
+    default Map<WorkerTranslationLanguage, WorkerDescriptionDTO> mapToSortedDescriptions(Map<WorkerTranslationLanguage, WorkerDescriptionEntity> input) {
         val workerDescriptionMapper = Mappers.getMapper(WorkerDescriptionMapper.class);
         if (input != null) {
             return input.entrySet().stream()

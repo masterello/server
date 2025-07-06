@@ -22,7 +22,7 @@ import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.dto.WorkerSearchRequest;
 import com.masterello.worker.dto.WorkerSearchResponse;
 import com.masterello.worker.dto.WorkerServiceDTO;
-import com.masterello.worker.service.TranslationService;
+import com.masterello.worker.service.WorkerTranslationService;
 import com.masterello.worker.validator.ServiceValidator;
 import io.restassured.RestAssured;
 import io.restassured.response.ValidatableResponse;
@@ -222,7 +222,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, 200, null));
-        when(aiService.process(org.mockito.ArgumentMatchers.any(AiPrompt.class), eq(TranslationService.TranslationResponse.class)))
+        when(aiService.process(org.mockito.ArgumentMatchers.any(AiPrompt.class), eq(WorkerTranslationService.TranslationResponse.class)))
                 .thenReturn(Mono.empty());
         WorkerInfoDTO info = WorkerInfoDTO.builder()
                 .description(DESCRIPTION)

@@ -14,16 +14,16 @@ import com.masterello.worker.config.WorkerConfigProperties;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.Language;
-import com.masterello.worker.domain.TranslationLanguage;
 import com.masterello.worker.domain.WorkerDescriptionEntity;
 import com.masterello.worker.domain.WorkerInfo;
+import com.masterello.worker.domain.WorkerTranslationLanguage;
 import com.masterello.worker.dto.PageRequestDTO;
-import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.exception.InvalidSearchRequestException;
 import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
 import com.masterello.worker.exception.WorkerNotFoundException;
 import com.masterello.worker.mapper.TranslatedWorkerInfoMapper;
+import com.masterello.worker.mapper.TranslationLanguageMapper;
 import com.masterello.worker.mapper.WorkerInfoMapper;
 import com.masterello.worker.repository.WorkerDescriptionRepository;
 import com.masterello.worker.repository.WorkerInfoRepository;
@@ -63,8 +63,10 @@ public class WorkerService implements ReadOnlyWorkerService {
     private final WorkerInfoMapper mapper;
     private final TranslatedWorkerInfoMapper translatedWorkerInfoMapper;
     private final WorkerConfigProperties workerConfigProperties;
-    private final TranslationService translationService;
+    private final WorkerTranslationService workerTranslationService;
     private final WorkerDescriptionRepository workerDescriptionRepository;
+    private final TranslationLanguageMapper languageMapper;
+
     private Pattern TEST_WORKER_EMAIL;
 
     @PostConstruct
@@ -95,7 +97,7 @@ public class WorkerService implements ReadOnlyWorkerService {
 
             if (StringUtils.isNotBlank(newDescription)) {
                 log.info("Request translations for worker: {}", workerId);
-                translationService.detectLanguageAndTranslateText(
+                workerTranslationService.detectLanguageAndTranslateText(
                         newDescription,
                         (translationResponse) -> storeTranslations(workerId, translationResponse),
                         (error) -> log.error("Translation failed for worker {}", workerId, error)
@@ -106,12 +108,12 @@ public class WorkerService implements ReadOnlyWorkerService {
 
     private void storeTranslations(
             UUID workerId,
-            TranslationService.TranslatedMessages translationResponse) {
+            WorkerTranslationService.TranslatedMessages translationResponse) {
         log.info("Update description translations for worker: {}", workerId);
         Set<WorkerDescriptionEntity> allDescriptions = translationResponse.messages().stream()
                 .map(translation -> new WorkerDescriptionEntity(
                         workerId,
-                        translation.language(),
+                        languageMapper.translationLanguageToWorkerLanguage(translation.language()),
                         translation.message(),
                         translation.original()
                 )).collect(Collectors.toSet());
@@ -121,7 +123,6 @@ public class WorkerService implements ReadOnlyWorkerService {
 
 
     private boolean hasDescriptionChanged(UUID workerId, String newDescription) {
-        // Fetch existing entity to compare descriptions
         String existingDescription = workerInfoRepository.findById(workerId)
                 .map(WorkerInfo::getDescription)
                 .orElse(null);
@@ -138,13 +139,13 @@ public class WorkerService implements ReadOnlyWorkerService {
         WorkerInfo patcherInfo;
 
         try {
-            patcherInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class,
-                    WorkerInfoDTO.class, mapper::mapToDto);
+            patcherInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class, mapper::mapToDto);
         } catch (ConstraintViolationException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new InvalidWorkerUpdateException("Error when applying update to worker info", ex);
         }
+        updateDescriptionTranslationIfNeeded(workerInfo.getWorkerId(), patcherInfo.getDescription());
         return workerInfoRepository.saveAndFlush(patcherInfo);
     }
 
@@ -179,7 +180,7 @@ public class WorkerService implements ReadOnlyWorkerService {
     }
 
     private FullWorkerProjection toFullWorkerProjection(WorkerInfo workerInfo, MasterelloUser masterelloUser,
-                                                        Map<UUID, Map<TranslationLanguage, WorkerDescriptionEntity>> descriptions
+                                                        Map<UUID, Map<WorkerTranslationLanguage, WorkerDescriptionEntity>> descriptions
     ) {
         return FullWorkerProjection.builder()
                 .uuid(masterelloUser.getUuid())
@@ -198,7 +199,7 @@ public class WorkerService implements ReadOnlyWorkerService {
         WorkerInfo workerInfo = getWorkerInfoOrThrow(workerId);
         MasterelloUser masterelloUser = masterelloUserService.findById(workerId)
                 .orElseThrow(() -> new WorkerInfoNotFoundException("User data not found for worker"));
-        Map<TranslationLanguage, WorkerDescriptionEntity> descriptions = workerDescriptionRepository.findByWorkerId(workerId).stream()
+        Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptions = workerDescriptionRepository.findByWorkerId(workerId).stream()
                 .collect(Collectors.toMap(WorkerDescriptionEntity::getLanguage, Function.identity()));
         return FullWorkerProjection.builder()
                 .uuid(masterelloUser.getUuid())

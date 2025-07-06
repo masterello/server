@@ -15,5 +15,5 @@ import java.util.Map;
 @SuperBuilder
 public class TranslatedWorkerInfoProjection extends WorkerInfo {
 
-    private Map<TranslationLanguage, WorkerDescriptionEntity> descriptions;
+    private Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptions;
 }

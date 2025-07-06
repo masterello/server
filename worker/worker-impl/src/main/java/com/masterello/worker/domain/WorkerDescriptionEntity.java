@@ -36,7 +36,7 @@ public class WorkerDescriptionEntity {
     @Id
     @Column(name = "language_code")
     @Enumerated(EnumType.STRING)
-    private TranslationLanguage language;
+    private WorkerTranslationLanguage language;
 
     @Column(nullable = false)
     private String text;
@@ -49,7 +49,7 @@ public class WorkerDescriptionEntity {
     @AllArgsConstructor
     public static class WorkerDescriptionId implements Serializable {
         private UUID workerId;
-        private TranslationLanguage language;
+        private WorkerTranslationLanguage language;
     }
 }
 

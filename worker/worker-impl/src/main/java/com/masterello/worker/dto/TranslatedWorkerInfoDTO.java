@@ -1,6 +1,6 @@
 package com.masterello.worker.dto;
 
-import com.masterello.worker.domain.TranslationLanguage;
+import com.masterello.worker.domain.WorkerTranslationLanguage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,5 +18,5 @@ import java.util.Map;
 @NoArgsConstructor
 public class TranslatedWorkerInfoDTO extends WorkerInfoDTO {
 
-    private Map<TranslationLanguage, WorkerDescriptionDTO> descriptions;
+    private Map<WorkerTranslationLanguage, WorkerDescriptionDTO> descriptions;
 }

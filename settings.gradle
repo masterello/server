@@ -44,6 +44,12 @@ project(':ai-contract').projectDir = new File('ai/ai-contract')
 include 'ai-contract-test'
 project(':ai-contract-test').projectDir = new File('ai/ai-contract-test')
 
+include 'translation-impl'
+project(':translation-impl').projectDir = new File('translation/translation-impl')
+include 'translation-contract'
+project(':translation-contract').projectDir = new File('translation/translation-contract')
+include 'translation-contract-test'
+project(':translation-contract-test').projectDir = new File('translation/translation-contract-test')
 
 include 'category-impl'
 project(':category-impl').projectDir = new File('category/category-impl')
