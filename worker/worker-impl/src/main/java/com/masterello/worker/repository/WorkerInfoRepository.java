@@ -18,4 +18,7 @@ public interface WorkerInfoRepository extends JpaRepository<WorkerInfo, UUID>, W
             "LEFT JOIN FETCH w.services " +
             "WHERE w.workerId IN :ids")
     List<WorkerInfo> findAllByWorkerIdIn(Set<UUID> ids, Sort sort);
+
+    List<WorkerInfo> findByWorkerIdIn(List<UUID> ids);
+
 }
