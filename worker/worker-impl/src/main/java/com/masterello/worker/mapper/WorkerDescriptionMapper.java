@@ -1,7 +1,7 @@
 package com.masterello.worker.mapper;
 
 import com.masterello.worker.domain.WorkerDescriptionEntity;
-import com.masterello.worker.dto.WorkerDescriptionDTO;
+import com.masterello.worker.dto.TextTranslationDTO;
 import org.mapstruct.Mapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -10,5 +10,5 @@ import org.springframework.beans.factory.annotation.Qualifier;
         uses = WorkerServiceMapper.class)
 public interface WorkerDescriptionMapper {
 
-    WorkerDescriptionDTO mapToDto(WorkerDescriptionEntity workerDescriptionEntity);
+    TextTranslationDTO mapToDto(WorkerDescriptionEntity workerDescriptionEntity);
 }

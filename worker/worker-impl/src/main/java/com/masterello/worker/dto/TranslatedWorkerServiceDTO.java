@@ -16,7 +16,7 @@ import java.util.Map;
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TranslatedWorkerInfoDTO extends WorkerInfoDTO<TranslatedWorkerServiceDTO> {
+public class TranslatedWorkerServiceDTO extends WorkerServiceDTO {
 
-    private Map<WorkerTranslationLanguage, TextTranslationDTO> descriptions;
+    private Map<WorkerTranslationLanguage, TextTranslationDTO> translatedDetails;
 }

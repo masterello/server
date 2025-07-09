@@ -5,15 +5,15 @@ import com.masterello.worker.validator.ServiceId;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.validator.constraints.Length;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class WorkerServiceDTO {
     @NotNull(message = ErrorCodes.SERVICE_ID_EMPTY)
     @ServiceId

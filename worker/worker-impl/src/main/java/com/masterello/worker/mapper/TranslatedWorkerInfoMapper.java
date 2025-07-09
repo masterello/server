@@ -2,13 +2,13 @@ package com.masterello.worker.mapper;
 
 import com.masterello.worker.domain.Language;
 import com.masterello.worker.domain.TranslatedWorkerInfoProjection;
+import com.masterello.worker.domain.TranslatedWorkerServiceProjection;
 import com.masterello.worker.domain.WorkerDescriptionEntity;
 import com.masterello.worker.domain.WorkerInfo;
-import com.masterello.worker.domain.WorkerServiceEntity;
 import com.masterello.worker.domain.WorkerTranslationLanguage;
+import com.masterello.worker.dto.TextTranslationDTO;
 import com.masterello.worker.dto.TranslatedWorkerInfoDTO;
-import com.masterello.worker.dto.WorkerDescriptionDTO;
-import com.masterello.worker.dto.WorkerServiceDTO;
+import com.masterello.worker.dto.TranslatedWorkerServiceDTO;
 import lombok.val;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -26,11 +26,13 @@ import java.util.stream.Collectors;
         uses = {WorkerServiceMapper.class, WorkerDescriptionMapper.class})
 public interface TranslatedWorkerInfoMapper {
     @Mapping(target = "descriptions", source = "descriptionEntitySet")
-    TranslatedWorkerInfoProjection mapToTranslatedWorkerInfo(WorkerInfo workerInfo, Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptionEntitySet);
+    @Mapping(target = "translatedServices", source = "translatedServicesEntitySet")
+    TranslatedWorkerInfoProjection mapToTranslatedWorkerInfo(WorkerInfo workerInfo, Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptionEntitySet,
+                                                             List<TranslatedWorkerServiceProjection> translatedServicesEntitySet);
 
     @Mappings({
             @Mapping(target = "languages", source = "languages", qualifiedByName = "setToSortedList"),
-            @Mapping(target = "services", source = "services", qualifiedByName = "setToSortedServiceList"),
+            @Mapping(target = "services", source = "translatedServices", qualifiedByName = "setToSortedServiceList"),
             @Mapping(target = "descriptions", source = "descriptions", qualifiedByName = "mapToSortedDescriptions")
     })
     TranslatedWorkerInfoDTO mapToDTO(TranslatedWorkerInfoProjection projection);
@@ -46,19 +48,19 @@ public interface TranslatedWorkerInfoMapper {
     }
 
     @Named("setToSortedServiceList")
-    default List<WorkerServiceDTO> sortServices(Set<WorkerServiceEntity> services) {
-        val workerServiceMapper = Mappers.getMapper(WorkerServiceMapper.class);
+    default List<TranslatedWorkerServiceDTO> sortServices(List<TranslatedWorkerServiceProjection> services) {
+        val workerServiceMapper = Mappers.getMapper(TranslatedWorkerServiceDetailsMapper.class);
         if (services != null) {
             return services.stream()
-                    .map(workerServiceMapper::mapToDto)
-                    .sorted(Comparator.comparing(WorkerServiceDTO::getServiceId))
+                    .map(workerServiceMapper::mapToDTO)
+                    .sorted(Comparator.comparing(TranslatedWorkerServiceDTO::getServiceId))
                     .collect(Collectors.toList());
         }
         return null; // Return as-is if null
     }
 
     @Named("mapToSortedDescriptions")
-    default Map<WorkerTranslationLanguage, WorkerDescriptionDTO> mapToSortedDescriptions(Map<WorkerTranslationLanguage, WorkerDescriptionEntity> input) {
+    default Map<WorkerTranslationLanguage, TextTranslationDTO> mapToSortedDescriptions(Map<WorkerTranslationLanguage, WorkerDescriptionEntity> input) {
         val workerDescriptionMapper = Mappers.getMapper(WorkerDescriptionMapper.class);
         if (input != null) {
             return input.entrySet().stream()

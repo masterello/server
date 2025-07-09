@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class WorkerDescriptionDTO {
+public class TextTranslationDTO {
 
     private String text;
     private boolean original;

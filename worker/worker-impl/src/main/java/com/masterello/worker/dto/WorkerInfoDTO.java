@@ -21,7 +21,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class WorkerInfoDTO {
+public class WorkerInfoDTO<T extends WorkerServiceDTO> {
 
     private String description;
     @AuthGuard
@@ -39,7 +39,7 @@ public class WorkerInfoDTO {
     private City city;
     @NotEmpty(message = ErrorCodes.SERVICES_EMPTY)
     @Valid
-    private List<WorkerServiceDTO> services;
+    private List<T> services;
     @NotEmpty(message = ErrorCodes.LANGUAGES_EMPTY)
     private List<Language> languages;
     private Instant registeredAt;

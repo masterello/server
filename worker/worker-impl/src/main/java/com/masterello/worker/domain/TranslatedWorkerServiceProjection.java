@@ -6,7 +6,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
 import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
@@ -14,8 +13,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class TranslatedWorkerInfoProjection extends WorkerInfo {
+public class TranslatedWorkerServiceProjection extends WorkerServiceEntity {
 
-    private Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptions;
-    private List<TranslatedWorkerServiceProjection> translatedServices;
+    private Map<WorkerTranslationLanguage, WorkerServiceDetailsEntity> translatedDetails;
+
 }
