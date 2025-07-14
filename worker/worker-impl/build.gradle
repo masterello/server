@@ -17,7 +17,7 @@ dependencies {
 
     testImplementation  project(':user-contract-test')
     testImplementation  project(':auth-contract-test')
-    testImplementation  project(':ai-contract-test')
+    testImplementation  project(':translation-contract-test')
     testImplementation  project(':category-contract-test')
     testImplementation  project(':common-test')
     testImplementation 'org.projectlombok:lombok:1.18.28'

@@ -52,3 +52,10 @@ values
     ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'DE', 'Der beste Klempner', false),
     ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'UK', 'Найкращий сантехнік', false);
 
+insert into public.worker_service_details (worker_id, service_id, language_code, text, is_original)
+values
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 10, 'RU', 'Цена за минуту', false),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 10, 'EN', 'Price per minute', true),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 10, 'DE', 'Preis pro Minute', false),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 10, 'UK', 'Ціна за хвилину', false);
+

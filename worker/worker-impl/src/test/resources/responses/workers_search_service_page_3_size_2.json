@@ -7,6 +7,7 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "fix toilets",
+        "descriptions": {},
         "phone": "+49777777",
         "telegram": "plumber-t",
         "whatsapp": "plumber-w",
