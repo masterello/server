@@ -18,5 +18,5 @@ public class FullWorkerProjection {
     @Sortable
     private String lastname;
     @Sortable(nested = true, targetTableAlias = "wi")
-    private WorkerInfo workerInfo;
+    private TranslatedWorkerInfoProjection workerInfo;
 }

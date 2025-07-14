@@ -14,15 +14,23 @@ import com.masterello.worker.config.WorkerConfigProperties;
 import com.masterello.worker.domain.FullWorkerPage;
 import com.masterello.worker.domain.FullWorkerProjection;
 import com.masterello.worker.domain.Language;
+import com.masterello.worker.domain.TranslatedWorkerInfoProjection;
+import com.masterello.worker.domain.TranslatedWorkerServiceProjection;
+import com.masterello.worker.domain.WorkerDescriptionEntity;
 import com.masterello.worker.domain.WorkerInfo;
+import com.masterello.worker.domain.WorkerServiceDetailsEntity;
+import com.masterello.worker.domain.WorkerTranslationLanguage;
 import com.masterello.worker.dto.PageRequestDTO;
-import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.exception.InvalidSearchRequestException;
 import com.masterello.worker.exception.InvalidWorkerUpdateException;
 import com.masterello.worker.exception.WorkerInfoNotFoundException;
 import com.masterello.worker.exception.WorkerNotFoundException;
+import com.masterello.worker.mapper.TranslatedWorkerInfoMapper;
+import com.masterello.worker.mapper.TranslatedWorkerServiceDetailsMapper;
 import com.masterello.worker.mapper.WorkerInfoMapper;
+import com.masterello.worker.repository.WorkerDescriptionRepository;
 import com.masterello.worker.repository.WorkerInfoRepository;
+import com.masterello.worker.repository.WorkerServiceDetailsRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +63,12 @@ public class WorkerService implements ReadOnlyWorkerService {
     private final ReadOnlyCategoryService categoryService;
     private final MasterelloUserService masterelloUserService;
     private final WorkerInfoMapper mapper;
+    private final TranslatedWorkerInfoMapper translatedWorkerInfoMapper;
+    private final TranslatedWorkerServiceDetailsMapper translatedWorkerServiceDetailsMapper;
     private final WorkerConfigProperties workerConfigProperties;
+    private final WorkerDescriptionRepository workerDescriptionRepository;
+    private final WorkerServiceDetailsRepository workerServiceDetailsRepository;
+
     private Pattern TEST_WORKER_EMAIL;
 
     @PostConstruct
@@ -73,7 +87,7 @@ public class WorkerService implements ReadOnlyWorkerService {
         workerInfo.setActive(user.isEnabled());
         workerInfo.setVerified(user.isEmailVerified());
         workerInfo.setTest(isTestUser(user));
-        return workerInfoRepository.save(workerInfo);
+        return workerInfoRepository.saveAndFlush(workerInfo);
     }
 
     @Override
@@ -86,8 +100,7 @@ public class WorkerService implements ReadOnlyWorkerService {
         WorkerInfo patcherInfo;
 
         try {
-            patcherInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class,
-                    WorkerInfoDTO.class, mapper::mapToDto);
+            patcherInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class, mapper::mapToDto);
         } catch (ConstraintViolationException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -109,25 +122,53 @@ public class WorkerService implements ReadOnlyWorkerService {
         PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
         val workerIds = workerInfoRepository.findWorkerIdsByFilters(cities, languages, categoriesWithChildren, shouldShowTestWorkers, pageRequest);
         val workers = workerInfoRepository.findAllByWorkerIdIn(workerIds.toSet(), pageRequest.getSort());
-        val fullWorkers = getFullWorkerProjections(workers, shouldShowTestWorkers);
+        val fullWorkers = getFullWorkerProjections(workers);
         return new FullWorkerPage(fullWorkers, workerIds.getTotalElements());
     }
 
-    private List<FullWorkerProjection> getFullWorkerProjections(List<WorkerInfo> workers, boolean showTestWorkers) {
+    private List<FullWorkerProjection> getFullWorkerProjections(List<WorkerInfo> workers) {
         Set<UUID> ids = workers.stream().map(WorkerInfo::getWorkerId).collect(Collectors.toSet());
         Map<UUID, MasterelloUser> users = masterelloUserService.findAllByIds(ids);
+        val descriptions = workerDescriptionRepository.findByWorkerIdIn(ids).stream()
+                .collect(Collectors.groupingBy(
+                        WorkerDescriptionEntity::getWorkerId,
+                        Collectors.toMap(WorkerDescriptionEntity::getLanguage, Function.identity())
+                ));
+        val details = workerServiceDetailsRepository.findByWorkerIdIn(ids).stream()
+                .collect(Collectors.groupingBy(
+                        WorkerServiceDetailsEntity::getWorkerId,
+                        Collectors.groupingBy(WorkerServiceDetailsEntity::getServiceId,
+                                Collectors.toMap(WorkerServiceDetailsEntity::getLanguage, Function.identity()))
+                ));
         return workers.stream()
-                .map(wi -> toFullWorkerProjection(wi, users.get(wi.getWorkerId())))
+                .map(wi -> toFullWorkerProjection(
+                                wi,
+                                users.get(wi.getWorkerId()),
+                                descriptions.getOrDefault(wi.getWorkerId(), Collections.emptyMap()),
+                                details.getOrDefault(wi.getWorkerId(), Collections.emptyMap())
+                        )
+                )
                 .toList();
     }
 
-    private FullWorkerProjection toFullWorkerProjection(WorkerInfo workerInfo, MasterelloUser masterelloUser) {
+    private FullWorkerProjection toFullWorkerProjection(WorkerInfo workerInfo, MasterelloUser masterelloUser,
+                                                        Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptions,
+                                                        Map<Integer, Map<WorkerTranslationLanguage, WorkerServiceDetailsEntity>> serviceDetails
+
+    ) {
+        List<TranslatedWorkerServiceProjection> translatedServiceDetails = workerInfo.getServices().stream()
+                .map(s -> translatedWorkerServiceDetailsMapper.mapToTranslatedWorkerInfo(s, serviceDetails.get(s.getServiceId())))
+                .collect(Collectors.toList());
+
+
+        TranslatedWorkerInfoProjection translatedWorkerInfo = translatedWorkerInfoMapper
+                .mapToTranslatedWorkerInfo(workerInfo, descriptions, translatedServiceDetails);
         return FullWorkerProjection.builder()
                 .uuid(masterelloUser.getUuid())
                 .title(masterelloUser.getTitle())
                 .lastname(masterelloUser.getLastname())
                 .name(masterelloUser.getName())
-                .workerInfo(workerInfo)
+                .workerInfo(translatedWorkerInfo)
                 .build();
     }
 
@@ -139,19 +180,30 @@ public class WorkerService implements ReadOnlyWorkerService {
         WorkerInfo workerInfo = getWorkerInfoOrThrow(workerId);
         MasterelloUser masterelloUser = masterelloUserService.findById(workerId)
                 .orElseThrow(() -> new WorkerInfoNotFoundException("User data not found for worker"));
+        Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptions = workerDescriptionRepository.findByWorkerId(workerId).stream()
+                .collect(Collectors.toMap(WorkerDescriptionEntity::getLanguage, Function.identity()));
+
+        val serviceDetails = workerServiceDetailsRepository.findByWorkerId(workerId).stream()
+                .collect(
+                        Collectors.groupingBy(WorkerServiceDetailsEntity::getServiceId,
+                                Collectors.toMap(WorkerServiceDetailsEntity::getLanguage, Function.identity()))
+                );
+        List<TranslatedWorkerServiceProjection> translatedServiceDetails = workerInfo.getServices().stream()
+                .map(s -> translatedWorkerServiceDetailsMapper.mapToTranslatedWorkerInfo(s, serviceDetails.get(s.getServiceId())))
+                .collect(Collectors.toList());
         return FullWorkerProjection.builder()
                 .uuid(masterelloUser.getUuid())
                 .name(masterelloUser.getName())
                 .lastname(masterelloUser.getLastname())
                 .title(masterelloUser.getTitle())
-                .workerInfo(workerInfo)
+                .workerInfo(translatedWorkerInfoMapper.mapToTranslatedWorkerInfo(workerInfo, descriptions, translatedServiceDetails))
                 .build();
     }
 
 
     @NotNull
     private List<Integer> getCategories(List<Integer> serviceIds) {
-        if(serviceIds == null) {
+        if (serviceIds == null) {
             return Collections.emptyList();
         }
         CategoryBulkRequest categoryBulkRequest = new CategoryBulkRequest(serviceIds, true);

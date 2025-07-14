@@ -34,6 +34,8 @@ public interface WorkerInfoMapper {
 
     @Mappings({
             @Mapping(target = "workerId", ignore = true),
+            @Mapping(target = "active", ignore = true),
+            @Mapping(target = "verified", ignore = true),
             @Mapping(target = "languages", source = "languages", qualifiedByName = "listToSet"),
             @Mapping(target = "services", source = "services", qualifiedByName = "listToSetService")
     })

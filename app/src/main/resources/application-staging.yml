@@ -80,6 +80,9 @@ masterello:
   chat:
     ws:
       enabled: false
+  translation:
+    deepl:
+      apiKey: ${DEEPL_API_KEY}
 
 management:
   health:

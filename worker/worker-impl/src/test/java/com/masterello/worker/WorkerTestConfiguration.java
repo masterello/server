@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
         "com.masterello.user.domain",
         "com.masterello.auth",
         "com.masterello.category",
+        "com.masterello.translation",
         "com.masterello.commons"
 })
 @EnableAutoConfiguration

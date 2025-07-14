@@ -7,6 +7,7 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "not so good plumber",
+        "descriptions": {},
         "phone": "+49666666666",
         "telegram": "meh-plumber-t",
         "whatsapp": "meh-plumber-w",
@@ -30,6 +31,7 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "not so good electrician",
+        "descriptions": {},
         "phone": "+49555555555",
         "telegram": "meh-electrician-t",
         "whatsapp": "meh-electrician-w",

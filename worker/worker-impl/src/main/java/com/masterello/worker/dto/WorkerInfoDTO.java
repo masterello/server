@@ -9,9 +9,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.validator.constraints.Length;
 
 import java.time.Instant;
@@ -20,8 +20,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class WorkerInfoDTO {
+@SuperBuilder
+public class WorkerInfoDTO<T extends WorkerServiceDTO> {
 
     private String description;
     @AuthGuard
@@ -39,7 +39,7 @@ public class WorkerInfoDTO {
     private City city;
     @NotEmpty(message = ErrorCodes.SERVICES_EMPTY)
     @Valid
-    private List<WorkerServiceDTO> services;
+    private List<T> services;
     @NotEmpty(message = ErrorCodes.LANGUAGES_EMPTY)
     private List<Language> languages;
     private Instant registeredAt;

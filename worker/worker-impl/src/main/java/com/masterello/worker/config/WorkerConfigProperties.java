@@ -10,4 +10,5 @@ import org.springframework.stereotype.Component;
 @Data
 public class WorkerConfigProperties {
     private String testWorkerEmailPattern;
+    private int bulkTranslationDelayInMillis = 500;
 }

@@ -46,8 +46,7 @@ public class PatchService {
         }
     }
 
-    public <T, D> T applyPatchWithValidation(JsonPatch patch, T object, Class<T> clazz,
-                                             Class<D> validatingClass, Function<T, D> mapper) {
+    public <T, D> T applyPatchWithValidation(JsonPatch patch, T object, Class<T> clazz, Function<T, D> mapper) {
         T patchedEntity = applyPatch(patch, object, clazz);
         D objectToValidate = mapper.apply(patchedEntity);
         val violations = validator.validate(objectToValidate);

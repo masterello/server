@@ -1,0 +1,21 @@
+package com.masterello.worker.domain;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+import java.util.List;
+import java.util.Map;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+public class TranslatedWorkerInfoProjection extends WorkerInfo {
+
+    private Map<WorkerTranslationLanguage, WorkerDescriptionEntity> descriptions;
+    private List<TranslatedWorkerServiceProjection> translatedServices;
+}

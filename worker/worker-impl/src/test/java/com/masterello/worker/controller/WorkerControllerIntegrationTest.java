@@ -8,6 +8,7 @@ import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
+import com.masterello.translation.service.TranslationService;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
@@ -67,6 +68,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     private ObjectMapper objectMapper;
     @Autowired
     private ServiceValidator serviceValidator;
+    @Autowired
+    private TranslationService aiService;
 
     @BeforeEach
     void setUp() {
@@ -217,7 +220,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, 200, null));
-
+//        when(aiService.process(org.mockito.ArgumentMatchers.any(AiPrompt.class), eq(WorkerTranslationService.TranslationResponse.class)))
+//                .thenReturn(Mono.empty());
         WorkerInfoDTO info = WorkerInfoDTO.builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)

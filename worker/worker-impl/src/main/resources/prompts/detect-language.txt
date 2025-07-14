@@ -1,0 +1,31 @@
+* The input may contain the same message in multiple languages.
+* Split the input into messages by language
+* Extract the first message
+* keep formatting (whitespaces, new lines, emojis)
+* Non-message text or metadata should not be included in the output.
+* If the input does not match the expected structure (e.g., no identifiable message), output an error with a relevant message field.
+
+## Output Format
+
+Return a JSON object with these fields:
+- "originalMessage": The original extracted message (string, in the source language)
+- "originalLanguage": language code (DE for german, RU for russian, EN for english,  UK for ukrainian, OTHER - for everything else)
+- "error": Null if successful, or an error message if extraction/translation fails
+
+Example successful response:
+{
+  "originalMessage": "Ich bin seit 15 Jahren professioneller Fotograf.",
+  "originalLanguage": "DE"
+  "error": null
+}
+
+Example error response:
+{
+  "originalMessage": null,
+  "originalLanguage": null,
+  "error": "No message could be extracted from input."
+}
+
+## Input
+
+<USER_INPUT>

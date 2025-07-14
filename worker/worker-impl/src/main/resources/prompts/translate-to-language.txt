@@ -1,0 +1,26 @@
+* Translate input message to <LANGUAGE> language
+* Return translated message
+* keep formatting unchanged (whitespaces, new lines, emojis)
+* If the input cannot be translated, output an error with a relevant message field.
+
+## Output Format
+
+Return a JSON object with these fields:
+- "translatedMessage": The translated message (string, in the source language)
+- "error": Null if successful, or an error message if translation fails
+
+Example successful response:
+{
+  "translatedMessage": "Ich bin seit 15 Jahren professioneller Fotograf.",
+  "error": null
+}
+
+Example error response:
+{
+  "translatedMessage": null,
+  "error": "No message could be extracted from input."
+}
+
+## Input
+
+<USER_INPUT>

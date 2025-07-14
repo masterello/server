@@ -18,9 +18,45 @@
           {
             "serviceId": 10,
             "amount": 100,
-            "details": "Price per minute"
+            "details": "Price per minute",
+            "translatedDetails": {
+              "EN": {
+                "text": "Price per minute",
+                "original": true
+              },
+              "RU": {
+                "text": "Цена за минуту",
+                "original": false
+              },
+              "UK": {
+                "text": "Ціна за хвилину",
+                "original": false
+              },
+              "DE": {
+                "text": "Preis pro Minute",
+                "original": false
+              }
+            }
           }
         ],
+        "descriptions": {
+          "DE": {
+            "text": "Der beste Klempner",
+            "original": false
+          },
+          "EN": {
+            "text": "best plumber",
+            "original": true
+          },
+          "RU": {
+            "text": "Лучший сантехник",
+            "original": false
+          },
+          "UK": {
+            "text": "Найкращий сантехнік",
+            "original": false
+          }
+        },
         "registeredAt": "2024-12-14T15:00:00.111111Z"
       }
     },
@@ -31,6 +67,7 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "best electrician",
+        "descriptions": {},
         "phone": "+49222222222",
         "telegram": "electrician-t",
         "whatsapp": "electrician-w",
@@ -58,6 +95,7 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "best vocal-coach",
+        "descriptions": {},
         "phone": "+49444444444",
         "telegram": "vocal-coach-t",
         "whatsapp": "vocal-coach-w",

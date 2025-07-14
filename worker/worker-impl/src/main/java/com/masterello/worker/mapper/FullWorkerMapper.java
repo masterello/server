@@ -5,9 +5,8 @@ import com.masterello.worker.dto.FullWorkerDTO;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring",
-        uses = WorkerInfoMapper.class)
+        uses = TranslatedWorkerInfoMapper.class)
 public interface FullWorkerMapper {
-    FullWorkerProjection mapToEntity(FullWorkerDTO fullWorkerDTO);
 
     FullWorkerDTO mapToDto(FullWorkerProjection fullWorkerProjection);
 }
