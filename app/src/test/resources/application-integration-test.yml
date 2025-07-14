@@ -39,7 +39,8 @@ masterello:
       secretKey: "BB"
       endpoint: "http://fakes3.com"
       region: "ADAS"
-  ai:
-    accessKey: testKey
+  translation:
+    deepl:
+      apiKey: testKey
 
 
