@@ -8,8 +8,8 @@ import java.util.UUID;
 
 @Data
 @Builder
-public class TranslationRequest {
+public class MissingTranslationsResponse {
     List<UUID> workerIds;
-    boolean withDescription;
-    boolean withServices;
 }
+
+

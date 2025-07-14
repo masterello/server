@@ -1,12 +1,16 @@
 package com.masterello.ai.config
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.masterello.ai.service.AiService
+import com.masterello.ai.service.DefaultAiService
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.reactive.function.client.WebClient
 
 @Configuration
-@EnableConfigurationProperties(AiConfigProperties::class)
+@ConditionalOnProperty("masterello.ai.enabled")
 class AiConfig {
 
     @Bean("openAiWebClient")
@@ -15,5 +19,12 @@ class AiConfig {
                 .baseUrl(properties.endpoint)
                 .defaultHeader("Authorization", "Bearer ${properties.accessKey}")
                 .build()
+    }
+
+    @Bean
+    fun aiService(@Qualifier("openAiWebClient") openAIWebClient: WebClient,
+                  aiConfigProperties: AiConfigProperties,
+                  objectMapper: ObjectMapper): AiService {
+        return DefaultAiService(openAIWebClient, aiConfigProperties, objectMapper)
     }
 }

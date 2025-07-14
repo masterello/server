@@ -10,6 +10,7 @@ dependencies {
     implementation project(':chat-impl')
     implementation project(':common-security')
     implementation project(':translation-impl')
+    implementation project(':ai-impl')
 
     implementation project(':common-monitoring')
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

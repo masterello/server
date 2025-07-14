@@ -6,12 +6,10 @@ import com.masterello.ai.model.AiPrompt
 import com.masterello.ai.model.AiPromptRef
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.MediaType
-import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 
 
-@Service
 class DefaultAiService(
         @Qualifier("openAiWebClient")
         private val openAIWebClient: WebClient,

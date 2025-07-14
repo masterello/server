@@ -141,7 +141,13 @@ public class WorkerService implements ReadOnlyWorkerService {
                                 Collectors.toMap(WorkerServiceDetailsEntity::getLanguage, Function.identity()))
                 ));
         return workers.stream()
-                .map(wi -> toFullWorkerProjection(wi, users.get(wi.getWorkerId()), descriptions.get(wi.getWorkerId()), details.get(wi.getWorkerId())))
+                .map(wi -> toFullWorkerProjection(
+                                wi,
+                                users.get(wi.getWorkerId()),
+                                descriptions.getOrDefault(wi.getWorkerId(), Collections.emptyMap()),
+                                details.getOrDefault(wi.getWorkerId(), Collections.emptyMap())
+                        )
+                )
                 .toList();
     }
 
