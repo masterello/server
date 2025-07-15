@@ -51,6 +51,7 @@ masterello:
     google:
       verification-url: "https://oauth2.googleapis.com"
       success-redirect-url: "https://masterello.com/login/google"
+      error-redirect-url: "https://masterello.com/login/google"
   user:
     email:
       enabled: true

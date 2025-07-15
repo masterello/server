@@ -6,6 +6,7 @@ import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticati
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationProvider;
 import com.masterello.auth.refresh.CustomOauth2RefreshTokenAuthenticationProvider;
 import com.masterello.auth.repository.CustomStatelessAuthorizationRequestRepository;
+import com.masterello.auth.responsehandlers.GoogleFailureAuthHandler;
 import com.masterello.auth.responsehandlers.GoogleSuccessAuthHandler;
 import com.masterello.auth.responsehandlers.Oauth2LogoutSuccessAuthHandler;
 import com.masterello.auth.responsehandlers.Oauth2SuccessAuthHandler;
@@ -39,6 +40,7 @@ public class SecurityConfig {
     private final CustomOauth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
     private final GoogleSuccessAuthHandler googleSuccessAuthHandler;
+    private final GoogleFailureAuthHandler googleErrorHandler;
     private final SuperAdminProperties superAdminProperties;
 
     /**
@@ -93,13 +95,15 @@ public class SecurityConfig {
     public SecurityFilterChain googleAuthFilter(HttpSecurity http) throws Exception {
 
         http
-                .securityMatcher("/oauth2/authorization/google", "/login", "/login/oauth2/code/google**", "/login/google**") // TODO remove /login from here, it shouldn't be processed by this ms
+                .securityMatcher("/oauth2/authorization/google", "/login/oauth2/code/google**", "/login/google**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/login/google**").permitAll()
+                        .requestMatchers("/login/google**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2Login -> oauth2Login
+                        .loginPage("/oauth2/authorization/google")
                         .successHandler(googleSuccessAuthHandler)
+                        .failureHandler(googleErrorHandler)
                         .authorizationEndpoint(subconfig ->
                                 subconfig.authorizationRequestRepository(this.authorizationRequestRepository))
                 )

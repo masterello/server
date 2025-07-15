@@ -33,6 +33,7 @@ masterello:
     google:
       verification-url: "http://localhost:8111/google"
       success-redirect-url: "https://masterello.com/login/google"
+      error-redirect-url: "https://masterello.com/login/google"
     file:
       cleanup-cron: "0 0 0 * * ?"
     session-cleanup:
