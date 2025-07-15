@@ -35,9 +35,9 @@ spring:
       client:
         registration:
           google:
-            clientId: 777134146814-n0jtdcbahc7ts5n2gfl5kvpdmf5tspd1.apps.googleusercontent.com
-            clientSecret: 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
-            redirectUri: https://masterello.com/{action}/oauth2/code/{registrationId}
+            clientId: ${GOOGLE_CLIENT_ID}
+            clientSecret: ${GOOGLE_CLIENT_SECRET}
+            redirectUri: http://localhost:8090/{action}/oauth2/code/{registrationId}
             authorizationGrantType:
               - authorization_code
               - refresh_token
@@ -50,6 +50,7 @@ masterello:
     google:
       verification-url: "https://oauth2.googleapis.com"
       success-redirect-url: "http://localhost/login/google"
+      error-redirect-url: "http://localhost/login/google"
   user:
     email:
       enabled: true

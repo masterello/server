@@ -32,7 +32,8 @@ masterello:
       refresh-token-ttl: 1h
     google:
       verification-url: "http://localhost:8111/google"
-      success-redirect-url: "https://masterello.com/login/google"
+      success-redirect-url: "http://localhost/login/google"
+      error-redirect-url: "http://localhost/login/google"
   file:
     spaces:
       accessKey: "AA"
