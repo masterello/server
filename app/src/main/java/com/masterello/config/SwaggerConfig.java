@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 
 @OpenAPIDefinition(
         servers = {
-                @Server(url = "https://api.masterello.com", description = "staging"),
+                @Server(url = "https://api.masterello.com", description = "production"),
                 @Server(url = "http://127.0.0.1:8090", description = "local")
         },
         info = @Info(title = "Masterello APIs",

@@ -8,6 +8,7 @@ import ch.qos.logback.core.AppenderBase
 import com.masterello.commons.monitoring.AlertLevel
 import com.masterello.commons.monitoring.AlertMessage
 import com.masterello.commons.monitoring.AlertSender
+import com.masterello.commons.monitoring.util.StackTraceUtil
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -28,13 +29,6 @@ class AlertAppender(private val alertSender: AlertSender) : AppenderBase<ILoggin
             WARN -> AlertLevel.WARN
             else -> return
         }
-        val stackTrace = getStackTrace(event)
-        alertSender.sendAlert(AlertMessage(level, event.formattedMessage, stackTrace))
-    }
-
-    private fun getStackTrace(event: ILoggingEvent) : String? {
-        return event.throwableProxy?.let { throwableProxy ->
-            throwableProxy.cause.stackTraceElementProxyArray.joinToString("\n") { it.stackTraceElement.toString() }
-        }
+        alertSender.sendAlert(AlertMessage(level, event.formattedMessage, StackTraceUtil.format(event.throwableProxy)))
     }
 }

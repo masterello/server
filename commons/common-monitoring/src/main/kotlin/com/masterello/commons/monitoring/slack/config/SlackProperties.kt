@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.bind.ConstructorBinding
 
 
 @ConfigurationProperties(prefix = "masterello.monitoring.slack")
-@ConditionalOnProperty(name = ["masterello.monitoring.channel"], havingValue = "slack", matchIfMissing = false)
+@ConditionalOnProperty(name = ["masterello.monitoring.alert.channel"], havingValue = "slack", matchIfMissing = false)
 data class SlackProperties @ConstructorBinding constructor(
         val clientId: String,
         val clientSecret: String,

@@ -73,7 +73,17 @@ masterello:
     oAuthFlow:
       tokenUrl: https:/api.masterello.com/oauth2/token
   monitoring:
-    channel: slack
+    alert:
+      channel: slack
+    log:
+      channel: grafana
+    betterstack:
+      apiKey: ${BETTER_STACK_API_KEY}
+      endpoint: ${BETTER_STACK_ENDPOINT}
+    grafana:
+      api-key: ${GRAFANA_API_KEY}
+      endpoint: https://logs-prod-012.grafana.net
+      instance-id: 1280879
     slack:
       endpoint: ${SLACK_WEBHOOK}
       clientId: ${SLACK_CLIENT_ID}
