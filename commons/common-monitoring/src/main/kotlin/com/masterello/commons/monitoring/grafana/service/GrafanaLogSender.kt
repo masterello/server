@@ -33,7 +33,6 @@ class GrafanaLogSender(
                         )
                 )
         )
-        logger.info { payload }
         restTemplate.postForEntity("/loki/api/v1/push", payload, String::class.java)
     }
 }
