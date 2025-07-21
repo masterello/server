@@ -5,7 +5,6 @@ import com.masterello.commons.monitoring.AlertLevel
 import com.masterello.commons.monitoring.AlertMessage
 import com.masterello.commons.monitoring.AlertSender
 import com.masterello.commons.monitoring.slack.config.SlackProperties
-import org.apache.commons.lang3.StringUtils
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.HttpEntity
@@ -15,13 +14,11 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
 
 @Service
-@ConditionalOnProperty(name = ["masterello.monitoring.channel"], havingValue = "slack", matchIfMissing = false)
+@ConditionalOnProperty(name = ["masterello.monitoring.alert.channel"], havingValue = "slack", matchIfMissing = false)
 class SlackAlertSender(@Qualifier("slackRestTemplate") private val restTemplate: RestTemplate,
                        private val slackConfig: SlackProperties,
                        private val objectMapper: ObjectMapper) : AlertSender {
 
-
-    private final val maxStacktraceSize: Int = 2000
 
     override fun sendAlert(message: AlertMessage) {
         try {
@@ -59,11 +56,11 @@ class SlackAlertSender(@Qualifier("slackRestTemplate") private val restTemplate:
         )
 
         // Add stack trace as a separate block if present
-        message.stackTrace?.let { stackTrace ->
+        message.stackTrace?.let {
             blocks.add(
                     mapOf(
                             "type" to "section",
-                            "text" to mapOf("type" to "mrkdwn", "text" to "```${StringUtils.abbreviate(stackTrace, maxStacktraceSize)}```")
+                            "text" to mapOf("type" to "mrkdwn", "text" to "```$it```")
                     )
             )
         }

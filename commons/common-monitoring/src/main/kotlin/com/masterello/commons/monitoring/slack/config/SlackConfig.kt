@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
 
 @Configuration
-@ConditionalOnProperty(name = ["masterello.monitoring.channel"], havingValue = "slack", matchIfMissing = false)
+@ConditionalOnProperty(name = ["masterello.monitoring.alert.channel"], havingValue = "slack", matchIfMissing = false)
 class SlackConfig(private val slackProperties: SlackProperties) {
 
     @Bean
