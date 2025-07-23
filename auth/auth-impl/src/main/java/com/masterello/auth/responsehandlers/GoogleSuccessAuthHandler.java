@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -24,10 +25,18 @@ public class GoogleSuccessAuthHandler implements AuthenticationSuccessHandler {
     }
 
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        OAuth2AuthorizationRequest authRequest =
+                (OAuth2AuthorizationRequest) request.getAttribute(CustomStatelessAuthorizationRequestRepository.CACHED_AUTH_REQUEST_ATTRIBUTE);
+
+        String source = null;
+        if (authRequest != null) {
+            source = (String) authRequest.getAdditionalParameters().get("source");
+        }
 
         OAuth2AuthenticationToken oauth2Token = (OAuth2AuthenticationToken)
                 authentication;
-        authorizationRequestRepository.removeCookie(request, response);
-        response.sendRedirect(googleSuccessRedirectUrl + "?OID_TOKEN=" + ((OidcUser) oauth2Token.getPrincipal()).getIdToken().getTokenValue());
+        response.sendRedirect(googleSuccessRedirectUrl +
+                "?OID_TOKEN=" + ((OidcUser) oauth2Token.getPrincipal()).getIdToken().getTokenValue() +
+                "&source=" + (source != null ? source : ""));
     }
 }

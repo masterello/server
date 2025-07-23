@@ -1,9 +1,8 @@
 package com.masterello.auth.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.masterello.auth.helper.CookieHelper;
+import com.masterello.auth.domain.AuthorizationRequestEntity;
 import com.masterello.auth.service.EncryptionService;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -16,14 +15,17 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 
 @Component
 @RequiredArgsConstructor
 public class CustomStatelessAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
-    private static final Duration OAUTH_COOKIE_EXPIRY = Duration.ofMinutes(5);
-    private static final String OAUTH_COOKIE_NAME = "OAUTH";
+    private static final Duration OAUTH_REQUEST_EXPIRY = Duration.ofMinutes(5);
+    public static final String CACHED_AUTH_REQUEST_ATTRIBUTE = "cached_oauth2_auth_request";
+
     private final EncryptionService encryptionService;
+    private final AuthorizationRequestEntityRepository entityRepository;
     private final ObjectMapper objectMapper = getObjectMapper();
 
     private ObjectMapper getObjectMapper() {
@@ -35,47 +37,52 @@ public class CustomStatelessAuthorizationRequestRepository implements Authorizat
 
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
-        return this.retrieveCookie(request);
+        String state = request.getParameter("state");
+        if (state == null) return null;
+
+        OAuth2AuthorizationRequest authRequest = entityRepository.findById(state)
+                .map(entity -> deserialize(entity.getRequestJson()))
+                .orElse(null);
+        if (authRequest != null) {
+            request.setAttribute(CACHED_AUTH_REQUEST_ATTRIBUTE, authRequest);
+        }
+        return authRequest;
     }
 
     @Override
     public void saveAuthorizationRequest(OAuth2AuthorizationRequest authorizationRequest, HttpServletRequest request, HttpServletResponse response) {
-        if (authorizationRequest == null) {
-            this.removeCookie(request, response);
-            return;
-        }
-        this.attachCookie(request, response, authorizationRequest);
+        if (authorizationRequest == null) return;
+
+        String state = authorizationRequest.getState();
+        String json = serialize(authorizationRequest);
+
+        AuthorizationRequestEntity entity = new AuthorizationRequestEntity(
+                state,
+                json,
+                Instant.now().plus(OAUTH_REQUEST_EXPIRY)
+        );
+
+        entityRepository.save(entity);
     }
 
     @Override
     public OAuth2AuthorizationRequest removeAuthorizationRequest(HttpServletRequest request, HttpServletResponse response) {
-        return this.retrieveCookie(request);
-    }
+        String state = request.getParameter("state");
+        if (state == null) return null;
 
-    private OAuth2AuthorizationRequest retrieveCookie(HttpServletRequest request) {
-        return CookieHelper.retrieve(request.getCookies(), OAUTH_COOKIE_NAME)
-                .map(this::decrypt)
-                .orElse(null);
-    }
-
-    private void attachCookie(HttpServletRequest request, HttpServletResponse response, OAuth2AuthorizationRequest value) {
-        Cookie cookie = CookieHelper.generateCookie(request, OAUTH_COOKIE_NAME, this.encrypt(value), OAUTH_COOKIE_EXPIRY);
-        response.addCookie(cookie);
-    }
-
-    public void removeCookie(HttpServletRequest request, HttpServletResponse response) {
-        Cookie expiredCookie = CookieHelper.generateExpiredCookie(request, OAUTH_COOKIE_NAME);
-        response.addCookie(expiredCookie);
+        OAuth2AuthorizationRequest authRequest = loadAuthorizationRequest(request);
+        entityRepository.deleteById(state);
+        return authRequest;
     }
 
     @SneakyThrows
-    private String encrypt(OAuth2AuthorizationRequest authorizationRequest) {
+    private String serialize(OAuth2AuthorizationRequest authorizationRequest) {
         String json = objectMapper.writer().writeValueAsString(authorizationRequest);
         return encryptionService.encrypt(json);
     }
 
     @SneakyThrows
-    private OAuth2AuthorizationRequest decrypt(String encrypted) {
+    private OAuth2AuthorizationRequest deserialize(String encrypted) {
         String decrypted = encryptionService.decrypt(encrypted);
         return objectMapper.reader().readValue(decrypted.getBytes(StandardCharsets.UTF_8), OAuth2AuthorizationRequest.class);
     }
