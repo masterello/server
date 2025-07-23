@@ -6,6 +6,7 @@ import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticati
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationProvider;
 import com.masterello.auth.refresh.CustomOauth2RefreshTokenAuthenticationProvider;
 import com.masterello.auth.repository.CustomStatelessAuthorizationRequestRepository;
+import com.masterello.auth.requestresolver.GoogleAuthenticationRequestResolver;
 import com.masterello.auth.responsehandlers.GoogleFailureAuthHandler;
 import com.masterello.auth.responsehandlers.GoogleSuccessAuthHandler;
 import com.masterello.auth.responsehandlers.Oauth2LogoutSuccessAuthHandler;
@@ -23,6 +24,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
@@ -92,7 +94,7 @@ public class SecurityConfig {
      */
     @Bean
     @Order(2)
-    public SecurityFilterChain googleAuthFilter(HttpSecurity http) throws Exception {
+    public SecurityFilterChain googleAuthFilter(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
 
         http
                 .securityMatcher("/oauth2/authorization/google", "/login/oauth2/code/google**", "/login/google**")
@@ -105,7 +107,10 @@ public class SecurityConfig {
                         .successHandler(googleSuccessAuthHandler)
                         .failureHandler(googleErrorHandler)
                         .authorizationEndpoint(subconfig ->
-                                subconfig.authorizationRequestRepository(this.authorizationRequestRepository))
+                                subconfig
+                                        .authorizationRequestResolver(new GoogleAuthenticationRequestResolver(clientRegistrationRepository, "/oauth2/authorization"))
+                                        .authorizationRequestRepository(authorizationRequestRepository)
+                        )
                 )
                 .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

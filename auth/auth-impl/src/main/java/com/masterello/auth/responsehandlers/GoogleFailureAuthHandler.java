@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,12 @@ public class GoogleFailureAuthHandler implements AuthenticationFailureHandler {
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        authorizationRequestRepository.removeCookie(request, response);
-        response.sendRedirect(googleFailureRedirectUrl + "?error=google_auth_failed");
+        OAuth2AuthorizationRequest authRequest = authorizationRequestRepository.removeAuthorizationRequest(request, response);
+
+        String source = null;
+        if (authRequest != null) {
+            source = (String) authRequest.getAdditionalParameters().get("source");
+        }
+        response.sendRedirect(googleFailureRedirectUrl + "?error=google_auth_failed&someParam=" +  (source != null ? source : ""));
     }
 }
