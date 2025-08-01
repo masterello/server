@@ -1,7 +1,7 @@
 package com.masterello.auth.config;
 
-import com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationConverter;
-import com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationProvider;
+import com.masterello.auth.customgrants.googlegrant.GoogleAuthCodeAuthenticationConverter;
+import com.masterello.auth.customgrants.googlegrant.GoogleAuthCodeAuthenticationProvider;
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationConverter;
 import com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationProvider;
 import com.masterello.auth.refresh.CustomOauth2RefreshTokenAuthenticationProvider;
@@ -37,7 +37,7 @@ public class SecurityConfig {
 
     private final CustomStatelessAuthorizationRequestRepository authorizationRequestRepository;
     private final CustomPasswordAuthenticationProvider customPassordAuthenticationProvider;
-    private final GoogleOidAuthenticationProvider googleOidAuthenticationProvider;
+    private final GoogleAuthCodeAuthenticationProvider googleAuthCodeAuthenticationProvider;
     private final LogoutRevocationAuthenticationProvider logoutRevocationAuthenticationProvider;
     private final CustomOauth2RefreshTokenAuthenticationProvider refreshTokenAuthenticationProvider;
     private final TokenAuthenticationFailureHandler tokenAuthenticationFailureHandler;
@@ -62,8 +62,8 @@ public class SecurityConfig {
                         tokenEndpoint
                                 .accessTokenResponseHandler(new Oauth2SuccessAuthHandler())
                                 .accessTokenRequestConverter(new CustomPasswordAuthenticationConverter())
-                                .accessTokenRequestConverter(new GoogleOidAuthenticationConverter())
-                                .authenticationProvider(googleOidAuthenticationProvider)
+                                .accessTokenRequestConverter(new GoogleAuthCodeAuthenticationConverter())
+                                .authenticationProvider(googleAuthCodeAuthenticationProvider)
                                 .authenticationProvider(customPassordAuthenticationProvider)
                                 .authenticationProvider(refreshTokenAuthenticationProvider)
                                 .errorResponseHandler(tokenAuthenticationFailureHandler))

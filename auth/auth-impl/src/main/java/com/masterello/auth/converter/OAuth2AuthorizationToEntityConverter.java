@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
@@ -19,11 +20,11 @@ import java.util.function.Supplier;
 
 @RequiredArgsConstructor
 @Component
-public class OAuth2AuthorizationToTokenPairConverter {
+public class OAuth2AuthorizationToEntityConverter {
 
     private final Supplier<ObjectMapper> authServiceObjectMapper;
 
-    public TokenPair toEntity(OAuth2Authorization authorization) {
+    public Authorization toAuthorizationEntity(OAuth2Authorization authorization) {
         Authorization authEntity = new Authorization();
         authEntity.setId(authorization.getId());
         if (!authorization.getAuthorizedScopes().isEmpty()) {
@@ -34,13 +35,21 @@ public class OAuth2AuthorizationToTokenPairConverter {
         authEntity.setPrincipal(getPrincipal(authorization.getAttributes().get(Principal.class.getName())));
         authEntity.setRegisteredClientId(authorization.getRegisteredClientId());
 
-        return createTokenPairEntity(authEntity, authorization);
+        OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
+                authorization.getToken(OAuth2AuthorizationCode.class);
+        if (authorizationCode != null) {
+            authEntity.setAuthorizationCodeIssuedAt(Objects.requireNonNull(authorizationCode.getToken().getIssuedAt()).atOffset(ZoneOffset.UTC));
+            authEntity.setAuthorizationCodeExpiresAt(Objects.requireNonNull(authorizationCode.getToken().getExpiresAt()).atOffset(ZoneOffset.UTC));
+            authEntity.setAuthorizationCodeValue(authorizationCode.getToken().getTokenValue());
+            authEntity.setAuthorizationCodeMetadata(writeObject(authorizationCode.getMetadata()));
+        }
+
+        return authEntity;
     }
 
-    private TokenPair createTokenPairEntity(Authorization entity, OAuth2Authorization authorization) {
+    public TokenPair toTokenPairEntity(OAuth2Authorization authorization) {
         TokenPair tokenPair = new TokenPair();
         tokenPair.setId(UUID.randomUUID());
-        tokenPair.setAuthorization(entity);
         tokenPair.setIssuedAt(OffsetDateTime.now());
         var accessToken = authorization.getAccessToken();
         if (accessToken != null && accessToken.getToken() != null) {

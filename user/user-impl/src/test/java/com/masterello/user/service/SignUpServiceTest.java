@@ -82,7 +82,7 @@ class SignUpServiceTest {
         when(userService.createUser(eq(userToSave))).thenReturn(expectedUser);
 
         // Act
-        MasterelloUser actualUser = signUpService.googleSignup(EMAIL);
+        MasterelloUser actualUser = signUpService.googleSignup(EMAIL, null, null);
 
         // Assert
         assertNotNull(actualUser);

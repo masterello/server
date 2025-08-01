@@ -3,14 +3,11 @@ package com.masterello.auth.controller;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import com.masterello.auth.AuthTestConfiguration;
-import com.masterello.auth.dto.GoogleTokenInfo;
+import com.masterello.auth.repository.AuthorizationRepository;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
-import com.masterello.user.service.AuthNService;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.MasterelloTestUser;
-import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
 import io.restassured.RestAssured;
@@ -31,17 +28,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.client.WireMock.ok;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.masterello.auth.config.AuthConstants.M_TOKEN_COOKIE;
 import static com.masterello.auth.config.AuthConstants.R_TOKEN_COOKIE;
 import static com.masterello.auth.utils.AuthTestDataProvider.*;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @SqlGroup({
@@ -52,15 +44,15 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {AuthTestConfiguration.class})
 public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
 
-    private static final String GOOGLE_TOKEN = "googoogle_token";
-    public static final String USER_FROM_GOOGLE = "new_user_from_google@gmail.com";
-
+    private static final String GOOGLE_AUTH_CODE = "XQ40Jy1ERz9QGWG2Lhl3CpjPfSLZ15FQyPCTafsL2dXxwZK3YVnVyZ-kW2Ov8t_riBjR_QUHX8QYmOHCo0Ica0bzUW68mf29c5yshIZCFrkGjwELHgE-HZarznEPBang";
+    private static final String USED_GOOGLE_AUTH_CODE = "QqqqQqqqz9QGWG2Lhl3CpjPfSLZ15FQyPCTafsL2dXxwZK3YVnVyZ-kW2Ov8t_riBjR_QUHX8QYmOHCo0Ica0bzUW68mf29c5yshIZCFrkGjwELHgE-HZarznEPBig";
+    
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
     private MasterelloUserService userService;
     @Autowired
-    private AuthNService authNService;
+    private AuthorizationRepository authorizationRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
     @BeforeEach
@@ -156,17 +148,6 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     void getToken_with_googlegrant() {
 
-        GoogleTokenInfo googleTokenInfo = GoogleTokenInfo.builder()
-                .email(USER_2_EMAIL)
-                .build();
-
-        stubFor(post(urlPathEqualTo("/google/tokeninfo"))
-                .withHeader("Content-Type", containing("application/json"))
-                .withQueryParam("id_token", new EqualToPattern(GOOGLE_TOKEN, true))
-                .willReturn(ok()
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(googleTokenInfo))));
-
         //@formatter:off
         RestAssured
                 .given()
@@ -174,7 +155,7 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
                     .accept("application/json")
                     .contentType("application/json")
                     .queryParam("grant_type", "google_oid")
-                    .queryParam("token", GOOGLE_TOKEN)
+                    .queryParam("token", GOOGLE_AUTH_CODE)
                 .when()
                     .post("/oauth2/token")
                 .then()
@@ -185,49 +166,28 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
                     .body("roles", hasSize(1))
                     .body("roles", hasItem(Role.USER.name()));
         //@formatter:on
-        MasterelloUser user = userService.findByEmail(USER_2_EMAIL)
-                .orElseThrow();
-
-        assertEquals(USER_2_EMAIL, user.getEmail());
-        assertFalse(user.isEmailVerified()); // shouldn't mark as verified existing user
-        assertNotNull(user.getPassword());
     }
 
     @SneakyThrows
     @Test
-    void getToken_with_googlegrant_signUp() {
-
-        GoogleTokenInfo googleTokenInfo = GoogleTokenInfo.builder()
-                .email(USER_FROM_GOOGLE)
-                .build();
-
-        stubFor(post(urlPathEqualTo("/google/tokeninfo"))
-                .withHeader("Content-Type", containing("application/json"))
-                .withQueryParam("id_token", new EqualToPattern(GOOGLE_TOKEN, true))
-                .willReturn(ok()
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(googleTokenInfo))));
-
-        //@formatter:off
+    void getToken_with_googlegrant_fail_on_auth_code_reuse() {
+        var authorization = authorizationRepository.findById("abda1cb3-885e-40e7-8dfc-50d1a468ac6a");
+        assertTrue(authorization.isPresent());
+         //@formatter:off
         RestAssured
                 .given()
                     .header("Authorization", CLIENT_BEARER)
                     .accept("application/json")
                     .contentType("application/json")
                     .queryParam("grant_type", "google_oid")
-                    .queryParam("token", GOOGLE_TOKEN)
+                    .queryParam("token", USED_GOOGLE_AUTH_CODE)
                 .when()
                     .post("/oauth2/token")
                 .then()
-                    .statusCode(200)
-                    .body("access_token", notNullValue())
-                    .body("refresh_token", notNullValue())
-                    .body("token_type", is("Bearer"))
-                    .body("roles", hasSize(1))
-                    .body("roles", hasItem(Role.USER.name()));
+                    .statusCode(401);
         //@formatter:on
-
-        verify(authNService).googleSignup(USER_FROM_GOOGLE);
+        authorization = authorizationRepository.findById("abda1cb3-885e-40e7-8dfc-50d1a468ac6a");
+        assertFalse(authorization.isPresent());
     }
 
     @Test

@@ -38,4 +38,16 @@ public class Authorization {
 
     @Column(name = "principal", columnDefinition = "TEXT")
     private String principal;
+
+    @Column(name = "authorization_code_value", columnDefinition = "TEXT")
+    private String authorizationCodeValue;
+
+    @Column(name = "authorization_code_issued_at")
+    private OffsetDateTime authorizationCodeIssuedAt;
+
+    @Column(name = "authorization_code_expires_at")
+    private OffsetDateTime authorizationCodeExpiresAt;
+
+    @Column(name = "authorization_code_metadata", columnDefinition = "TEXT")
+    private String authorizationCodeMetadata;
 }
