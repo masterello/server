@@ -2,6 +2,7 @@ package com.masterello.user.service;
 
 
 import com.masterello.commons.async.MasterelloEventPublisher;
+import com.masterello.user.config.ConfirmationCodeProperties;
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.dto.ResendConfirmationLinkDTO;
 import com.masterello.user.dto.VerifyUserTokenDTO;
@@ -42,10 +43,15 @@ public class ConfirmationLinkServiceTest {
     private EmailConfigProperties emailConfigProperties;
 
     @Mock
+    private ConfirmationCodeProperties confirmationCodeProperties;
+    @Mock
     private ConfirmationLinkRepository confirmationLinkRepository;
 
     @Mock
     private MasterelloEventPublisher publisher;
+
+    @Mock
+    private ConfirmationCodeGenerator codeGenerator;
 
     @InjectMocks
     private ConfirmationLinkService confirmationLinkService;
@@ -210,6 +216,9 @@ public class ConfirmationLinkServiceTest {
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
         when(emailConfigProperties.getDailyAttempts()).thenReturn(3);
         when(confirmationLinkRepository.findConfirmationCountsByUserUuid(any())).thenReturn(1);
+        when(confirmationCodeProperties.getConfirmationCodeLength()).thenReturn(6);
+        when(confirmationCodeProperties.getMaxAttempts()).thenReturn(3);
+        when(codeGenerator.generateRandomDigitCode(6)).thenReturn("123456");
 
         //WHEN
         confirmationLinkService.resendConfirmationLink(ResendConfirmationLinkDTO.builder()
@@ -229,6 +238,9 @@ public class ConfirmationLinkServiceTest {
     public void sendConfirmationLink() throws MessagingException, IOException {
         //WHEN
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
+        when(confirmationCodeProperties.getConfirmationCodeLength()).thenReturn(6);
+        when(codeGenerator.generateRandomDigitCode(6)).thenReturn("123456");
+        when(confirmationCodeProperties.getMaxAttempts()).thenReturn(3);
 
         //WHEN
         confirmationLinkService.sendConfirmationLink(buildUser(), null);
@@ -243,6 +255,9 @@ public class ConfirmationLinkServiceTest {
     public void sendConfirmationLinkSafe() throws MessagingException, IOException {
         //WHEN
         doNothing().when(emailService).sendConfirmationEmail(any(), any(), isNull());
+        when(confirmationCodeProperties.getConfirmationCodeLength()).thenReturn(6);
+        when(codeGenerator.generateRandomDigitCode(6)).thenReturn("123456");
+        when(confirmationCodeProperties.getMaxAttempts()).thenReturn(3);
 
         //WHEN
         confirmationLinkService.sendConfirmationLinkSafe(buildUser(), null);

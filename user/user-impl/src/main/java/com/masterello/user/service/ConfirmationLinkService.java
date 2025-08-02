@@ -3,12 +3,15 @@ package com.masterello.user.service;
 
 import com.masterello.commons.async.MasterelloEventPublisher;
 import com.masterello.commons.core.data.Locale;
+import com.masterello.commons.core.retry.SimpleRetryUtil;
+import com.masterello.user.config.ConfirmationCodeProperties;
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.domain.ConfirmationLink;
 import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.dto.ResendConfirmationLinkDTO;
 import com.masterello.user.dto.VerifyUserTokenDTO;
 import com.masterello.user.event.EmailVerifiedChangedEvent;
+import com.masterello.user.exception.ConfirmationCodeCollisionException;
 import com.masterello.user.exception.ConfirmationLinkNotFoundException;
 import com.masterello.user.exception.DailyAttemptsExceededException;
 import com.masterello.user.exception.TokenExpiredException;
@@ -23,12 +26,14 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.time.OffsetDateTime;
-import java.util.UUID;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -37,8 +42,10 @@ public class ConfirmationLinkService {
 
     private final EmailService emailService;
     private final EmailConfigProperties emailConfigProperties;
+    private final ConfirmationCodeProperties confirmationCodeProperties;
     private final ConfirmationLinkRepository confirmationLinkRepository;
     private final UserRepository userRepository;
+    private final ConfirmationCodeGenerator codeGenerator;
     private final MasterelloEventPublisher publisher;
 
     @Transactional
@@ -65,6 +72,8 @@ public class ConfirmationLinkService {
     public void sendConfirmationLinkSafe(@NonNull MasterelloUser user, @Nullable Locale locale) {
         try {
             sendConfirmationLink(user, locale);
+        } catch (ConfirmationCodeCollisionException e) {
+            log.error("Error sending confirmation code due to collision", e);
         } catch (MessagingException | IOException e) {
             log.error("Error sending email", e);
         }
@@ -88,7 +97,7 @@ public class ConfirmationLinkService {
         var confirmationResendAttempts =
                 confirmationLinkRepository.findConfirmationCountsByUserUuid(user.getUuid());
 
-        if(confirmationResendAttempts >= emailConfigProperties.getDailyAttempts()) {
+        if (confirmationResendAttempts >= emailConfigProperties.getDailyAttempts()) {
             throw new DailyAttemptsExceededException("Exceeded daily limit for password reset, try again in 24 hours");
         }
 
@@ -108,16 +117,37 @@ public class ConfirmationLinkService {
     }
 
     private String createNewConfirmationToken(MasterelloUser user) {
-        String verificationCode = UUID.randomUUID().toString();
+        String verificationCode = codeGenerator.generateRandomDigitCode(confirmationCodeProperties.getConfirmationCodeLength());
 
         var confirmationLink = ConfirmationLink.builder()
                 .token(verificationCode)
                 .userUuid(user.getUuid())
-                .expiresAt(OffsetDateTime.now().plusDays(1))
+                .expiresAt(OffsetDateTime.now().plus(confirmationCodeProperties.getCodeTtl()))
                 .creationDate(OffsetDateTime.now())
                 .build();
 
-        confirmationLinkRepository.saveAndFlush(confirmationLink);
+        try {
+
+
+            SimpleRetryUtil.retryOperationOn(() -> {
+                        log.info("trying to save confirmation code");
+                        return confirmationLinkRepository.saveAndFlush(confirmationLink);
+                    },
+                    "save confirmation link",
+                    confirmationCodeProperties.getMaxAttempts(),
+                    List.of(DataIntegrityViolationException.class));
+        } catch (Throwable e) {
+            throw new ConfirmationCodeCollisionException("Failed to generate unique confirmation code", e);
+        }
         return verificationCode;
+    }
+
+    @Scheduled(cron = "#{@confirmationCodeProperties.cleanupCron}")
+    @Transactional
+    public void cleanupExpiredCodes() {
+        log.info("Running confirmation codes cleanup");
+        OffsetDateTime cleanUpThresholdDate = OffsetDateTime.now().minus(confirmationCodeProperties.getCleanupThreshold());
+        int cleanedUp = confirmationLinkRepository.nullOutExpiredCodes(cleanUpThresholdDate);
+        log.info("Cleaned up {} codes", cleanedUp);
     }
 }

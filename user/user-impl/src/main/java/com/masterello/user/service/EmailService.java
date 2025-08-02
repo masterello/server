@@ -1,7 +1,7 @@
 package com.masterello.user.service;
 
-import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.commons.core.data.Locale;
+import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.value.MasterelloUser;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -51,6 +51,15 @@ public class EmailService {
         Locale resolvedLocale = Optional.ofNullable(locale).orElse(Locale.EN);
         String filePath = CONFIRM_EMAIL_FILE.replace("${locale}", resolvedLocale.getCode());
         String text = readFile(filePath).replace("${verifyURL}", buildConfirmEmailUrl(verificationCode, resolvedLocale));
+
+//   TODO uncomment when FE is ready
+//        String text = readFile(filePath);
+//        text = text.replace("${code}", verificationCode);
+//        for (int i = 0; i < 6; i++) {
+//            String placeholder = "${code[" + i + "]}";
+//            String digit = i < verificationCode.length() ? String.valueOf(verificationCode.charAt(i)) : "";
+//            text = text.replace(placeholder, digit);
+//        }
         sendMessage(user, text, emailConfigProperties.getRegistrationSubject().get(resolvedLocale));
     }
 
