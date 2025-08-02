@@ -31,10 +31,12 @@ public class UserContractTestConfig {
     private static class TestAuthNService implements AuthNService {
 
         @Override
-        public MasterelloUser googleSignup(String email) {
+        public MasterelloUser googleSignup(String email, String name, String lastName) {
             return MasterelloTestUser.builder()
                     .email(email)
                     .uuid(UUID.randomUUID())
+                    .name(name)
+                    .lastname(lastName)
                     .roles(Set.of(Role.USER))
                     .status(UserStatus.ACTIVE)
                     .emailVerified(true)

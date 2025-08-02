@@ -26,9 +26,14 @@ import org.springframework.security.oauth2.server.authorization.context.Authoriz
 
 import java.security.Principal;
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
-import static com.masterello.auth.customgrants.googlegrant.GoogleOidAuthenticationConverter.GOOGLE_OID_GRANT_TYPE;
+import static com.masterello.auth.customgrants.googlegrant.GoogleAuthCodeAuthenticationConverter.GOOGLE_AUTH_CODE_GRANT_TYPE;
 import static com.masterello.auth.customgrants.passwordgrant.CustomPasswordAuthenticationConverter.PASSWORD_GRANT_TYPE;
 import static java.util.Collections.singletonList;
 import static org.mockito.Mockito.mock;
@@ -155,7 +160,7 @@ public class AuthTestDataProvider {
         return RegisteredClient.withId(CLIENT_ID.toString())
                 .clientId(REDISTERED_CLIENT_ID)
                 .authorizationGrantType(new AuthorizationGrantType(PASSWORD_GRANT_TYPE))
-                .authorizationGrantType(new AuthorizationGrantType(GOOGLE_OID_GRANT_TYPE))
+                .authorizationGrantType(new AuthorizationGrantType(GOOGLE_AUTH_CODE_GRANT_TYPE))
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
                 .build();
     }

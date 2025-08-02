@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface AuthorizationRepository extends JpaRepository<Authorization, String> {
 
+    Optional<Authorization> findByAuthorizationCodeValue(String tokenValue);
 }

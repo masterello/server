@@ -5,5 +5,5 @@ import com.masterello.user.value.MasterelloUser;
 
 public interface AuthNService {
 
-    MasterelloUser googleSignup(String email);
+    MasterelloUser googleSignup(String email, String name, String lastName);
 }

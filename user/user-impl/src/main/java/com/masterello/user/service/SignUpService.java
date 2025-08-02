@@ -1,7 +1,7 @@
 package com.masterello.user.service;
 
-import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.commons.core.data.Locale;
+import com.masterello.user.domain.MasterelloUserEntity;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
@@ -41,10 +41,12 @@ public class SignUpService implements AuthNService{
 
     @Override
     @Transactional
-    public MasterelloUser googleSignup(String email){
-        MasterelloUserEntity user = MasterelloUserEntity.builder()
+    public MasterelloUser googleSignup(String email, String name, String lastName) {
+    MasterelloUserEntity user = MasterelloUserEntity.builder()
                 .email(email)
                 .emailVerified(true)
+                .name(name)
+                .lastname(lastName)
                 .roles(Set.of(Role.USER))
                 .status(UserStatus.ACTIVE)
                 .build();

@@ -6,7 +6,15 @@ import lombok.val;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClaimAccessor;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -27,7 +35,7 @@ import static com.masterello.auth.util.AuthenticationUtil.getAuthenticatedClient
 public abstract class AbstractAuthenticationProvider implements AuthenticationProvider  {
 
     private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
-    private final OAuth2AuthorizationService authorizationService;
+    protected final OAuth2AuthorizationService authorizationService;
     protected final SecurityUserDetailsService userDetailsService;
     private final OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
@@ -70,7 +78,7 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
         return new OAuth2AccessTokenAuthenticationToken(registeredClient, clientPrincipal, accessToken, refreshToken, additionalParameters);
     }
 
-    private OAuth2RefreshToken getRefreshToken(RegisteredClient registeredClient, OAuth2ClientAuthenticationToken clientPrincipal, DefaultOAuth2TokenContext.Builder tokenContextBuilder, OAuth2Authorization.Builder authorizationBuilder) {
+    protected OAuth2RefreshToken getRefreshToken(RegisteredClient registeredClient, OAuth2ClientAuthenticationToken clientPrincipal, DefaultOAuth2TokenContext.Builder tokenContextBuilder, OAuth2Authorization.Builder authorizationBuilder) {
         OAuth2RefreshToken refreshToken = null;
         if (registeredClient.getAuthorizationGrantTypes().contains(AuthorizationGrantType.REFRESH_TOKEN) &&
                 !clientPrincipal.getClientAuthenticationMethod().equals(ClientAuthenticationMethod.NONE)) {
@@ -88,7 +96,7 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
         return refreshToken;
     }
 
-    private OAuth2AccessToken getAccessToken(DefaultOAuth2TokenContext.Builder tokenContextBuilder, OAuth2Authorization.Builder authorizationBuilder) {
+    protected OAuth2AccessToken getAccessToken(DefaultOAuth2TokenContext.Builder tokenContextBuilder, OAuth2Authorization.Builder authorizationBuilder) {
         OAuth2TokenContext tokenContext = tokenContextBuilder.tokenType(OAuth2TokenType.ACCESS_TOKEN).build();
         OAuth2Token generatedAccessToken = this.tokenGenerator.generate(tokenContext);
         if (generatedAccessToken == null) {
@@ -109,14 +117,14 @@ public abstract class AbstractAuthenticationProvider implements AuthenticationPr
         return accessToken;
     }
 
-    private OAuth2Authorization.Builder getAuthorizationBuilder(RegisteredClient registeredClient, Authentication principal) {
+    protected OAuth2Authorization.Builder getAuthorizationBuilder(RegisteredClient registeredClient, Authentication principal) {
         return OAuth2Authorization.withRegisteredClient(registeredClient)
                 .attribute(Principal.class.getName(), principal)
                 .principalName(principal.getName())
                 .authorizationGrantType(getGrantType());
     }
 
-    private DefaultOAuth2TokenContext.Builder getTokenContextBuilder(Authentication authenticationToken, RegisteredClient registeredClient, Authentication principal) {
+    protected DefaultOAuth2TokenContext.Builder getTokenContextBuilder(Authentication authenticationToken, RegisteredClient registeredClient, Authentication principal) {
         return DefaultOAuth2TokenContext.builder()
                 .registeredClient(registeredClient)
                 .principal(principal)

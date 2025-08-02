@@ -9,15 +9,16 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import java.util.Map;
 
 @Getter
-public class GoogleOidAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
+public class GoogleAuthCodeAuthenticationToken extends OAuth2AuthorizationGrantAuthenticationToken {
 
     private static final long serialVersionUID = 3506080732586435489L;
 
     private final String token;
 
-    public GoogleOidAuthenticationToken(Authentication clientPrincipal,
-                                        Map<String, Object> additionalParameters) {
-        super(new AuthorizationGrantType(GoogleOidAuthenticationConverter.GOOGLE_OID_GRANT_TYPE), clientPrincipal, additionalParameters);
+    public GoogleAuthCodeAuthenticationToken(Authentication clientPrincipal,
+                                             AuthorizationGrantType grantType,
+                                             Map<String, Object> additionalParameters) {
+        super(grantType, clientPrincipal, additionalParameters);
         this.token = (String) additionalParameters.get(OAuth2ParameterNames.TOKEN);
 
     }
