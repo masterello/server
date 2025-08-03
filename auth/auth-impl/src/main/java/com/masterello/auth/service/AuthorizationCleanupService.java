@@ -45,7 +45,7 @@ public class AuthorizationCleanupService {
     private Page<String> processBatchWithRetry(int page, OffsetDateTime now) {
         Page<String> expiredAuthorizationIds;
         try {
-            expiredAuthorizationIds = retryOperation(() -> processBatch(page, now), MAX_RETRIES);
+            expiredAuthorizationIds = retryOperation(() -> processBatch(page, now), "Clean up sessions", MAX_RETRIES);
         } catch(Throwable ex) {
             log.error("Couldn't process page {}", page, ex);
             expiredAuthorizationIds = new PageImpl<>(Collections.emptyList());

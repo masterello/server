@@ -22,7 +22,6 @@ public class SignUpService implements AuthNService{
     private final PasswordEncoder passwordEncoder;
     private final ConfirmationLinkService confirmationLinkService;
 
-    @Transactional
     public MasterelloUser selfSignup(String email, String password, Locale locale){
         MasterelloUserEntity user = MasterelloUserEntity.builder()
                 .email(email)
