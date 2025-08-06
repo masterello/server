@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"                    # Adjust if your build.gradle is in a subdirectory
+    schedule:
+      interval: "daily"              # Options: "daily", "weekly", "monthly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    ignore:
+      - dependency-name: "org.springframework.boot:spring-boot-starter"
+        update-types: ["version-update:semver-major"]
+    groups:
+      spring-boot-dependencies:
+        patterns:
+          - "org.springframework.boot*"
+        update-types:
+          - "minor"
+          - "patch"
+      jackson:
+        patterns:
+          - "com.fasterxml.jackson.core*"
+        update-types:
+          - "minor"
+          - "patch"
+
