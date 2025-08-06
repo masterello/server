@@ -14,6 +14,6 @@ INSERT INTO public.clients (
     '$2a$10$tLIpyfrweaz.H1Ta/oiuiOc.WxfK29t9bHPraGrWDyGH6SXb58akC',  --> Encrypted password pB%zH!Mx7vR5@vrR8rkp^P
     'api-gateway',
     'client_secret_basic',
-    'google_oid,refresh_token,client_credentials,password',
+    'google_auth_code,refresh_token,client_credentials,password',
     'WORKER,ADMIN,USER'
 );

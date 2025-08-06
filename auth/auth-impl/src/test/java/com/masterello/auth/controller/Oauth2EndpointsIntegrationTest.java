@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.http.entity.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -153,9 +154,9 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
                 .given()
                     .header("Authorization", CLIENT_BEARER)
                     .accept("application/json")
-                    .contentType("application/json")
-                    .queryParam("grant_type", "google_oid")
-                    .queryParam("token", GOOGLE_AUTH_CODE)
+                    .contentType(ContentType.APPLICATION_FORM_URLENCODED.getMimeType())
+                    .queryParam("grant_type", "google_auth_code")
+                    .formParam("token", GOOGLE_AUTH_CODE)
                 .when()
                     .post("/oauth2/token")
                 .then()
@@ -179,7 +180,7 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
                     .header("Authorization", CLIENT_BEARER)
                     .accept("application/json")
                     .contentType("application/json")
-                    .queryParam("grant_type", "google_oid")
+                    .queryParam("grant_type", "google_auth_code")
                     .queryParam("token", USED_GOOGLE_AUTH_CODE)
                 .when()
                     .post("/oauth2/token")
