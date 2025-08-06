@@ -20,7 +20,7 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "com.github.java-json-tools:json-patch:1.13"
-    implementation "io.github.oshai:kotlin-logging-jvm:5.1.4"
+    implementation "io.github.oshai:kotlin-logging-jvm:7.0.12"
     developmentOnly "org.springframework.boot:spring-boot-devtools"
     testImplementation "org.springframework.boot:spring-boot-starter-test"
     testImplementation "org.springframework.boot:spring-boot-testcontainers"
