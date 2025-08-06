@@ -50,7 +50,6 @@ public class GoogleSuccessAuthHandler implements AuthenticationSuccessHandler {
         String authorizationCode = customAuthorizationCodeService.generateAuthorizationCode(new MasterelloAuthenticationToken(user));
         response.sendRedirect(googleSuccessRedirectUrl +
                 "?AUTH_CODE=" + authorizationCode +
-                "&OID_TOKEN=" + authorizationCode + // TODO Remove when migrated to AUTH_CODE
                 "&source=" + (source != null ? source : ""));
     }
 

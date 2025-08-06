@@ -17,8 +17,6 @@ import java.util.Map;
 public class GoogleAuthCodeAuthenticationConverter implements AuthenticationConverter {
 
     public static final String GOOGLE_AUTH_CODE_GRANT_TYPE = "google_auth_code";
-    public static final String GOOGLE_OID_GRANT_TYPE = "google_oid"; // TODO remove when migrated to auth code
-
 
     @Nullable
     @Override
@@ -26,7 +24,7 @@ public class GoogleAuthCodeAuthenticationConverter implements AuthenticationConv
 
         String grantType = request.getParameter(OAuth2ParameterNames.GRANT_TYPE);
 
-        if (!GOOGLE_AUTH_CODE_GRANT_TYPE.equals(grantType) && !GOOGLE_OID_GRANT_TYPE.equals(grantType)) {
+        if (!GOOGLE_AUTH_CODE_GRANT_TYPE.equals(grantType)) {
             return null;
         }
 

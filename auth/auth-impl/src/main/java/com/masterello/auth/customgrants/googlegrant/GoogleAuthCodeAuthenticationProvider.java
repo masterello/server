@@ -64,7 +64,6 @@ public class GoogleAuthCodeAuthenticationProvider extends AbstractAuthentication
         val principal = getPrincipal(authorization);
         //-----------TOKEN BUILDERS----------
         DefaultOAuth2TokenContext.Builder tokenContextBuilder = getTokenContextBuilder(authentication, registeredClient, principal);
-        tokenContextBuilder.authorizationGrantType(googleAuthToken.getGrantType()); // TODO remove when switch to new grant
 
         OAuth2Authorization.Builder authorizationBuilder =  OAuth2Authorization.from(authorization);
 
