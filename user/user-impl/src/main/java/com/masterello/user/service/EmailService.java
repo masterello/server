@@ -26,10 +26,9 @@ import java.util.Optional;
 public class EmailService {
     private final EmailConfigProperties emailConfigProperties;
     private final ResourceLoader resourceLoader;
-    private static final String CONFIRMATION_LINK = "/user/confirm-email/";
     private static final String RESET_PASSWORD_LINK = "/user/reset-password/";
 
-    private static final String CONFIRM_EMAIL_FILE = "classpath:email-templates/${locale}/confirm-email.html";
+    private static final String CONFIRM_EMAIL_FILE = "classpath:email-templates/${locale}/confirm-email-short-code.html";
 
     private static final String RESET_PASSWORD_FILE = "classpath:email-templates/${locale}/reset-password.html";
 
@@ -50,21 +49,14 @@ public class EmailService {
                                       @Nullable Locale locale) throws MessagingException, IOException {
         Locale resolvedLocale = Optional.ofNullable(locale).orElse(Locale.EN);
         String filePath = CONFIRM_EMAIL_FILE.replace("${locale}", resolvedLocale.getCode());
-        String text = readFile(filePath).replace("${verifyURL}", buildConfirmEmailUrl(verificationCode, resolvedLocale));
-
-//   TODO uncomment when FE is ready
-//        String text = readFile(filePath);
-//        text = text.replace("${code}", verificationCode);
-//        for (int i = 0; i < 6; i++) {
-//            String placeholder = "${code[" + i + "]}";
-//            String digit = i < verificationCode.length() ? String.valueOf(verificationCode.charAt(i)) : "";
-//            text = text.replace(placeholder, digit);
-//        }
+        String text = readFile(filePath);
+        text = text.replace("${code}", verificationCode);
+        for (int i = 0; i < 6; i++) {
+            String placeholder = "${code[" + i + "]}";
+            String digit = i < verificationCode.length() ? String.valueOf(verificationCode.charAt(i)) : "";
+            text = text.replace(placeholder, digit);
+        }
         sendMessage(user, text, emailConfigProperties.getRegistrationSubject().get(resolvedLocale));
-    }
-
-    private String buildConfirmEmailUrl(String verificationCode, Locale locale) {
-        return emailConfigProperties.getServiceUrl() +  "/" + locale.getCode() + CONFIRMATION_LINK + verificationCode;
     }
 
     private String buildPasswordResetRequestUrl(String resetLinkToken, Locale locale) {
