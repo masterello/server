@@ -1,9 +1,8 @@
 package com.masterello.chat.ws.interceptor
 
 import com.masterello.auth.data.AuthData
-import com.masterello.chat.exceptions.ChatNotFoundException
-import com.masterello.chat.repository.ChatRepository
-import com.masterello.commons.security.exception.UnauthorisedException
+import com.masterello.chat.security.ChatSecurityExpressions
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.simp.SimpMessageType
@@ -13,9 +12,12 @@ import org.springframework.stereotype.Component
 import java.util.*
 
 @Component
-class WebSocketAuthInterceptor(private val chatRepository: ChatRepository) : ChannelInterceptor {
-
-    private val chatDestinationPattern: Regex = Regex("^/(topic/messages|ws/chat)/([a-zA-Z0-9-]+)$")
+class WebSocketAuthInterceptor(
+    private val chatSecurityExpressions: ChatSecurityExpressions
+) : ChannelInterceptor {
+    
+    private val log = KotlinLogging.logger {}
+    private val chatDestinationPattern: Regex = Regex("^/(topic/messages|ws/chat)/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = StompHeaderAccessor.wrap(message)
@@ -23,7 +25,7 @@ class WebSocketAuthInterceptor(private val chatRepository: ChatRepository) : Cha
         if (SimpMessageType.SUBSCRIBE == accessor.messageType) {
             val chatId = accessor.destination?.let { extractChatId(it) }
             if (chatId != null) {
-                checkPermissionsToConnectToChat(accessor, chatId)
+                checkPermissionsToSubscribeToChat(accessor, chatId)
             }
         }
 
@@ -31,22 +33,33 @@ class WebSocketAuthInterceptor(private val chatRepository: ChatRepository) : Cha
     }
 
     fun extractChatId(destination: String): UUID? {
-        val matchResult = chatDestinationPattern.matchEntire(destination)
-        return matchResult?.groups?.get(2)?.value?.let(UUID::fromString)
+        return try {
+            val matchResult = chatDestinationPattern.matchEntire(destination)
+            matchResult?.groups?.get(2)?.value?.let { UUID.fromString(it) }
+        } catch (ex: IllegalArgumentException) {
+            log.warn { "Invalid UUID format in destination: $destination" }
+            null
+        }
     }
 
-    private fun checkPermissionsToConnectToChat(accessor: StompHeaderAccessor, chatId: UUID) {
-        val chat = chatRepository.findById(chatId)
-                .orElseThrow { ChatNotFoundException("Chat $chatId not found") }
+    private fun checkPermissionsToSubscribeToChat(accessor: StompHeaderAccessor, chatId: UUID) {
         val user = getUser(accessor)
-
-        if (chat.userId != user.userId && chat.workerId != user.userId) {
-            throw UnauthorisedException("User ${user.userId} is not authorized to connect to chat $chatId")
+        
+        // Use centralized authorization logic with userId extracted from session attributes
+        if (!chatSecurityExpressions.canSubscribeToChat(user.userId, chatId)) {
+            throw org.springframework.security.access.AccessDeniedException(
+                "User ${user.userId} is not authorized to subscribe to chat $chatId"
+            )
         }
+        
+        log.debug { "WebSocket subscription authorized for user ${user.userId} to chat $chatId" }
     }
 
     private fun getUser(accessor: StompHeaderAccessor): AuthData {
         val sessionAttributes = accessor.sessionAttributes
-        return sessionAttributes!!["SECURITY_CONTEXT"] as AuthData
+            ?: throw IllegalStateException("No session attributes found")
+        
+        return sessionAttributes["SECURITY_CONTEXT"] as? AuthData
+            ?: throw IllegalStateException("No authentication data found in session")
     }
 }

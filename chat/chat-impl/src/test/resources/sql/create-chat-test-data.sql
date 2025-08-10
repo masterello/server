@@ -1,6 +1,6 @@
-insert into public.chat(id, task_id, user_id, worker_id)
+insert into public.chat(id, user_id, worker_id, chat_type, task_id, created_at)
 values
-    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'd1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'bb2c6e16-2228-4ac1-8482-1f3548672b43', '57bc029c-d8e3-458f-b25a-7f73283cec98');
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'bb2c6e16-2228-4ac1-8482-1f3548672b43', '57bc029c-d8e3-458f-b25a-7f73283cec98', 'TASK_SPECIFIC', 'd1c822c9-0ee4-462a-a88e-7c45e3bb0e54', NOW() - INTERVAL '1 DAY');
 
 INSERT INTO public.chat_message (id, chat_id, message, created_by, created_at)
 VALUES
