@@ -2,7 +2,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "1.9.25"
     id("org.jetbrains.kotlin.plugin.spring") version "1.9.25"
     id("org.jetbrains.kotlin.kapt") version "1.9.25" // Add the kapt plugin for annotation processing
-
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.9.25" // <-- This enables JPA no-arg constructor generation
 }
 
 dependencies {

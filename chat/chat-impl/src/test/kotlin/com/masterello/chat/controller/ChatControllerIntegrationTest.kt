@@ -16,9 +16,11 @@ import com.masterello.chat.ChatTestDataProvider.Companion.buildUser
 import com.masterello.chat.ChatTestDataProvider.Companion.buildWorker
 import com.masterello.chat.ChatTestDataProvider.Companion.task
 import com.masterello.chat.ChatTestDataProvider.Companion.tokenCookie
+import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
-import com.masterello.chat.dto.GetOrCreateChatDTO
+import com.masterello.chat.dto.GetOrCreateGeneralChatDTO
+import com.masterello.chat.dto.GetOrCreateTaskChatDTO
 import com.masterello.chat.repository.ChatRepository
 import com.masterello.commons.test.AbstractWebIntegrationTest
 import com.masterello.task.service.ReadOnlyTaskService
@@ -35,7 +37,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlGroup
 import java.io.File
-import java.time.OffsetDateTime
 import java.util.*
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -66,9 +67,9 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .thenReturn(mapOf(Pair(USER, buildUser(USER, "Harry", "Potter")), 
                         Pair(WORKER, buildUser(WORKER, "Hagrid", "Hagridson"))))
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chatBefore = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatBefore)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
          )
@@ -82,14 +83,14 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(200)
         //@formatter:on
 
         val chatDTO = response.extract().body().`as`(ChatDTO::class.java)
         assertNotNull(chatDTO)
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatCreated)
         assertEquals(chatDTO.taskId, chatCreated.taskId)
         assertEquals(USER, chatDTO.userId)
@@ -107,9 +108,9 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .thenReturn(mapOf(Pair(USER, buildUser(USER, "Harry", "Potter")),
                         Pair(WORKER, buildUser(WORKER, "Hagrid", "Hagridson"))))
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chatBefore = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatBefore)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -123,14 +124,14 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(200)
         //@formatter:on
 
         val chatDTO = response.extract().body().`as`(ChatDTO::class.java)
         assertNotNull(chatDTO)
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatCreated)
         assertEquals(chatDTO.taskId, chatCreated.taskId)
         assertEquals(USER, chatDTO.userId)
@@ -146,7 +147,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.empty())
 
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -160,12 +161,12 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(404)
         //@formatter:on
 
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatCreated)
     }
 
@@ -175,7 +176,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.of(buildWorker(WORKER)))
 
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -189,22 +190,22 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(403)
         //@formatter:on
 
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatCreated)
     }
 
     @Test
     @AuthMocked(userId = WORKER_S, roles = [AuthZRole.WORKER])
-    fun `test chat created by task worker when task doesn't exist`() {
+    fun `test creeate chat by worker when task doesn't exist`() {
         whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.of(buildWorker(WORKER)))
 
         whenever(taskService.getTask(TASK_ID)).thenReturn(null)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -218,19 +219,19 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
-                    .statusCode(404)
+                    .statusCode(403)
         //@formatter:on
 
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatCreated)
     }
 
     @Test
     fun `test chat request fails for anonymous user`() {
 
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -244,12 +245,12 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(401)
         //@formatter:on
 
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatCreated)
     }
 
@@ -261,9 +262,9 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .thenReturn(mapOf(Pair(USER, buildUser(USER, "Harry", "Potter")),
                         Pair(WORKER_WITH_CHAT, buildUser(WORKER_WITH_CHAT, "Hagrid", "Hagridson"))))
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chatBefore = chatRepository.findByWorkerIdAndTaskId(WORKER_WITH_CHAT, TASK_ID)
+        val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatBefore)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER_WITH_CHAT
         )
@@ -277,14 +278,14 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(200)
         //@formatter:on
 
         val chatDTO = response.extract().body().`as`(ChatDTO::class.java)
         assertNotNull(chatDTO)
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER_WITH_CHAT, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatCreated)
         assertEquals(chatDTO.taskId, chatCreated.taskId)
         assertEquals(USER, chatDTO.userId)
@@ -302,9 +303,9 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .thenReturn(mapOf(Pair(USER, buildUser(USER, "Harry", "Potter")),
                         Pair(WORKER_WITH_CHAT, buildUser(WORKER_WITH_CHAT, "Hagrid", "Hagridson"))))
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chatBefore = chatRepository.findByWorkerIdAndTaskId(WORKER_WITH_CHAT, TASK_ID)
+        val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatBefore)
-        val chat= GetOrCreateChatDTO(
+        val chat= GetOrCreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER_WITH_CHAT
         )
@@ -318,14 +319,14 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .cookie(tokenCookie())
                     .body(chat)
                 .`when`()
-                    .post("/api/chat")
+                    .post("/api/chat/task")
                 .then()
                     .statusCode(200)
         //@formatter:on
 
         val chatDTO = response.extract().body().`as`(ChatDTO::class.java)
         assertNotNull(chatDTO)
-        val chatCreated = chatRepository.findByWorkerIdAndTaskId(WORKER_WITH_CHAT, TASK_ID)
+        val chatCreated = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatCreated)
         assertEquals(chatDTO.taskId, chatCreated.taskId)
         assertEquals(USER, chatDTO.userId)
@@ -333,6 +334,113 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         assertEquals(WORKER_WITH_CHAT, chatDTO.workerId)
         assertEquals("Hagrid Hagridson", chatDTO.workerName)
         assertEquals(TASK_ID, chatDTO.taskId)
+    }
+
+    // === General Chat Tests ===
+    
+    @Test
+    @AuthMocked(userId = USER_S, roles = [AuthZRole.USER])
+    fun `test general chat creation by user`() {
+        whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.of(buildWorker(WORKER)))
+        whenever(userService.findAllByIds(setOf(USER, WORKER)))
+            .thenReturn(mapOf(
+                USER to buildUser(USER, "Harry", "Potter"),
+                WORKER to buildUser(WORKER, "Hagrid", "Hagridson")
+            ))
+
+        //@formatter:off
+        val response = RestAssured
+            .given()
+                .accept("application/json")
+                .contentType("application/json")
+                .cookie(tokenCookie())
+                .with().body(GetOrCreateGeneralChatDTO(WORKER, USER))
+            .`when`()
+                .post("/api/chat")
+            .then()
+                .statusCode(200)
+        //@formatter:on
+
+        val chatDTO = response.extract().body().`as`(ChatDTO::class.java)
+        assertNotNull(chatDTO)
+        assertEquals("GENERAL", chatDTO.chatType.name)
+        assertNull(chatDTO.taskId)
+        assertEquals(USER, chatDTO.userId)
+        assertEquals(WORKER, chatDTO.workerId)
+        assertEquals("Harry Potter", chatDTO.userName)
+        assertEquals("Hagrid Hagridson", chatDTO.workerName)
+    }
+    
+    @Test
+    @AuthMocked(userId = WORKER_S, roles = [AuthZRole.WORKER]) 
+    fun `test general chat creation by worker`() {
+        whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.of(buildWorker(WORKER)))
+        whenever(userService.findAllByIds(setOf(WORKER, USER)))
+            .thenReturn(mapOf(
+                WORKER to buildUser(WORKER, "Hagrid", "Hagridson"),
+                USER to buildUser(USER, "Harry", "Potter")
+            ))
+
+        //@formatter:off
+        val response = RestAssured
+            .given()
+                .accept("application/json")
+                .contentType("application/json")
+                .cookie(tokenCookie())
+                .with().body(GetOrCreateGeneralChatDTO(WORKER, USER))
+            .`when`()
+                .post("/api/chat")
+            .then()
+                .statusCode(200)
+        //@formatter:on
+
+        val chatDTO = response.extract().body().`as`(ChatDTO::class.java)
+        assertNotNull(chatDTO)
+        assertEquals("GENERAL", chatDTO.chatType.name)
+        assertNull(chatDTO.taskId)
+        assertEquals(WORKER, chatDTO.workerId) // Requester becomes "user"
+        assertEquals(USER, chatDTO.userId) // Other participant becomes "worker"
+    }
+
+    @Test
+    fun `test general chat creation fails for anonymous user`() {
+        //@formatter:off
+        RestAssured
+            .given()
+                .accept("application/json")
+                .contentType("application/json")
+                .with().body(GetOrCreateGeneralChatDTO(WORKER, USER))
+            .`when`()
+                .post("/api/chat")
+            .then()
+                .statusCode(401)
+        //@formatter:on
+    }
+
+    @Test
+    @AuthMocked(userId = USER_S, roles = [AuthZRole.USER])
+    fun `test get user chats`() {
+        whenever(userService.findAllByIds(setOf(WORKER_WITH_CHAT, USER)))
+                .thenReturn(mapOf(
+                        WORKER_WITH_CHAT to buildUser(WORKER_WITH_CHAT, "Hagrid", "Hagridson"),
+                        USER to buildUser(USER, "Harry", "Potter")
+                ))
+
+        //@formatter:off
+        val response = RestAssured
+            .given()
+                .accept("application/json")
+                .contentType("application/json")
+                .cookie(tokenCookie())
+            .`when`()
+                .get("/api/chat/my-chats")
+            .then()
+                .statusCode(200)
+        //@formatter:on
+
+        val chats = response.extract().body().jsonPath().getList(".", ChatDTO::class.java)
+        assertNotNull(chats)
+        // Should contain the existing chat from test data
     }
 
     @ParameterizedTest
@@ -374,7 +482,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .`when`()
                     .get("/api/chat/${UUID.randomUUID()}/history")
                 .then()
-                    .statusCode(404)
+                    .statusCode(403)
         //@formatter:on
     }
 

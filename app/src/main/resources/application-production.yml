@@ -90,7 +90,7 @@ masterello:
       clientSecret: ${SLACK_CLIENT_SECRET}
   chat:
     ws:
-      enabled: false
+      enabled: true
   translation:
     deepl:
       apiKey: ${DEEPL_API_KEY}

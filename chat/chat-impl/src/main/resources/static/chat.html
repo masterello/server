@@ -32,7 +32,7 @@
 <body>
 <div>
     <h2>Chat</h2>
-    <input type="text" id="taskId" placeholder="Enter Task ID">
+    <input type="text" id="userId" placeholder="Enter User ID">
     <input type="text" id="workerId" placeholder="Enter Worker ID">
     <button onclick="getOrCreateChat()">Get or Create Chat</button>
 
@@ -61,11 +61,11 @@
     var currentChat = null; // Store chat details
 
     async function getOrCreateChat() {
-        const taskId = document.getElementById('taskId').value;
+        const userId = document.getElementById('userId').value;
         const workerId = document.getElementById('workerId').value;
 
-        if (!taskId || !workerId) {
-            alert("Please enter Task ID and Worker ID.");
+        if (!userId || !workerId) {
+            alert("Please enter User ID and Worker ID.");
             return;
         }
 
@@ -76,7 +76,7 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    taskId: taskId,
+                    userId: userId,
                     workerId: workerId
                 }),
             });

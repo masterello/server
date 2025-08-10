@@ -2,41 +2,66 @@ package com.masterello.chat.controller
 
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
-import com.masterello.chat.dto.GetOrCreateChatDTO
+import com.masterello.chat.dto.GetOrCreateGeneralChatDTO
+import com.masterello.chat.dto.GetOrCreateTaskChatDTO
 import com.masterello.chat.service.ChatService
-import com.masterello.user.service.MasterelloUserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.*
 import java.time.OffsetDateTime
-import java.util.UUID
+import java.util.*
 
 @RestController
 @RequestMapping("/api/chat")
 class ChatController(
-        private val service: ChatService,
+    private val chatService: ChatService
 ) {
 
-    @Operation(summary = "Get Or Create chat", description = "get chat if exists or create otherwise")
-    @ApiResponse(responseCode = "200", description = "Returns chat info")
+    @Operation(
+        summary = "Get general chat", 
+        description = "Creates or retrieves a general chat between current user and specified worker"
+    )
+    @ApiResponse(responseCode = "200", description = "Returns general chat info")
     @PostMapping("")
-    fun getOrCreate(@RequestBody request: GetOrCreateChatDTO): ChatDTO {
-        return service.getOrCreateChat(request.workerId, request.taskId)
+    @PreAuthorize("@chatSecurity.canCreateGeneralChat(#request.userId, #request.workerId)")
+    fun getOrCreateGeneralChat(@RequestBody request: GetOrCreateGeneralChatDTO): ChatDTO {
+        return chatService.getOrCreateGeneralChat(request.userId, request.workerId)
     }
 
-    @Operation(summary = "Get chat history", description = "get chat history")
+    @Operation(
+        summary = "Get task-specific chat", 
+        description = "Creates or retrieves a chat for a specific task between task owner and worker"
+    )
+    @ApiResponse(responseCode = "200", description = "Returns task-specific chat info")
+    @PostMapping("/task")
+    @PreAuthorize("@chatSecurity.canCreateTaskChat(#request.taskId, #request.workerId)")
+    fun getOrCreateTaskChat(@RequestBody request: GetOrCreateTaskChatDTO): ChatDTO {
+        return chatService.getOrCreateTaskChat(request.taskId, request.workerId)
+    }
+
+    @Operation(
+        summary = "Get user's chats", 
+        description = "Retrieves all active chats for the current user"
+    )
+    @ApiResponse(responseCode = "200", description = "Returns list of user's chats")
+    @GetMapping("/my-chats")
+    fun getUserChats(): List<ChatDTO> {
+        return chatService.getUserChats()
+    }
+
+    @Operation(
+        summary = "Get chat history", 
+        description = "Retrieves message history for a specific chat"
+    )
     @ApiResponse(responseCode = "200", description = "Returns chat history")
     @GetMapping("{chatId}/history")
-    fun getChatHistory(@PathVariable("chatId") chatId: UUID,
-                       @RequestParam(value = "limit", required = false, defaultValue = "10") limit: Int,
-                       @RequestParam(value = "before", required = false, defaultValue = "#{T(java.time.OffsetDateTime).now()}") before: OffsetDateTime
+    @PreAuthorize("@chatSecurity.canAccessChat(#chatId)")
+    fun getChatHistory(
+        @PathVariable("chatId") chatId: UUID,
+        @RequestParam(value = "limit", required = false, defaultValue = "10") limit: Int,
+        @RequestParam(value = "before", required = false, defaultValue = "#{T(java.time.OffsetDateTime).now()}") before: OffsetDateTime
     ): ChatHistoryDTO {
-        return service.getChatHistory(chatId, limit, before)
+        return chatService.getChatHistory(chatId, limit, before)
     }
 }
