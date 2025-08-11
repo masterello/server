@@ -29,7 +29,7 @@ public interface WorkerInfoMapper {
             @Mapping(target = "languages", source = "languages", qualifiedByName = "setToSortedList"),
             @Mapping(target = "services", source = "services", qualifiedByName = "setToSortedServiceList")
     })
-    WorkerInfoDTO mapToDto(WorkerInfo workerInfo);
+    WorkerInfoDTO<WorkerServiceDTO> mapToDto(WorkerInfo workerInfo);
 
 
     @Mappings({
@@ -39,7 +39,7 @@ public interface WorkerInfoMapper {
             @Mapping(target = "languages", source = "languages", qualifiedByName = "listToSet"),
             @Mapping(target = "services", source = "services", qualifiedByName = "listToSetService")
     })
-    WorkerInfo mapToEntity(WorkerInfoDTO workerInfoDTO);
+    WorkerInfo mapToEntity(WorkerInfoDTO<WorkerServiceDTO> workerInfoDTO);
 
     @Named("setToSortedList")
     default List<Language> sortLanguages(Set<Language> languages) {
