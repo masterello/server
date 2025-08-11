@@ -13,7 +13,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     implementation 'org.flywaydb:flyway-core'
-    implementation 'com.github.fge:json-patch:1.7'
+    implementation 'com.github.fge:json-patch:1.9'
 
     testImplementation  project(':auth-contract-test')
     testImplementation  project(':common-test')
