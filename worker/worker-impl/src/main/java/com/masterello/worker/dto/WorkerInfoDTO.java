@@ -33,6 +33,8 @@ public class WorkerInfoDTO<T extends WorkerServiceDTO> {
     private String whatsapp;
     @AuthGuard
     private String viber;
+    @AuthGuard
+    private String instagram;
     @NotNull(message = ErrorCodes.COUNTRY_EMPTY)
     private Country country;
     @NotNull(message = ErrorCodes.CITY_EMPTY)

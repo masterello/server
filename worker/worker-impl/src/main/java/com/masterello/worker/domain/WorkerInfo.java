@@ -87,6 +87,10 @@ public class WorkerInfo implements Worker {
     @Column(name = "viber")
     private String viber;
 
+    @Patchable
+    @Column(name = "instagram")
+    private String instagram;
+
     @TranslatedCollection
     @Patchable
     @ElementCollection(targetClass = WorkerServiceEntity.class, fetch = FetchType.EAGER)
