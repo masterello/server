@@ -19,14 +19,19 @@ plugins {
     id("org.jetbrains.kotlin.plugin.jpa") version "1.9.25" apply false
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+subprojects {
+    plugins.withId("java") {
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
+        }
     }
-}
-
-kotlin {
-    jvmToolchain(21)
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        kotlin {
+            jvmToolchain(21)
+        }
+    }
 }
 
 subprojects {
