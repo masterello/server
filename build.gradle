@@ -18,6 +18,16 @@ plugins {
     id("org.jetbrains.kotlin.plugin.jpa") version "1.9.25" apply false
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(21))
+    }
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'org.springframework.boot'
