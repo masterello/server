@@ -23,7 +23,7 @@ dependencies {
 
     testImplementation project(':user-contract-test')
     testImplementation  project(':common-test')
-    testImplementation 'org.projectlombok:lombok:1.18.28'
+    testImplementation 'org.projectlombok:lombok:1.18.38'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
@@ -33,7 +33,7 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock:3.0.1'
     testImplementation 'org.springframework:spring-test'
 
-    testAnnotationProcessor "org.projectlombok:lombok:1.18.28"
+    testAnnotationProcessor "org.projectlombok:lombok:1.18.38"
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 }
