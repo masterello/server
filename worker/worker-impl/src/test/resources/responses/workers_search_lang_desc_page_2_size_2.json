@@ -13,7 +13,10 @@
         "whatsapp": "vocal-coach-w",
         "viber": "vocal-coach-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["BE"]
+        },
         "languages": ["DE", "EN"],
         "services": [
           {
@@ -41,7 +44,10 @@
         "whatsapp": "meh-plumber-w",
         "viber": "meh-plumber-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["BE"]
+        },
         "languages": ["DE", "TR"],
         "services": [
           {

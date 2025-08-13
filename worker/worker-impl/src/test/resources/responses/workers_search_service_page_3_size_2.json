@@ -13,7 +13,10 @@
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": true,
+          "cities": ["BE"]
+        },
         "languages": ["IT"],
         "services": [
           {

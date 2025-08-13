@@ -27,7 +27,7 @@ public interface WorkerInfoMapper {
 
     @Mappings({
             @Mapping(target = "languages", source = "languages", qualifiedByName = "setToSortedList"),
-            @Mapping(target = "services", source = "services", qualifiedByName = "setToSortedServiceList")
+            @Mapping(target = "services", source = "services", qualifiedByName = "setToSortedServiceList"),
     })
     WorkerInfoDTO<WorkerServiceDTO> mapToDto(WorkerInfo workerInfo);
 
@@ -36,6 +36,7 @@ public interface WorkerInfoMapper {
             @Mapping(target = "workerId", ignore = true),
             @Mapping(target = "active", ignore = true),
             @Mapping(target = "verified", ignore = true),
+            @Mapping(target = "city", ignore = true),
             @Mapping(target = "languages", source = "languages", qualifiedByName = "listToSet"),
             @Mapping(target = "services", source = "services", qualifiedByName = "listToSetService")
     })

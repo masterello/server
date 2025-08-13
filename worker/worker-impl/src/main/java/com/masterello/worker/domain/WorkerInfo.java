@@ -15,6 +15,7 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
@@ -72,9 +73,14 @@ public class WorkerInfo implements Worker {
     private Country country;
 
     @Patchable
+    @Deprecated
     @Column(name = "city")
     @Convert(converter = CityConverter.class)
     private City city;
+
+    @Patchable
+    @Embedded
+    private ServiceLocation serviceLocation;
 
     @Patchable
     @ElementCollection(targetClass = Language.class, fetch = FetchType.EAGER)

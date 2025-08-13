@@ -97,16 +97,16 @@ public class WorkerService implements ReadOnlyWorkerService {
 
     public WorkerInfo updateWorkerInfo(UUID workerId, JsonPatch patch) {
         val workerInfo = getWorkerInfoOrThrow(workerId);
-        WorkerInfo patcherInfo;
+        WorkerInfo patchedInfo;
 
         try {
-            patcherInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class, mapper::mapToDto);
+            patchedInfo = patchService.applyPatchWithValidation(patch, workerInfo, WorkerInfo.class, mapper::mapToDto);
         } catch (ConstraintViolationException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new InvalidWorkerUpdateException("Error when applying update to worker info", ex);
         }
-        return workerInfoRepository.saveAndFlush(patcherInfo);
+        return workerInfoRepository.saveAndFlush(patchedInfo);
     }
 
     private WorkerInfo getWorkerInfoOrThrow(UUID workerId) {
@@ -115,12 +115,13 @@ public class WorkerService implements ReadOnlyWorkerService {
     }
 
     public FullWorkerPage searchWorkers(List<Language> languages, List<Integer> serviceIds, List<City> cities,
-                                        PageRequestDTO pageRequestDTO, boolean showTestWorkers) {
+                                        boolean shouldIncludeOnline, boolean showTestWorkers, PageRequestDTO pageRequestDTO) {
         boolean shouldShowTestWorkers = showTestWorkers && AuthContextUtil.isAdmin();
         final List<Integer> categoriesWithChildren = getCategories(serviceIds);
 
         PageRequest pageRequest = validateAndPreparePageRequest(pageRequestDTO);
-        val workerIds = workerInfoRepository.findWorkerIdsByFilters(cities, languages, categoriesWithChildren, shouldShowTestWorkers, pageRequest);
+        val workerIds = workerInfoRepository.findWorkerIdsByFilters(
+                cities, languages, categoriesWithChildren, shouldShowTestWorkers, shouldIncludeOnline, pageRequest);
         val workers = workerInfoRepository.findAllByWorkerIdIn(workerIds.toSet(), pageRequest.getSort());
         val fullWorkers = getFullWorkerProjections(workers);
         return new FullWorkerPage(fullWorkers, workerIds.getTotalElements());

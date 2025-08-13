@@ -1,15 +1,15 @@
-insert into public.worker_info (worker_id, description, phone, whatsapp, telegram, viber, country, city, registered_at, active, test, verified)
+insert into public.worker_info (worker_id, description, phone, whatsapp, telegram, viber, country, online, registered_at, active, test, verified)
 values
-    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'best plumber', '+49111111111', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'HH', '2024-12-14T15:00:00.111111Z', true, false, true),
-    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'best electrician', '+49222222222', 'electrician-w', 'electrician-t', 'electrician-v', 'DE', 'M', '2024-12-13T15:00:00.111111Z', true, false, true),
-    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'best vocal-coach', '+49444444444', 'vocal-coach-w', 'vocal-coach-t', 'vocal-coach-v', 'DE', 'BE', '2024-12-12T15:00:00.111111Z', true, false, true),
-    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'not so good electrician', '+49555555555', 'meh-electrician-w', 'meh-electrician-t', 'meh-electrician-v', 'DE', 'BE', '2024-12-11T15:00:00.111111Z', true, false, true),
-    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'not so good plumber', '+49666666666', 'meh-plumber-w', 'meh-plumber-t', 'meh-plumber-v', 'DE', 'BE', '2024-12-10T15:00:00.111111Z', true, false, true),
-    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'fix toilets', '+49777777', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'BE', '2024-12-09T15:00:00.111111Z', true, false, true),
-    ('dda832b4-b8e3-43df-a457-d77043b01751', 'fix sinks', '+498888888881', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', 'BE', '2024-12-08T15:00:00.111111Z', true, false, true),
-    ('dda832b4-b8e3-43df-a457-d77043b01759', 'not active', '+498888888883', 'not_active-w', 'not_active-t', 'not_active-v', 'DE', 'BE', '2024-12-08T15:00:00.111111Z', false, false, true),
-    ('eea832b4-b8e3-43df-a457-d77043b01759', 'test', '+491191919191', 'test-w', 'test-t', 'test-v', 'DE', 'BE', '2024-12-25T15:00:00.111111Z', true, true, true),
-    ('16e71912-e454-47c7-bd66-4238af0bcb7d', 'not verified', '+492291919191', 'not-verified-w', 'not-verified-t', 'not-verified-v', 'DE', 'BE', '2024-12-25T15:00:00.111111Z', true, true, false);
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'best plumber', '+49111111111', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', false,'2024-12-14T15:00:00.111111Z', true, false, true),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'best electrician', '+49222222222', 'electrician-w', 'electrician-t', 'electrician-v', 'DE', false,'2024-12-13T15:00:00.111111Z', true, false, true),
+    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'best vocal-coach', '+49444444444', 'vocal-coach-w', 'vocal-coach-t', 'vocal-coach-v', 'DE', false, '2024-12-12T15:00:00.111111Z', true, false, true),
+    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'not so good electrician', '+49555555555', 'meh-electrician-w', 'meh-electrician-t', 'meh-electrician-v', 'DE', false, '2024-12-11T15:00:00.111111Z', true, false, true),
+    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'not so good plumber', '+49666666666', 'meh-plumber-w', 'meh-plumber-t', 'meh-plumber-v', 'DE', false, '2024-12-10T15:00:00.111111Z', true, false, true),
+    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'fix toilets', '+49777777', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', true,'2024-12-09T15:00:00.111111Z', true, false, true),
+    ('dda832b4-b8e3-43df-a457-d77043b01751', 'fix sinks', '+498888888881', 'plumber-w', 'plumber-t', 'plumber-v', 'DE', true, '2024-12-08T15:00:00.111111Z', true, false, true),
+    ('dda832b4-b8e3-43df-a457-d77043b01759', 'not active', '+498888888883', 'not_active-w', 'not_active-t', 'not_active-v', 'DE', false, '2024-12-08T15:00:00.111111Z', false, false, true),
+    ('eea832b4-b8e3-43df-a457-d77043b01759', 'test', '+491191919191', 'test-w', 'test-t', 'test-v', 'DE', false, '2024-12-25T15:00:00.111111Z', true, true, true),
+    ('16e71912-e454-47c7-bd66-4238af0bcb7d', 'not verified', '+492291919191', 'not-verified-w', 'not-verified-t', 'not-verified-v', 'DE', false, '2024-12-25T15:00:00.111111Z', true, true, false);
 
 insert into public.worker_services (worker_id, service_id, amount, details)
 values
@@ -26,7 +26,20 @@ values
     ('eea832b4-b8e3-43df-a457-d77043b01759', 10, 111, null),
     ('16e71912-e454-47c7-bd66-4238af0bcb7d', 10, 200, null);
 
-
+insert into public.worker_location_cities (worker_id, city)
+values
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'HH'),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'M'),
+    ('e5fcf8dd-b6be-4a36-a85a-e2d952cc6254', 'BE'),
+    ('e4de38bf-168e-41fc-b7b1-b9d74a47529e', 'M'),
+    ('d1c822c9-0ee4-462a-a88e-7c45e3bb0e54', 'BE'),
+    ('57bc029c-d8e3-458f-b25a-7f73283cec98', 'BE'),
+    ('b007b62c-43cf-4ac3-b1e5-36fb9f1c0f52', 'BE'),
+    ('f2e91db9-4ceb-4231-bd4e-c898b441247d', 'BE'),
+    ('dda832b4-b8e3-43df-a457-d77043b01751', 'BE'),
+    ('dda832b4-b8e3-43df-a457-d77043b01759', 'BE'),
+    ('eea832b4-b8e3-43df-a457-d77043b01759', 'BE'),
+    ('16e71912-e454-47c7-bd66-4238af0bcb7d', 'BE');
 
 insert into public.worker_languages (worker_id, language)
 values

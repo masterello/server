@@ -13,7 +13,10 @@
         "whatsapp": "vocal-coach-w",
         "viber": "vocal-coach-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["BE"]
+        },
         "languages": ["DE", "EN"],
         "services": [
           {
@@ -41,7 +44,10 @@
         "whatsapp": "electrician-w",
         "viber": "electrician-v",
         "country": "DE",
-        "city": "M",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["M"]
+        },
         "languages": ["EN", "UK"],
         "services": [
           {
@@ -69,7 +75,10 @@
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
         "country": "DE",
-        "city": "HH",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["HH", "M", "BE"]
+        },
         "languages": ["DE", "RU"],
         "services": [
           {
@@ -130,7 +139,10 @@
         "whatsapp": "test-w",
         "viber": "test-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["BE"]
+        },
         "languages": ["DE"],
         "test": true,
         "services": [
