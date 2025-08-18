@@ -13,7 +13,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
-    implementation 'com.github.fge:json-patch:1.7'
+    implementation 'com.github.fge:json-patch:1.9'
 
     testImplementation  project(':user-contract-test')
     testImplementation  project(':auth-contract-test')
@@ -25,9 +25,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'org.postgresql:postgresql:42.6.0'
+    testImplementation 'org.postgresql:postgresql:42.7.7'
     testImplementation 'io.rest-assured:rest-assured'
-    testImplementation 'com.github.tomakehurst:wiremock:3.0.1'
+    testImplementation("org.wiremock:wiremock-jetty12:3.13.1")
     testImplementation 'org.springframework:spring-test'
 
 }

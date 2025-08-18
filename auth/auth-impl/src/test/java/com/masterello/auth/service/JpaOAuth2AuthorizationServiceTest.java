@@ -56,7 +56,7 @@ class JpaOAuth2AuthorizationServiceTest {
         // Assert
         verify(tokenPairRepository).revokeAllTokensByAuthorizationId(authId);
         verify(authorizationRepository).saveAndFlush(authorizationEntity);
-        verify(tokenPairRepository).save(tokenPairEntity);
+        verify(tokenPairRepository).saveAndFlush(tokenPairEntity);
     }
 
     @Test

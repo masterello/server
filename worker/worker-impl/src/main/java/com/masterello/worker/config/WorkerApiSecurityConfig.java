@@ -12,7 +12,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -27,16 +27,17 @@ public class WorkerApiSecurityConfig {
 
     @Bean
     public SecurityFilterChain apiWorkerFilter(HttpSecurity http) throws Exception {
+        var matcherBuilder = PathPatternRequestMatcher.withDefaults();
         RequestMatcher publicEndpoints = new OrRequestMatcher(
-                new AntPathRequestMatcher("/api/worker/search"),
-                new AntPathRequestMatcher("/api/worker/*/full-info"),
-                new AntPathRequestMatcher("/api/worker/supported-languages")
+                matcherBuilder.matcher("/api/worker/search"),
+                matcherBuilder.matcher("/api/worker/*/full-info"),
+                matcherBuilder.matcher("/api/worker/supported-languages")
         );
         AuthFilter authFilter = new AuthFilter(
                 new NegatedRequestMatcher(publicEndpoints), authService);
 
         http
-                .securityMatcher("/api/worker/**")
+                .securityMatcher(matcherBuilder.matcher("/api/worker/**"))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(publicEndpoints).permitAll()

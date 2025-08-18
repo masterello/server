@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
@@ -25,15 +25,17 @@ class FileSecurityConfig(private val authService: AuthService) {
     @Throws(Exception::class)
     fun apiFileAuthFilter(http: HttpSecurity): SecurityFilterChain {
 
+        val matcherBuilder = PathPatternRequestMatcher.withDefaults()
+
         val privateEndpoints: RequestMatcher = OrRequestMatcher(
-                AntPathRequestMatcher("/api/files/upload", HttpMethod.POST.name()),                  // Authenticated: Upload file
-                AntPathRequestMatcher("/api/files/{userUuid:$uuidPattern}/confirm", HttpMethod.POST.name()),                  // Authenticated: Confirm file uploading
-                AntPathRequestMatcher("/api/files/{userUuid:$uuidPattern}/{fileUuid:$uuidPattern}", HttpMethod.DELETE.name()) // Authenticated: Delete file
+                matcherBuilder.matcher(HttpMethod.POST, "/api/files/upload"),                  // Authenticated: Upload file
+                matcherBuilder.matcher(HttpMethod.POST, "/api/files/{userUuid}/confirm"),                  // Authenticated: Confirm file uploading
+                matcherBuilder.matcher(HttpMethod.DELETE, "/api/files/{userUuid}/{fileUuid}") // Authenticated: Delete file
         )
         val authFilter = AuthFilter(privateEndpoints, authService)
 
         http
-            .securityMatcher(AntPathRequestMatcher("/api/files/**"))
+            .securityMatcher(matcherBuilder.matcher("/api/files/**"))
             .csrf { it.disable() }
             .authorizeHttpRequests { auth -> auth
                 .requestMatchers(NegatedRequestMatcher(privateEndpoints)).permitAll()

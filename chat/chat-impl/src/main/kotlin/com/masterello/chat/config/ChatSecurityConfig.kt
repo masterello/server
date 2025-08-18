@@ -10,7 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 
 @Configuration
 @EnableMethodSecurity(prePostEnabled = true)
@@ -20,7 +20,8 @@ class ChatSecurityConfig(private val authService: AuthService) {
     @Bean
     @Throws(Exception::class)
     fun apiChatAuthFilter(http: HttpSecurity): SecurityFilterChain {
-        val authFilter = AuthFilter(AntPathRequestMatcher("/**"), authService)
+        val matcherBuilder = PathPatternRequestMatcher.withDefaults()
+        val authFilter = AuthFilter(matcherBuilder.matcher("/**"), authService)
 
         http
                 .securityMatcher("/api/chat/**", "/ws/chat/**")

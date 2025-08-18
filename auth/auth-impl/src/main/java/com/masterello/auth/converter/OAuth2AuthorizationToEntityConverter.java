@@ -15,7 +15,6 @@ import java.security.Principal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.function.Supplier;
 
 @RequiredArgsConstructor
@@ -49,7 +48,6 @@ public class OAuth2AuthorizationToEntityConverter {
 
     public TokenPair toTokenPairEntity(OAuth2Authorization authorization) {
         TokenPair tokenPair = new TokenPair();
-        tokenPair.setId(UUID.randomUUID());
         tokenPair.setIssuedAt(OffsetDateTime.now());
         var accessToken = authorization.getAccessToken();
         if (accessToken != null && accessToken.getToken() != null) {

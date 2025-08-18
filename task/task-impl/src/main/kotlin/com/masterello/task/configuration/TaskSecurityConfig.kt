@@ -4,12 +4,13 @@ import com.masterello.auth.service.AuthService
 import com.masterello.commons.security.filter.AuthFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher
 import org.springframework.security.web.util.matcher.OrRequestMatcher
 import org.springframework.security.web.util.matcher.RequestMatcher
 
@@ -21,22 +22,24 @@ open class TaskSecurityConfig(private val authService: AuthService) {
     @Throws(Exception::class)
     open fun apiTaskAuthFilter(http: HttpSecurity): SecurityFilterChain {
 
+        val matcherBuilder = PathPatternRequestMatcher.withDefaults()
+
         val protectedEndpoints: RequestMatcher = OrRequestMatcher(
-                AntPathRequestMatcher("/api/tasks/{taskUuid}", "GET"),
-                AntPathRequestMatcher("/api/tasks/user/{userUuid}/search", "POST"),
-                AntPathRequestMatcher("/api/tasks/worker/{workerUuid}/search", "POST"),
-                AntPathRequestMatcher("/api/tasks", "POST"),
-                AntPathRequestMatcher("/api/tasks/search", "POST"),
-                AntPathRequestMatcher("/api/tasks/worker/search", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/update", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/assign", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/unassign", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/reassign", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/complete", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/cancel", "POST"),
-                AntPathRequestMatcher("/api/tasks/worker-review", "POST"),
-                AntPathRequestMatcher("/api/tasks/user-review", "POST"),
-                AntPathRequestMatcher("/api/tasks/{taskUuid}/worker/{workerUuid}/confirm", "POST"),
+                matcherBuilder.matcher(HttpMethod.GET, "/api/tasks/{taskUuid}"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/user/{userUuid}/search"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/worker/{workerUuid}/search"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/search"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/worker/search"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/update"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/assign"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/unassign"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/reassign"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/complete"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/cancel"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/worker-review"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/user-review"),
+                matcherBuilder.matcher(HttpMethod.POST, "/api/tasks/{taskUuid}/worker/{workerUuid}/confirm"),
         )
 
         val authFilter = AuthFilter(protectedEndpoints, authService)
