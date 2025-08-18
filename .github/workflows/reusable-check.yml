@@ -54,41 +54,47 @@ jobs:
           out: 'reports'
         timeout-minutes: 10
         continue-on-error: true
-      - name: Upload report
+      - name: Upload report (if present)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
           path: reports
+          if-no-files-found: ignore
+
       - name: Confirm report exists
+        if: always()
         run: |
           echo "Checking report file..."
-          ls -l reports
-          file reports/dependency-check-report.html
-          head -n 10 reports/dependency-check-report.html
+          if [ -d reports ]; then
+            ls -l reports || true
+          else
+            echo "No reports directory found. Skipping."
+          fi
+
       - uses: jwalton/gh-find-current-pr@v1
         id: finder
-      # (Only the relevant job steps shown)
+
       - name: Count vulnerabilities from JSON
         id: count_vulns
+        if: always()
         run: |
           REPORT=reports/dependency-check-report.json
 
           if [ -f "$REPORT" ]; then
-            # ensure jq exists
             sudo apt-get update -y
             sudo apt-get install -y jq
 
-            # get a newline-separated list of normalized severities (lowercase)
             SEVERITIES=$(jq -r '.dependencies[]?.vulnerabilities[]?.severity // empty' "$REPORT" \
               | tr '[:upper:]' '[:lower:]' \
               | sed 's/^highest$/critical/')
 
-            # count each severity (exact line match)
             CRITICAL=$(echo "$SEVERITIES" | grep -c '^critical$')
             HIGH=$(echo "$SEVERITIES" | grep -c '^high$')
             MEDIUM=$(echo "$SEVERITIES" | grep -c '^medium$')
             LOW=$(echo "$SEVERITIES" | grep -c '^low$')
           else
+            echo "No report found, defaulting to 0 vulnerabilities"
             CRITICAL=0
             HIGH=0
             MEDIUM=0

@@ -12,5 +12,6 @@ data class CategoryDto (
         val isService: Boolean? = null,
         val createdDate: OffsetDateTime? = null,
         val updatedDate: OffsetDateTime? = null,
-        val active: Boolean? = null
+        val active: Boolean? = null,
+        val availableOnline: Boolean? = null
 )

@@ -70,7 +70,8 @@ public final class WorkerTestDataProvider {
                 true,
                 OffsetDateTime.now(),
                 OffsetDateTime.now(),
-                active
+                active,
+                false
         );
     }
 
