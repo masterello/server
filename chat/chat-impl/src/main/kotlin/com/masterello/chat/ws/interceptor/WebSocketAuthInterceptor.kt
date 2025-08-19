@@ -17,7 +17,8 @@ class WebSocketAuthInterceptor(
 ) : ChannelInterceptor {
     
     private val log = KotlinLogging.logger {}
-    private val chatDestinationPattern: Regex = Regex("^/(topic/messages|ws/chat)/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
+    // Only allow broker destinations for subscriptions: /topic/messages/<uuid>
+    private val chatDestinationPattern: Regex = Regex("^/topic/messages/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = StompHeaderAccessor.wrap(message)
@@ -35,7 +36,7 @@ class WebSocketAuthInterceptor(
     fun extractChatId(destination: String): UUID? {
         return try {
             val matchResult = chatDestinationPattern.matchEntire(destination)
-            matchResult?.groups?.get(2)?.value?.let { UUID.fromString(it) }
+            matchResult?.groups?.get(1)?.value?.let { UUID.fromString(it) }
         } catch (ex: IllegalArgumentException) {
             log.warn { "Invalid UUID format in destination: $destination" }
             null
