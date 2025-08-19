@@ -18,27 +18,48 @@ class WebSocketAuthInterceptor(
     
     private val log = KotlinLogging.logger {}
     // Only allow broker destinations for subscriptions: /topic/messages/<uuid>
-    private val chatDestinationPattern: Regex = Regex("^/topic/messages/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
+    private val subscribeDestinationPattern: Regex = Regex("^/topic/messages/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
+    // Authorize SEND frames to application destination: /ws/sendMessage/<uuid>
+    private val sendDestinationPattern: Regex = Regex("^/ws/sendMessage/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = StompHeaderAccessor.wrap(message)
 
-        if (SimpMessageType.SUBSCRIBE == accessor.messageType) {
-            val chatId = accessor.destination?.let { extractChatId(it) }
-            if (chatId != null) {
-                checkPermissionsToSubscribeToChat(accessor, chatId)
+        when (accessor.messageType) {
+            SimpMessageType.SUBSCRIBE -> {
+                val chatId = accessor.destination?.let { extractChatIdForSubscribe(it) }
+                if (chatId != null) {
+                    checkPermissionsToSubscribeToChat(accessor, chatId)
+                }
             }
+            SimpMessageType.MESSAGE -> {
+                val chatId = accessor.destination?.let { extractChatIdForSend(it) }
+                if (chatId != null) {
+                    checkPermissionsToSendToChat(accessor, chatId)
+                }
+            }
+            else -> {}
         }
 
         return message
     }
 
-    fun extractChatId(destination: String): UUID? {
+    fun extractChatIdForSubscribe(destination: String): UUID? {
         return try {
-            val matchResult = chatDestinationPattern.matchEntire(destination)
+            val matchResult = subscribeDestinationPattern.matchEntire(destination)
             matchResult?.groups?.get(1)?.value?.let { UUID.fromString(it) }
         } catch (ex: IllegalArgumentException) {
-            log.warn { "Invalid UUID format in destination: $destination" }
+            log.warn { "Invalid UUID format in SUBSCRIBE destination: $destination" }
+            null
+        }
+    }
+
+    fun extractChatIdForSend(destination: String): UUID? {
+        return try {
+            val matchResult = sendDestinationPattern.matchEntire(destination)
+            matchResult?.groups?.get(1)?.value?.let { UUID.fromString(it) }
+        } catch (ex: IllegalArgumentException) {
+            log.warn { "Invalid UUID format in SEND destination: $destination" }
             null
         }
     }
@@ -46,7 +67,6 @@ class WebSocketAuthInterceptor(
     private fun checkPermissionsToSubscribeToChat(accessor: StompHeaderAccessor, chatId: UUID) {
         val user = getUser(accessor)
         
-        // Use centralized authorization logic with userId extracted from session attributes
         if (!chatSecurityExpressions.canSubscribeToChat(user.userId, chatId)) {
             throw org.springframework.security.access.AccessDeniedException(
                 "User ${user.userId} is not authorized to subscribe to chat $chatId"
@@ -54,6 +74,18 @@ class WebSocketAuthInterceptor(
         }
         
         log.debug { "WebSocket subscription authorized for user ${user.userId} to chat $chatId" }
+    }
+
+    private fun checkPermissionsToSendToChat(accessor: StompHeaderAccessor, chatId: UUID) {
+        val user = getUser(accessor)
+
+        if (!chatSecurityExpressions.canSendMessageToChat(user.userId, chatId)) {
+            throw org.springframework.security.access.AccessDeniedException(
+                "User ${user.userId} is not authorized to send messages to chat $chatId"
+            )
+        }
+
+        log.debug { "WebSocket send authorized for user ${user.userId} to chat $chatId" }
     }
 
     private fun getUser(accessor: StompHeaderAccessor): AuthData {
