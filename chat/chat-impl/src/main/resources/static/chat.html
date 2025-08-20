@@ -46,6 +46,11 @@
         <span id="presence-user" style="margin-right:12px;">User: unknown</span>
         <span id="presence-worker">Worker: unknown</span>
     </div>
+    <div style="margin-top:4px;">
+        <span>Typing: </span>
+        <span id="typing-user" style="margin-right:12px;">User: -</span>
+        <span id="typing-worker">Worker: -</span>
+    </div>
 
     <div style="margin-top:8px;">
         <input type="text" id="message" placeholder="Type a message">
@@ -130,6 +135,12 @@
             stompClient.subscribe('/topic/presence/' + chatId, function (presenceOutput) {
                 var snapshot = JSON.parse(presenceOutput.body);
                 updatePresence(snapshot);
+            });
+
+            // Subscribe to typing updates
+            stompClient.subscribe('/topic/typing/' + chatId, function (typingOutput) {
+                var evt = JSON.parse(typingOutput.body);
+                updateTyping(evt);
             });
 
             // Kick off presence ping immediately and then every 15s
@@ -237,6 +248,22 @@
         }
     });
 
+    // Typing indicator logic
+    var typingState = { started: false, timeoutId: null };
+    messageInput.addEventListener('input', function() {
+        var chatId = document.getElementById('chatId').value;
+        if (!chatId || !stompClient || !stompClient.connected) return;
+        if (!typingState.started) {
+            typingState.started = true;
+            stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: true }));
+        }
+        if (typingState.timeoutId) clearTimeout(typingState.timeoutId);
+        typingState.timeoutId = setTimeout(function() {
+            typingState.started = false;
+            stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: false }));
+        }, 1500);
+    });
+
     function sendPresencePing(chatId) {
         if (!stompClient || !stompClient.connected) return;
         stompClient.send('/ws/presence/ping/' + chatId, {}, 'ping');
@@ -255,6 +282,17 @@
 
         userSpan.textContent = 'User: ' + (userEntry ? userEntry.status : 'unknown');
         workerSpan.textContent = 'Worker: ' + (workerEntry ? workerEntry.status : 'unknown');
+    }
+
+    function updateTyping(evt) {
+        if (!evt || !currentChat) return;
+        var userSpan = document.getElementById('typing-user');
+        var workerSpan = document.getElementById('typing-worker');
+        if (evt.userId === currentChat.userId) {
+            userSpan.textContent = 'User: ' + (evt.started ? 'typing…' : '-');
+        } else if (evt.userId === currentChat.workerId) {
+            workerSpan.textContent = 'Worker: ' + (evt.started ? 'typing…' : '-');
+        }
     }
 </script>
 </body>
