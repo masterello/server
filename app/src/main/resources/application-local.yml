@@ -75,4 +75,5 @@ logging:
     org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: DEBUG
     org.springframework.web.socket.messaging.SubProtocolWebSocketHandler: DEBUG
     org.springframework.messaging.simp: DEBUG
+    com.masterello.chat: DEBUG
 

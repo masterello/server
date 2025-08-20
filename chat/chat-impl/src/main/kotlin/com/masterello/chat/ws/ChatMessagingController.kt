@@ -1,10 +1,10 @@
 package com.masterello.chat.ws
 
-import com.masterello.auth.data.AuthData
 import com.masterello.chat.domain.Message
 import com.masterello.chat.dto.ChatMessageDTO
 import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.MessageRepository
+import com.masterello.chat.util.AuthUtil.getUser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.messaging.handler.annotation.DestinationVariable
 import org.springframework.messaging.handler.annotation.MessageMapping
@@ -28,7 +28,7 @@ class ChatMessagingController(
         @DestinationVariable chatId: UUID, 
         accessor: StompHeaderAccessor
     ): ChatMessageDTO {
-        val user = getUser(accessor)
+        val user = getUser(accessor)?: throw IllegalStateException("No authentication data found in session")
         
         log.info { "User ${user.userId} sending message to chat $chatId" }
         
@@ -45,13 +45,5 @@ class ChatMessagingController(
         ))
         
         return messageMapper.toDto(saved)
-    }
-
-    private fun getUser(accessor: StompHeaderAccessor): AuthData {
-        val sessionAttributes = accessor.sessionAttributes
-            ?: throw IllegalStateException("No session attributes found")
-        
-        return sessionAttributes["SECURITY_CONTEXT"] as? AuthData
-            ?: throw IllegalStateException("No authentication data found in session")
     }
 }

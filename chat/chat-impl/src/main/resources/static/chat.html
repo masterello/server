@@ -36,11 +36,22 @@
     <input type="text" id="workerId" placeholder="Enter Worker ID">
     <button onclick="getOrCreateChat()">Get or Create Chat</button>
 
-    <input type="text" id="chatId" placeholder="Chat ID" readonly>
-    <input type="text" id="message" placeholder="Type a message">
-    <button onclick="connectToChat()">Connect</button>
-    <button onclick="sendMessage()">Send</button>
-    <button id="emojiButton">😊</button>
+    <div style="margin-top:8px;">
+        <input type="text" id="chatId" placeholder="Chat ID">
+        <button onclick="connectToChat()">Connect</button>
+    </div>
+
+    <div style="margin-top:8px;">
+        <span>Presence: </span>
+        <span id="presence-user" style="margin-right:12px;">User: unknown</span>
+        <span id="presence-worker">Worker: unknown</span>
+    </div>
+
+    <div style="margin-top:8px;">
+        <input type="text" id="message" placeholder="Type a message">
+        <button onclick="sendMessage()">Send</button>
+        <button id="emojiButton">😊</button>
+    </div>
     <table id="messages">
         <thead>
         <tr>
@@ -59,6 +70,7 @@
     var stompClient = null;
     var messagesMap = new Map(); // Store messages as a map with id as key
     var currentChat = null; // Store chat details
+    var presenceInterval = null; // Interval id for presence pings
 
     async function getOrCreateChat() {
         const userId = document.getElementById('userId').value;
@@ -113,6 +125,17 @@
                 addMessageToMap(message);
                 displayMessages();
             });
+
+            // Subscribe to presence updates
+            stompClient.subscribe('/topic/presence/' + chatId, function (presenceOutput) {
+                var snapshot = JSON.parse(presenceOutput.body);
+                updatePresence(snapshot);
+            });
+
+            // Kick off presence ping immediately and then every 15s
+            sendPresencePing(chatId);
+            if (presenceInterval) clearInterval(presenceInterval);
+            presenceInterval = setInterval(function() { sendPresencePing(chatId); }, 15000);
 
             // Fetch chat history
             fetchChatHistory(chatId);
@@ -213,6 +236,26 @@
             emojiPicker.style.display = 'none';
         }
     });
+
+    function sendPresencePing(chatId) {
+        if (!stompClient || !stompClient.connected) return;
+        stompClient.send('/ws/presence/ping/' + chatId, {}, 'ping');
+    }
+
+    function updatePresence(snapshot) {
+        if (!snapshot || !snapshot.participants) return;
+        var userSpan = document.getElementById('presence-user');
+        var workerSpan = document.getElementById('presence-worker');
+
+        var userId = currentChat ? currentChat.userId : null;
+        var workerId = currentChat ? currentChat.workerId : null;
+
+        var userEntry = snapshot.participants.find(function(p) { return p.userId === userId; });
+        var workerEntry = snapshot.participants.find(function(p) { return p.userId === workerId; });
+
+        userSpan.textContent = 'User: ' + (userEntry ? userEntry.status : 'unknown');
+        workerSpan.textContent = 'Worker: ' + (workerEntry ? workerEntry.status : 'unknown');
+    }
 </script>
 </body>
 </html>

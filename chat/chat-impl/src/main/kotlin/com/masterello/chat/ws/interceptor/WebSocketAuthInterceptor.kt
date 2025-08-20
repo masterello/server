@@ -1,7 +1,7 @@
 package com.masterello.chat.ws.interceptor
 
-import com.masterello.auth.data.AuthData
 import com.masterello.chat.security.ChatSecurityExpressions
+import com.masterello.chat.util.AuthUtil.getUser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
@@ -18,9 +18,9 @@ class WebSocketAuthInterceptor(
     
     private val log = KotlinLogging.logger {}
     // Only allow broker destinations for subscriptions: /topic/messages/<uuid>
-    private val subscribeDestinationPattern: Regex = Regex("^/topic/messages/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
-    // Authorize SEND frames to application destination: /ws/sendMessage/<uuid>
-    private val sendDestinationPattern: Regex = Regex("^/ws/sendMessage/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
+    private val subscribeDestinationPattern: Regex = Regex("^/topic/messages/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$|^/topic/presence/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
+    // Authorize SEND frames to application destinations: /ws/sendMessage/{uuid} and /ws/presence/ping/{uuid}
+    private val sendDestinationPattern: Regex = Regex("^/ws/sendMessage/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$|^/ws/presence/ping/([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$")
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*>? {
         val accessor = StompHeaderAccessor.wrap(message)
@@ -47,7 +47,8 @@ class WebSocketAuthInterceptor(
     fun extractChatIdForSubscribe(destination: String): UUID? {
         return try {
             val matchResult = subscribeDestinationPattern.matchEntire(destination)
-            matchResult?.groups?.get(1)?.value?.let { UUID.fromString(it) }
+            val group = matchResult?.groups?.drop(1)?.firstOrNull { it != null }?.value
+            group?.let { UUID.fromString(it) }
         } catch (ex: IllegalArgumentException) {
             log.warn { "Invalid UUID format in SUBSCRIBE destination: $destination" }
             null
@@ -57,7 +58,8 @@ class WebSocketAuthInterceptor(
     fun extractChatIdForSend(destination: String): UUID? {
         return try {
             val matchResult = sendDestinationPattern.matchEntire(destination)
-            matchResult?.groups?.get(1)?.value?.let { UUID.fromString(it) }
+            val group = matchResult?.groups?.drop(1)?.firstOrNull { it != null }?.value
+            group?.let { UUID.fromString(it) }
         } catch (ex: IllegalArgumentException) {
             log.warn { "Invalid UUID format in SEND destination: $destination" }
             null
@@ -65,7 +67,7 @@ class WebSocketAuthInterceptor(
     }
 
     private fun checkPermissionsToSubscribeToChat(accessor: StompHeaderAccessor, chatId: UUID) {
-        val user = getUser(accessor)
+        val user = getUser(accessor)?: throw IllegalStateException("No authentication data found in session")
         
         if (!chatSecurityExpressions.canSubscribeToChat(user.userId, chatId)) {
             throw org.springframework.security.access.AccessDeniedException(
@@ -77,7 +79,7 @@ class WebSocketAuthInterceptor(
     }
 
     private fun checkPermissionsToSendToChat(accessor: StompHeaderAccessor, chatId: UUID) {
-        val user = getUser(accessor)
+        val user = getUser(accessor)?: throw IllegalStateException("No authentication data found in session")
 
         if (!chatSecurityExpressions.canSendMessageToChat(user.userId, chatId)) {
             throw org.springframework.security.access.AccessDeniedException(
@@ -86,13 +88,5 @@ class WebSocketAuthInterceptor(
         }
 
         log.debug { "WebSocket send authorized for user ${user.userId} to chat $chatId" }
-    }
-
-    private fun getUser(accessor: StompHeaderAccessor): AuthData {
-        val sessionAttributes = accessor.sessionAttributes
-            ?: throw IllegalStateException("No session attributes found")
-        
-        return sessionAttributes["SECURITY_CONTEXT"] as? AuthData
-            ?: throw IllegalStateException("No authentication data found in session")
     }
 }
