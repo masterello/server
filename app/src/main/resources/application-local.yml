@@ -69,6 +69,11 @@ masterello:
   openapi:
     oAuthFlow:
       tokenUrl: http:/127.0.0.1:8090/oauth2/token
+  chat:
+    ws:
+      allowedOriginPatterns:
+        - http://127.0.0.1:*
+        - http://localhost:*
 
 logging:
   level:

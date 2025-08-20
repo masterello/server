@@ -52,6 +52,7 @@ class WebSocketConfig(private val webSocketAuthInterceptor: WebSocketAuthInterce
                         return SecurityContextHolder.getContext().authentication
                     }
                 })
+                .setAllowedOriginPatterns(*chatWebSocketProperties.allowedOriginPatterns.toTypedArray())
                 .withSockJS() // WebSocket connection endpoint
 
     }
