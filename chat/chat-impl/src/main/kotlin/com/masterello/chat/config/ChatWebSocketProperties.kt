@@ -9,7 +9,8 @@ data class ChatWebSocketProperties (
         val serverHeartbeat: Long = 15000,
         val taskSchedulerPoolSize: Int = 1,
         val inboundThreadPool: ThreadPoolConfig = ThreadPoolConfig(),
-        val outboundThreadPool: ThreadPoolConfig = ThreadPoolConfig()
+        val outboundThreadPool: ThreadPoolConfig = ThreadPoolConfig(),
+        val allowedOriginPatterns: List<String> = emptyList()
 )
 
 data class ThreadPoolConfig(
