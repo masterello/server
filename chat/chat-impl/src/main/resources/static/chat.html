@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.1/stomp.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.23.0/picker.min.js"></script>
     <style>
         table {
             width: 100%;
@@ -18,64 +17,59 @@
             padding: 8px;
             text-align: left;
         }
-        #emoji-picker {
-            position: absolute;
-            display: none;
-            z-index: 10000;
-            background-color: white;
-            border: 1px solid #ddd;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-            width: 300px;
-        }
+        #chatList .row { border:1px solid #eee; border-radius:8px; padding:10px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+        #chatList .row:hover { background:#f5f5f5; }
+        .badge { background:#29c36a; color:white; font-size:12px; border-radius:12px; padding:2px 6px; min-width:22px; text-align:center; }
+        .online-chip { background:#e7f7ed; color:#1a7f37; border:1px solid #c7edd7; border-radius:10px; padding:1px 6px; font-size:11px; margin-left:8px; }
     </style>
 </head>
 <body>
 <div>
     <h2>Chat</h2>
-    <input type="text" id="userId" placeholder="Enter User ID">
-    <input type="text" id="workerId" placeholder="Enter Worker ID">
-    <button onclick="getOrCreateChat()">Get or Create Chat</button>
-
-    <div style="margin-top:8px;">
-        <input type="text" id="chatId" placeholder="Chat ID">
-        <button onclick="connectToChat()">Connect</button>
+    <div class="chat-app" style="display:flex; gap:20px; min-height:70vh;">
+        <!-- Sidebar -->
+        <aside id="chatSidebar" style="width:320px; border-right:1px solid #eee; padding-right:12px;">
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+                <h3 style="margin:8px 0;">My messages</h3>
+                <button onclick="createNewChat()" title="Create new chat" style="padding:6px 10px;">+ New</button>
+            </div>
+            <input id="chatSearch" type="text" placeholder="Search" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <div id="chatList" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                <!-- chat rows inserted here -->
+            </div>
+        </aside>
+        <!-- Main -->
+        <main id="chatMain" style="flex:1; display:flex; flex-direction:column;">
+            <div id="chatHeader" style="height:48px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eee;">
+                <div id="chatTitle" style="font-weight:600;">Select a chat</div>
+                <div id="chatStatus">
+                    <span id="onlineBadge" style="display:none; color:#41a541; margin-right:10px;">Online</span>
+                    <span id="typingBadge" style="display:none; color:#666; font-style:italic;">typing…</span>
+                </div>
+            </div>
+            <div id="chatThread" style="flex:1; overflow:auto; padding:12px; background:#fafafa; border-radius:8px; margin-top:8px;">
+                <!-- messages inserted here -->
+            </div>
+            <div id="composer" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+                <input id="chatInput" type="text" placeholder="Message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
+                <button id="sendBtn" onclick="sendFromComposer()" style="padding:10px 14px;">Send ➤</button>
+            </div>
+        </main>
     </div>
-
-    <div style="margin-top:8px;">
-        <span>Presence: </span>
-        <span id="presence-user" style="margin-right:12px;">User: unknown</span>
-        <span id="presence-worker">Worker: unknown</span>
-    </div>
-    <div style="margin-top:4px;">
-        <span>Typing: </span>
-        <span id="typing-user" style="margin-right:12px;">User: -</span>
-        <span id="typing-worker">Worker: -</span>
-    </div>
-
-    <div style="margin-top:8px;">
-        <input type="text" id="message" placeholder="Type a message">
-        <button onclick="sendMessage()">Send</button>
-        <button id="emojiButton">😊</button>
-    </div>
-    <table id="messages">
-        <thead>
-        <tr>
-            <th>Created At</th>
-            <th>Created By</th>
-            <th>Message</th>
-        </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-    <emoji-picker id="emoji-picker"></emoji-picker>
 </div>
 
 <script>
+    // Global/init variables to avoid undefined access
+    window.addEventListener('load', initApp);
+    var currentUser = null;
+    var wsSessionIdGlobal = null;
+    window.connectedChats = window.connectedChats || {};
+    var connectedChats = window.connectedChats; // chatId -> entry
+    var multiPresenceInterval = null;
+    var myChatsIndex = {}; // id -> chat object from /api/chat/my-chats
+    var userPresence = {}; // userId -> { status, lastSeen }
+
     var stompClient = null;
-    var messagesMap = new Map(); // Store messages as a map with id as key
-    var currentChat = null; // Store chat details
-    var presenceInterval = null; // Interval id for presence pings
 
     async function getOrCreateChat() {
         const userId = document.getElementById('userId').value;
@@ -123,6 +117,8 @@
 
         stompClient.connect({}, function (frame) {
             console.log("Connected: " + frame);
+            var wsSessionId = frame && frame.headers ? frame.headers['session'] : null;
+            if (!wsSessionId) { console.warn('No STOMP session id in CONNECTED frame'); }
 
             // Subscribe to the messages topic
             stompClient.subscribe('/topic/messages/' + chatId, function (messageOutput) {
@@ -131,11 +127,20 @@
                 displayMessages();
             });
 
-            // Subscribe to presence updates
-            stompClient.subscribe('/topic/presence/' + chatId, function (presenceOutput) {
-                var snapshot = JSON.parse(presenceOutput.body);
-                updatePresence(snapshot);
-            });
+
+            // Subscribe to WS status for this session
+            if (wsSessionId) {
+                stompClient.subscribe('/topic/ws-status/' + wsSessionId, function (statusOutput) {
+                    try {
+                        var status = JSON.parse(statusOutput.body);
+                        if (status.type === 'EXPIRED') {
+                            console.warn('WS session ' + status.sessionId + ' expired. Please reauth via BFF.');
+                        }
+                    } catch (e) {
+                        console.warn('WS status parse error', e);
+                    }
+                });
+            }
 
             // Subscribe to typing updates
             stompClient.subscribe('/topic/typing/' + chatId, function (typingOutput) {
@@ -143,10 +148,6 @@
                 updateTyping(evt);
             });
 
-            // Kick off presence ping immediately and then every 15s
-            sendPresencePing(chatId);
-            if (presenceInterval) clearInterval(presenceInterval);
-            presenceInterval = setInterval(function() { sendPresencePing(chatId); }, 15000);
 
             // Fetch chat history
             fetchChatHistory(chatId);
@@ -225,73 +226,499 @@
         }
     }
 
-    const emojiPicker = document.getElementById('emoji-picker');
-    const emojiButton = document.getElementById('emojiButton');
-    const messageInput = document.getElementById('message');
 
-    emojiButton.addEventListener('click', function(event) {
-        event.stopPropagation();
-        const buttonRect = emojiButton.getBoundingClientRect();
-        emojiPicker.style.left = `${buttonRect.left}px`;
-        emojiPicker.style.top = `${buttonRect.bottom + window.scrollY}px`;
-        emojiPicker.style.display = (emojiPicker.style.display === 'none' || emojiPicker.style.display === '') ? 'block' : 'none';
-    });
 
-    emojiPicker.addEventListener('emoji-click', function(event) {
-        messageInput.value += event.detail.unicode;
-        emojiPicker.style.display = 'none';
-    });
 
-    document.addEventListener('click', function(event) {
-        if (!emojiButton.contains(event.target) && !emojiPicker.contains(event.target)) {
-            emojiPicker.style.display = 'none';
+
+    // ===== Multi-chat demo logic =====
+    // variables initialized at the top of the script
+
+    async function initApp() {
+        try {
+            await ensureWebSocketConnected();
+            await loadCurrentUserAndChats();
+            wireSearch();
+            // Subscribe to all chats after loading
+            Object.keys(myChatsIndex).forEach(function(id){ if (!connectedChats[id]) { createChatEntry(id); subscribeChat(id); } });
+            // Select first chat if present
+            var firstId = Object.keys(myChatsIndex)[0];
+            if (firstId) selectChat(firstId);
+        } catch (e) { console.error('Init error', e); }
+    }
+
+    async function loadCurrentUserAndChats() {
+        try {
+            const userResp = await fetch('/api/user', { credentials: 'include' });
+            if (userResp.ok) {
+                currentUser = await userResp.json();
+                console.log('Current user:', currentUser);
+            } else {
+                console.warn('Failed to load current user, status', userResp.status);
+            }
+        } catch (e) {
+            console.warn('Error loading current user', e);
         }
-    });
 
-    // Typing indicator logic
-    var typingState = { started: false, timeoutId: null };
-    messageInput.addEventListener('input', function() {
-        var chatId = document.getElementById('chatId').value;
-        if (!chatId || !stompClient || !stompClient.connected) return;
-        if (!typingState.started) {
-            typingState.started = true;
-            stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: true }));
+        try {
+            const chatsResp = await fetch('/api/chat/my-chats', { credentials: 'include' });
+            if (!chatsResp.ok) {
+                console.warn('Failed to load chats, status', chatsResp.status);
+                return;
+            }
+            const chats = await chatsResp.json();
+            const list = document.getElementById('chatList');
+            list.innerHTML = '';
+            myChatsIndex = {};
+            (chats || []).forEach(function(c) {
+                if (!c || !c.id) return;
+                myChatsIndex[c.id] = c;
+                appendChatRow(c);
+            });
+            // After rendering rows, subscribe to per-user presence for counterparts (deduped) and request batch snapshot
+            if (stompClient && stompClient.connected) {
+                var me = currentUser && (currentUser.uuid || currentUser.id);
+                var seen = {};
+                Object.keys(myChatsIndex).forEach(function(cid){
+                    var c = myChatsIndex[cid] || {};
+                    var counterpartId = (me && c.userId === me) ? c.workerId : (me && c.workerId === me ? c.userId : (c.workerId || c.userId));
+                    if (counterpartId && !seen[counterpartId]) { seen[counterpartId] = true; subscribeUserPresence(counterpartId); }
+                });
+            }
+        } catch (e) {
+            console.warn('Error loading chats', e);
         }
-        if (typingState.timeoutId) clearTimeout(typingState.timeoutId);
-        typingState.timeoutId = setTimeout(function() {
-            typingState.started = false;
+    }
+
+    function wireSearch() {
+        var input = document.getElementById('chatSearch');
+        if (!input) return;
+        input.addEventListener('input', function(){
+            var q = (input.value || '').toLowerCase();
+            Object.keys(myChatsIndex).forEach(function(id){
+                var c = myChatsIndex[id] || {};
+                var text = ((c.workerName || '') + ' ' + (c.userName || '') + ' ' + id).toLowerCase();
+                var row = document.getElementById('row-' + id);
+                if (row) row.style.display = text.indexOf(q) >= 0 ? '' : 'none';
+            });
+        });
+    }
+
+    function appendChatRow(c) {
+        var list = document.getElementById('chatList');
+        var row = document.createElement('div'); row.className = 'row'; row.id = 'row-' + c.id;
+        var left = document.createElement('div'); left.style.display = 'flex'; left.style.alignItems = 'center';
+        var name = document.createElement('div'); name.style.fontWeight = '600'; name.textContent = getCounterpartName(c.id);
+        var online = document.createElement('span'); online.className = 'online-chip'; online.id = 'row-online-' + c.id; online.style.display = 'none'; online.textContent = 'Online';
+        left.appendChild(name); left.appendChild(online);
+        var badge = document.createElement('span'); badge.className = 'badge'; badge.style.display = 'none'; badge.id = 'badge-' + c.id; badge.textContent = '0';
+        row.appendChild(left); row.appendChild(badge);
+        row.onclick = function(){ selectChat(c.id); };
+        list.appendChild(row);
+    }
+
+    function updateBadge(chatId, count) {
+        var b = document.getElementById('badge-' + chatId);
+        if (!b) return;
+        if (count > 0) { b.style.display = 'inline-block'; b.textContent = '+' + count; }
+        else { b.style.display = 'none'; b.textContent = '0'; }
+    }
+
+    async function ensureWebSocketConnected() {
+        if (stompClient && stompClient.connected) return;
+        return new Promise(function(resolve, reject) {
+            var socket = new SockJS('/ws/chat');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                console.log('WS Connected:', frame);
+                wsSessionIdGlobal = frame && frame.headers ? frame.headers['session'] : null;
+                var composerInput = document.getElementById('chatInput');
+                if (composerInput) {
+                    composerInput.addEventListener('input', function(){ if (window.selectedChatId) handleTypingMulti(window.selectedChatId); });
+                }
+                resolve();
+            }, function (error) {
+                console.error('WS connection error:', error);
+                reject(error);
+            });
+        });
+    }
+
+    function isOnlineStatus(status) {
+        return ('' + (status || '')).toUpperCase() === 'ONLINE';
+    }
+
+    function updatePresenceHeader(chatId) {
+        // Updates the Online badge based on per-user presence of the counterpart
+        try {
+            var onlineBadge = document.getElementById('onlineBadge');
+            var chat = connectedChats[chatId];
+            var me = currentUser && (currentUser.uuid || currentUser.id);
+            // If other participant is typing, suppress Online badge
+            var typing = chat && chat.typing;
+            var isOtherTyping = typing && typing.started && (!typing.userId || typing.userId !== me);
+            if (isOtherTyping) { if (onlineBadge) onlineBadge.style.display = 'none'; return; }
+            var counterpartId = getCounterpartId(chatId);
+            if (!counterpartId) { if (onlineBadge) onlineBadge.style.display = 'none'; return; }
+            var up = userPresence[counterpartId];
+            var online = up && up.status && isOnlineStatus(up.status);
+            if (onlineBadge) onlineBadge.style.display = online ? 'inline' : 'none';
+        } catch (e) { console.warn('updatePresenceHeader error', e); }
+    }
+
+    function updateTypingHeader(chatId) {
+        // Shows typing… when someone other than the current user is typing in the selected chat
+        try {
+            var typingBadge = document.getElementById('typingBadge');
+            var onlineBadge = document.getElementById('onlineBadge');
+            var chat = connectedChats[chatId];
+            var typing = chat && chat.typing;
+            if (!typingBadge) return;
+            var me = currentUser && (currentUser.uuid || currentUser.id);
+            var isOtherTyping = typing && typing.started && (!typing.userId || typing.userId !== me);
+            if (isOtherTyping) {
+                typingBadge.style.display = 'inline';
+                if (onlineBadge) onlineBadge.style.display = 'none';
+            } else {
+                typingBadge.style.display = 'none';
+                // Re-show online state if applicable
+                updatePresenceHeader(chatId);
+            }
+        } catch (e) { console.warn('updateTypingHeader error', e); }
+    }
+
+    function getCounterpartName(chatId) {
+        try {
+            var info = myChatsIndex[chatId] || {};
+            var me = currentUser && (currentUser.uuid || currentUser.id);
+            if (me) {
+                if (info.userId && me === info.userId) return info.workerName || info.workerId || 'Unknown';
+                if (info.workerId && me === info.workerId) return info.userName || info.userId || 'Unknown';
+            }
+            return info.workerName || info.userName || 'Chat';
+        } catch (e) {
+            console.warn('getCounterpartName error', e);
+            return 'Chat';
+        }
+    }
+
+    function createChatEntry(chatId) {
+        // create hidden data entry for subscriptions/messages if not exists
+        if (!connectedChats[chatId]) {
+            connectedChats[chatId] = { messages: new Map(), elements: {}, subscriptions: [], meta: { userName: myChatsIndex[chatId]?.userName || '', workerName: myChatsIndex[chatId]?.workerName || '' }, unread: 0, historyLoaded: false };
+        }
+    }
+
+    function selectChat(chatId) {
+        if (!(connectedChats && connectedChats[chatId])) createChatEntry(chatId);
+        // Highlight selected row (simple effect)
+        Array.from(document.querySelectorAll('#chatList .row')).forEach(function(el){ el.style.background = 'transparent'; });
+        var row = document.getElementById('row-' + chatId); if (row) row.style.background = '#eef7ff';
+        // Reset unread
+        connectedChats[chatId].unread = 0; updateBadge(chatId, 0);
+        // Update title with counterpart name only
+        var titleEl = document.getElementById('chatTitle');
+        if (titleEl) titleEl.textContent = getCounterpartName(chatId);
+        updatePresenceHeader(chatId);
+        updateTypingHeader(chatId);
+        // Ensure full history is loaded on first open
+        if (!connectedChats[chatId].historyLoaded) { fetchChatHistoryMulti(chatId); }
+        // Render thread
+        renderMessagesMulti(chatId);
+        // Save selected
+        window.selectedChatId = chatId;
+    }
+
+    async function connectSelectedChat() {
+        var select = document.getElementById('chatSelect');
+        var chatId = select && ('' + select.value).trim();
+        if (!chatId) {
+            alert('Select a chat first');
+            return;
+        }
+        await ensureWebSocketConnected();
+        if (connectedChats && Object.prototype.hasOwnProperty.call(connectedChats, chatId)) {
+            console.log('Already connected to', chatId);
+            return;
+        }
+        createChatPanel(chatId);
+        if (!(connectedChats && Object.prototype.hasOwnProperty.call(connectedChats, chatId))) {
+            console.warn('Failed to create chat panel for', chatId);
+            return;
+        }
+        subscribeChat(chatId);
+        fetchChatHistoryMulti(chatId);
+    }
+
+    function createChatPanel(chatId) {
+        var container = document.getElementById('connected-chats-container');
+        var panel = document.createElement('div'); // not used in new layout; kept for compatibility
+        panel.style.border = '1px solid #ccc';
+        panel.style.borderRadius = '6px';
+        panel.style.padding = '10px';
+        panel.style.width = '420px';
+
+            var header = document.createElement('div');
+        header.innerHTML = '<strong>Chat:</strong> ' + chatId + ' ';
+        var dcBtn = document.createElement('button'); dcBtn.textContent = 'Disconnect'; dcBtn.style.marginLeft = '8px';
+        dcBtn.onclick = function(){ disconnectChat(chatId); };
+        header.appendChild(dcBtn);
+        panel.appendChild(header);
+
+        var presenceDiv = document.createElement('div');
+        presenceDiv.style.marginTop = '6px';
+        presenceDiv.innerHTML = '<span>Presence: </span>'+
+            '<span class="presence-user">User: unknown</span> '+
+            '<span class="presence-worker" style="margin-left:12px;">Worker: unknown</span>';
+        panel.appendChild(presenceDiv);
+
+        var typingDiv = document.createElement('div');
+        typingDiv.style.marginTop = '4px';
+        typingDiv.innerHTML = '<span>Typing: </span>'+
+            '<span class="typing-user">User: -</span> '+
+            '<span class="typing-worker" style="margin-left:12px;">Worker: -</span>';
+        panel.appendChild(typingDiv);
+
+        var tbl = document.createElement('table');
+        tbl.style.width = '100%';
+        tbl.style.borderCollapse = 'collapse';
+        tbl.innerHTML = '<thead><tr><th>Created At</th><th>Created By</th><th>Message</th></tr></thead><tbody></tbody>';
+        panel.appendChild(tbl);
+
+        var inputRow = document.createElement('div');
+        inputRow.style.marginTop = '8px';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Type a message';
+        input.style.width = '70%';
+        var sendBtn = document.createElement('button');
+        sendBtn.textContent = 'Send';
+        sendBtn.onclick = function(){ sendMessageMulti(chatId, input); };
+        input.addEventListener('input', function(){ handleTypingMulti(chatId); });
+        inputRow.appendChild(input);
+        inputRow.appendChild(sendBtn);
+        panel.appendChild(inputRow);
+
+        container.appendChild(panel);
+        var meta = myChatsIndex[chatId] || {};
+        connectedChats[chatId] = {
+            messages: new Map(),
+            elements: { panel: panel, tbody: tbl.querySelector('tbody'), presenceDiv: presenceDiv, typingDiv: typingDiv, input: input },
+            subscriptions: [],
+            meta: { userName: meta.userName || '', workerName: meta.workerName || '' }
+        };
+    }
+
+    function subscribeChat(chatId) {
+        if (!stompClient || !stompClient.connected) return;
+        if (!(connectedChats && Object.prototype.hasOwnProperty.call(connectedChats, chatId))) return;
+        var subs = [];
+        subs.push(stompClient.subscribe('/topic/messages/' + chatId, function (messageOutput) {
+            var chat = connectedChats[chatId];
+            if (!chat) return;
+            try {
+                var message = JSON.parse(messageOutput.body);
+                if (message && message.id && !chat.messages.has(message.id)) {
+                    chat.messages.set(message.id, message);
+                    // If not selected, bump unread
+                    if (window.selectedChatId !== chatId) {
+                        chat.unread = (chat.unread || 0) + 1;
+                        updateBadge(chatId, chat.unread);
+                    }
+                }
+                if (window.selectedChatId === chatId) renderMessagesMulti(chatId);
+            } catch(e) { console.warn('message parse error', e); }
+        }));
+        subs.push(stompClient.subscribe('/topic/typing/' + chatId, function (typingOutput) {
+            var chat = connectedChats[chatId]; if (!chat) return;
+            try {
+                var evt = JSON.parse(typingOutput.body);
+                chat.typing = evt; // stored for header UI
+                if (window.selectedChatId === chatId) updateTypingHeader(chatId);
+            } catch(e) { console.warn('typing parse error', e); }
+        }));
+        if (connectedChats[chatId]) connectedChats[chatId].subscriptions = subs;
+    }
+
+    async function fetchChatHistoryMulti(chatId) {
+        try {
+            const resp = await fetch('/api/chat/' + encodeURIComponent(chatId) + '/history', { credentials: 'include' });
+            if (!resp.ok) return;
+            const history = await resp.json();
+            var chat = connectedChats[chatId];
+            if (!chat) return;
+            ((history && history.messages) || []).forEach(function(m){
+                if (m && m.id && !chat.messages.has(m.id)) chat.messages.set(m.id, m);
+            });
+            chat.historyLoaded = true;
+            renderMessagesMulti(chatId);
+        } catch (e) { console.warn('history error', e); }
+    }
+
+    function renderMessagesMulti(chatId) {
+        var thread = document.getElementById('chatThread');
+        thread.innerHTML = '';
+        var chat = connectedChats[chatId]; if (!chat) return;
+        var arr = Array.from(chat.messages.values()).sort(function(a,b){ return new Date(a && a.createdAt) - new Date(b && b.createdAt); });
+        arr.forEach(function(m){
+            var bubble = document.createElement('div');
+            bubble.style.maxWidth = '65%';
+            bubble.style.margin = '6px 0';
+            bubble.style.padding = '8px 10px';
+            bubble.style.borderRadius = '8px';
+            bubble.style.display = 'inline-block';
+            if (m.createdBy === myChatsIndex[chatId]?.userId) { bubble.style.background = '#e8f4ff'; bubble.style.alignSelf = 'flex-start'; }
+            else if (m.createdBy === myChatsIndex[chatId]?.workerId) { bubble.style.background = '#fff3d6'; bubble.style.alignSelf = 'flex-end'; }
+            else { bubble.style.background = '#fff'; }
+            bubble.textContent = m.message;
+            var wrap = document.createElement('div');
+            wrap.style.display = 'flex';
+            wrap.style.justifyContent = (m.createdBy === myChatsIndex[chatId]?.workerId) ? 'flex-end' : 'flex-start';
+            wrap.appendChild(bubble);
+            thread.appendChild(wrap);
+        });
+        thread.scrollTop = thread.scrollHeight;
+    }
+
+    function getCounterpartId(chatId) {
+        var c = myChatsIndex[chatId] || {};
+        var me = currentUser && (currentUser.uuid || currentUser.id);
+        if (me && c.userId && me === c.userId) return c.workerId;
+        if (me && c.workerId && me === c.workerId) return c.userId;
+        // Fallback: prefer workerId as counterpart
+        return c.workerId || c.userId;
+    }
+
+    function updatePresenceRow(chatId) {
+        try {
+            var el = document.getElementById('row-online-' + chatId);
+            if (!el) return;
+            var counterpartId = getCounterpartId(chatId);
+            if (!counterpartId) { el.style.display = 'none'; return; }
+            var up = userPresence[counterpartId];
+            var online = up && up.status && isOnlineStatus(up.status);
+            el.style.display = online ? 'inline-block' : 'none';
+        } catch (e) { console.warn('updatePresenceRow error', e); }
+    }
+
+    function subscribeUserPresence(userId) {
+        if (!userId || !stompClient || !stompClient.connected) return;
+        // Live updates
+        stompClient.subscribe('/topic/presence/user/' + userId, function(msg){
+            try {
+                var dto = JSON.parse(msg.body);
+                userPresence[userId] = dto;
+                // Update all rows involving this userId
+                Object.keys(myChatsIndex).forEach(function(cid){ if (getCounterpartId(cid) === userId) updatePresenceRow(cid); });
+                // If the selected chat involves this user, refresh header
+                if (window.selectedChatId && getCounterpartId(window.selectedChatId) === userId) updatePresenceHeader(window.selectedChatId);
+            } catch(e){ console.warn('user presence parse error', e); }
+        });
+        // One-time initial snapshot via application subscribe mapping
+        try {
+            var sub = stompClient.subscribe('/ws/presence/user/' + userId, function(msg){
+                try {
+                    var dto = JSON.parse(msg.body);
+                    userPresence[userId] = dto;
+                    Object.keys(myChatsIndex).forEach(function(cid){ if (getCounterpartId(cid) === userId) updatePresenceRow(cid); });
+                    if (window.selectedChatId && getCounterpartId(window.selectedChatId) === userId) updatePresenceHeader(window.selectedChatId);
+                } catch(e){ console.warn('presence snapshot parse error', e); }
+                try { sub.unsubscribe(); } catch(_) {}
+            });
+        } catch (e) { console.warn('presence snapshot subscribe error', e); }
+    }
+
+
+    function updateTypingMulti(chatId, evt) {
+        var chat = connectedChats[chatId]; if (!chat) return;
+        var userSpan = chat.elements.typingDiv.querySelector('.typing-user');
+        var workerSpan = chat.elements.typingDiv.querySelector('.typing-worker');
+        // We don't have names here; just show labels per role
+        if (evt && evt.started) {
+            // naive: flip any one to typing
+            userSpan.textContent = 'User: typing…';
+        } else {
+            userSpan.textContent = 'User: -';
+            workerSpan.textContent = 'Worker: -';
+        }
+    }
+
+    function sendFromComposer() {
+        var chatId = window.selectedChatId;
+        if (!chatId) { alert('Select a chat first'); return; }
+        var inputEl = document.getElementById('chatInput');
+        sendMessageMulti(chatId, inputEl);
+    }
+
+    function sendMessageMulti(chatId, inputEl) {
+        var msg = (inputEl.value || '').trim();
+        if (!msg) return;
+        stompClient.send('/ws/sendMessage/' + chatId, {}, msg);
+        inputEl.value = '';
+    }
+
+    var typingTimers = {}; // chatId -> timeoutId
+    function handleTypingMulti(chatId) {
+        if (!stompClient || !stompClient.connected) return;
+        stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: true }));
+        if (typingTimers[chatId]) clearTimeout(typingTimers[chatId]);
+        typingTimers[chatId] = setTimeout(function(){
             stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: false }));
         }, 1500);
-    });
-
-    function sendPresencePing(chatId) {
-        if (!stompClient || !stompClient.connected) return;
-        stompClient.send('/ws/presence/ping/' + chatId, {}, 'ping');
     }
 
-    function updatePresence(snapshot) {
-        if (!snapshot || !snapshot.participants) return;
-        var userSpan = document.getElementById('presence-user');
-        var workerSpan = document.getElementById('presence-worker');
 
-        var userId = currentChat ? currentChat.userId : null;
-        var workerId = currentChat ? currentChat.workerId : null;
-
-        var userEntry = snapshot.participants.find(function(p) { return p.userId === userId; });
-        var workerEntry = snapshot.participants.find(function(p) { return p.userId === workerId; });
-
-        userSpan.textContent = 'User: ' + (userEntry ? userEntry.status : 'unknown');
-        workerSpan.textContent = 'Worker: ' + (workerEntry ? workerEntry.status : 'unknown');
+    function disconnectChat(chatId) {
+        var chat = connectedChats[chatId];
+        if (!chat) return;
+        // Unsubscribe
+        (chat.subscriptions || []).forEach(function(sub){ try { sub.unsubscribe(); } catch(e){} });
+        // Remove panel
+        if (chat.elements && chat.elements.panel && chat.elements.panel.parentNode) {
+            chat.elements.panel.parentNode.removeChild(chat.elements.panel);
+        }
+        delete connectedChats[chatId];
+        if (Object.keys(connectedChats).length === 0 && multiPresenceInterval) {
+            clearInterval(multiPresenceInterval);
+            multiPresenceInterval = null;
+        }
     }
 
-    function updateTyping(evt) {
-        if (!evt || !currentChat) return;
-        var userSpan = document.getElementById('typing-user');
-        var workerSpan = document.getElementById('typing-worker');
-        if (evt.userId === currentChat.userId) {
-            userSpan.textContent = 'User: ' + (evt.started ? 'typing…' : '-');
-        } else if (evt.userId === currentChat.workerId) {
-            workerSpan.textContent = 'Worker: ' + (evt.started ? 'typing…' : '-');
+    async function createNewChat() {
+        try {
+            if (!currentUser) {
+                const userResp = await fetch('/api/user', { credentials: 'include' });
+                if (userResp.ok) {
+                    currentUser = await userResp.json();
+                }
+            }
+            var myId = currentUser && (currentUser.uuid || currentUser.id);
+            if (!myId) { alert('Cannot determine current user id'); return; }
+            var partnerType = prompt('Partner type? Enter "worker" or "user" (default worker):', 'worker');
+            partnerType = (partnerType || 'worker').toLowerCase() === 'user' ? 'user' : 'worker';
+            var partnerId = prompt('Enter partner ID:');
+            if (!partnerId) { alert('Partner ID required'); return; }
+            var payload = partnerType === 'worker' ? { userId: myId, workerId: partnerId } : { userId: partnerId, workerId: myId };
+            const resp = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(payload)
+            });
+            if (!resp.ok) {
+                alert('Failed to create chat: ' + resp.status);
+                return;
+            }
+            const chat = await resp.json();
+            const chatId = chat.id || chat.chatId;
+            if (!chatId) { alert('Chat created but id missing'); return; }
+            // Update local index and UI
+            myChatsIndex[chatId] = chat;
+            appendChatRow(chat);
+            createChatEntry(chatId);
+            subscribeChat(chatId);
+            selectChat(chatId);
+        } catch (e) {
+            console.error('Create chat error', e);
         }
     }
 </script>

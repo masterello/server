@@ -31,6 +31,7 @@ class WebSocketAuthInterceptor(
         val accessor = StompHeaderAccessor.wrap(message)
 
         when (accessor.messageType) {
+            //TODO while only these two types - check
             SimpMessageType.SUBSCRIBE -> {
                 val chatId = accessor.destination?.let { extractChatIdForSubscribe(it) }
                 if (chatId != null) {

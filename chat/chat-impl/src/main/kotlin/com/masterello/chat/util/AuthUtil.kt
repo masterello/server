@@ -7,7 +7,6 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor
 object AuthUtil {
     private val log = KotlinLogging.logger {}
     fun getUser(accessor: StompHeaderAccessor): AuthData? {
-        log.debug { "getUser" }
         val principal = accessor.user
         return if (principal is org.springframework.security.core.Authentication) {
             val details = principal.details
