@@ -45,6 +45,7 @@ public class UserApiSecurityConfig {
     public SecurityFilterChain apiUserFilter(HttpSecurity http) throws Exception {
         RequestMatcher publicEndpoints = new OrRequestMatcher(
                 new AntPathRequestMatcher("/api/user/signup"),
+                new AntPathRequestMatcher("/api/user/confirmationLink/**"),
                 new AntPathRequestMatcher("/api/user/resetPassword/**")
         );
         AuthFilter authFilter = new AuthFilter(

@@ -15,7 +15,7 @@ import java.util.UUID;
 @Repository
 public interface ConfirmationLinkRepository extends JpaRepository<ConfirmationLink, UUID> {
 
-    Optional<ConfirmationLink> findByTokenAndUserUuid(String token, UUID userId);
+    Optional<ConfirmationLink> findByToken(String token);
 
     @Query(nativeQuery = true, value =
             """
