@@ -4,7 +4,6 @@ package com.masterello.user.service;
 import com.masterello.commons.async.MasterelloEventPublisher;
 import com.masterello.commons.core.data.Locale;
 import com.masterello.commons.core.retry.SimpleRetryUtil;
-import com.masterello.commons.security.util.AuthContextUtil;
 import com.masterello.user.config.ConfirmationCodeProperties;
 import com.masterello.user.config.EmailConfigProperties;
 import com.masterello.user.domain.ConfirmationLink;
@@ -52,15 +51,12 @@ public class ConfirmationLinkService {
     @Transactional
     public void activateUser(VerifyUserTokenDTO userTokenDTO) {
         var token = userTokenDTO.getToken();
-        var authenticatedUserId = AuthContextUtil.getAuthenticatedUserId();
-        log.info("Activating user {} by token {}", authenticatedUserId, token);
+        log.info("Activating user by token {}", token);
 
-        var confirmationLink = confirmationLinkRepository.findByTokenAndUserUuid(token, authenticatedUserId)
-                .orElseThrow(() -> {
-                    log.info("Confirmation link by token {} is not found", token);
-                    return new ConfirmationLinkNotFoundException("Confirmation link is not found");
-                });
-
+        var confirmationLink = confirmationLinkRepository.findByToken(token).orElseThrow(() -> {
+            log.info("Confirmation link by token {} is not found", token);
+            return new ConfirmationLinkNotFoundException("Confirmation link is not found");
+        });
 
         var user = userRepository.findById(confirmationLink.getUserUuid())
                 .orElseThrow(() -> new UserNotFoundException("user is not found"));
@@ -90,8 +86,7 @@ public class ConfirmationLinkService {
     }
 
     public void resendConfirmationLink(ResendConfirmationLinkDTO confirmationLinkDTO) throws MessagingException, IOException {
-        var authenticatedUserId = AuthContextUtil.getAuthenticatedUserId();
-        var user = userRepository.findById(authenticatedUserId)
+        var user = userRepository.findById(confirmationLinkDTO.getUserUuid())
                 .orElseThrow(() -> new UserNotFoundException("user is not found"));
 
         if (user.isEmailVerified()) {
