@@ -238,8 +238,6 @@
             await ensureWebSocketConnected();
             await loadCurrentUserAndChats();
             wireSearch();
-            // Subscribe to all chats after loading
-            Object.keys(myChatsIndex).forEach(function(id){ if (!connectedChats[id]) { createChatEntry(id); subscribeChat(id); } });
             // Select first chat if present
             var firstId = Object.keys(myChatsIndex)[0];
             if (firstId) selectChat(firstId);
@@ -408,8 +406,21 @@
         }
     }
 
+    function unsubscribeChat(chatId) {
+        var chat = connectedChats && connectedChats[chatId];
+        if (!chat) return;
+        (chat.subscriptions || []).forEach(function(sub){ try { sub.unsubscribe(); } catch(e){} });
+        chat.subscriptions = [];
+    }
+
     function selectChat(chatId) {
         if (!(connectedChats && connectedChats[chatId])) createChatEntry(chatId);
+        // Unsubscribe previous selection (if any)
+        var prev = window.selectedChatId;
+        if (prev && prev !== chatId) { unsubscribeChat(prev); }
+        // Subscribe to this chat if not already subscribed
+        var subs = (connectedChats[chatId] && connectedChats[chatId].subscriptions) || [];
+        if (!subs || subs.length === 0) { subscribeChat(chatId); }
         // Highlight selected row (simple effect)
         Array.from(document.querySelectorAll('#chatList .row')).forEach(function(el){ el.style.background = 'transparent'; });
         var row = document.getElementById('row-' + chatId); if (row) row.style.background = '#eef7ff';
