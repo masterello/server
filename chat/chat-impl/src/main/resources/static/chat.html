@@ -78,6 +78,8 @@
     var chatPage = { page: 1, size: 10, totalPages: 1, hasNext: false, hasPrevious: false };
 
     var stompClient = null;
+    var inboxSubscribed = false;
+    var pendingChat = null; // { partnerType: 'worker'|'user', partnerId: string } when composing before chat exists
 
     async function getOrCreateChat() {
         const userId = document.getElementById('userId').value;
@@ -259,6 +261,8 @@
             if (userResp.ok) {
                 currentUser = await userResp.json();
                 console.log('Current user:', currentUser);
+                // Subscribe inbox once user is known and WS connected
+                if (stompClient && stompClient.connected) { subscribeInbox(); }
             } else {
                 console.warn('Failed to load current user, status', userResp.status);
             }
@@ -302,6 +306,30 @@
         } catch (e) {
             console.warn('Error loading chats', e);
         }
+    }
+
+    function subscribeInbox() {
+        if (inboxSubscribed) return;
+        var uid = currentUser && (currentUser.uuid || currentUser.id);
+        if (!uid || !stompClient || !stompClient.connected) return;
+        try {
+            stompClient.subscribe('/topic/inbox/' + uid, function(msg){
+                try {
+                    var dto = JSON.parse(msg.body);
+                    if (dto && dto.chatId) {
+                        var cid = dto.chatId;
+                        // Update cache if exists
+                        if (myChatsIndex[cid]) {
+                            myChatsIndex[cid].lastMessageAt = dto.lastMessageAt;
+                            myChatsIndex[cid].lastMessagePreview = dto.lastMessagePreview;
+                        }
+                        // Keep server as source of truth for ordering/pagination
+                        loadCurrentUserAndChats(true);
+                    }
+                } catch(e){ console.warn('inbox parse error', e); }
+            });
+            inboxSubscribed = true;
+        } catch (e) { console.warn('inbox subscribe error', e); }
     }
 
     function wireSearch() {
@@ -436,6 +464,8 @@
                 if (composerInput) {
                     composerInput.addEventListener('input', function(){ if (window.selectedChatId) handleTypingMulti(window.selectedChatId); });
                 }
+                // If we already know currentUser, subscribe inbox now
+                try { if (currentUser && (currentUser.uuid || currentUser.id)) subscribeInbox(); } catch(e){}
                 resolve();
             }, function (error) {
                 console.error('WS connection error:', error);
@@ -534,8 +564,8 @@
         if (titleEl) titleEl.textContent = getCounterpartName(chatId);
         updatePresenceHeader(chatId);
         updateTypingHeader(chatId);
-        // Ensure full history is loaded on first open
-        if (!connectedChats[chatId].historyLoaded) { fetchChatHistoryMulti(chatId); }
+        // Always (re)fetch recent history to avoid missing messages received while chat was not selected
+        fetchChatHistoryMulti(chatId);
         // Render thread
         renderMessagesMulti(chatId);
         // Save selected
@@ -655,7 +685,7 @@
 
     async function fetchChatHistoryMulti(chatId) {
         try {
-            const resp = await fetch('/api/chat/' + encodeURIComponent(chatId) + '/history', { credentials: 'include' });
+            const resp = await fetch('/api/chat/' + encodeURIComponent(chatId) + '/history?limit=50', { credentials: 'include' });
             if (!resp.ok) return;
             const history = await resp.json();
             var chat = connectedChats[chatId];
@@ -764,10 +794,43 @@
         }
     }
 
-    function sendFromComposer() {
-        var chatId = window.selectedChatId;
-        if (!chatId) { alert('Select a chat first'); return; }
+    async function sendFromComposer() {
         var inputEl = document.getElementById('chatInput');
+        var chatId = window.selectedChatId;
+        if (!chatId) {
+            // If we are composing a new chat, create it now and then send
+            if (!pendingChat) { alert('Select a chat or start a new one'); return; }
+            try {
+                await ensureWebSocketConnected();
+                if (!currentUser) {
+                    const userResp = await fetch('/api/user', { credentials: 'include' });
+                    if (userResp.ok) currentUser = await userResp.json();
+                }
+                var myId = currentUser && (currentUser.uuid || currentUser.id);
+                var partnerType = pendingChat.partnerType;
+                var partnerId = pendingChat.partnerId;
+                var payload = partnerType === 'worker' ? { userId: myId, workerId: partnerId } : { userId: partnerId, workerId: myId };
+                const resp = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) { alert('Failed to create chat: ' + resp.status); return; }
+                const chat = await resp.json();
+                chatId = chat.id || chat.chatId;
+                if (!chatId) { alert('Chat created but id missing'); return; }
+                // Subscribe and select chat, but do not add to list; inbox event will refresh it
+                myChatsIndex[chatId] = chat;
+                createChatEntry(chatId);
+                subscribeChat(chatId);
+                selectChat(chatId);
+                pendingChat = null;
+            } catch (e) {
+                console.error('Failed to create chat on first send', e);
+                return;
+            }
+        }
         sendMessageMulti(chatId, inputEl);
     }
 
@@ -819,25 +882,19 @@
             partnerType = (partnerType || 'worker').toLowerCase() === 'user' ? 'user' : 'worker';
             var partnerId = prompt('Enter partner ID:');
             if (!partnerId) { alert('Partner ID required'); return; }
-            var payload = partnerType === 'worker' ? { userId: myId, workerId: partnerId } : { userId: partnerId, workerId: myId };
-            const resp = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            });
-            if (!resp.ok) {
-                alert('Failed to create chat: ' + resp.status);
-                return;
+            pendingChat = { partnerType: partnerType, partnerId: partnerId };
+            window.selectedChatId = null; // not created yet
+            // Update header title to show counterpart indicator
+            var titleEl = document.getElementById('chatTitle');
+            if (titleEl) {
+                var label = partnerType === 'worker' ? 'Worker' : 'User';
+                titleEl.textContent = 'New chat with ' + label + ' ' + partnerId;
             }
-            const chat = await resp.json();
-            const chatId = chat.id || chat.chatId;
-            if (!chatId) { alert('Chat created but id missing'); return; }
-            // Refresh list from server to get proper sort order and denorm fields, then select the new chat
-            chatPage.page = 1;
-            await loadCurrentUserAndChats(true, chatId);
+            // Reset thread UI for composing
+            var thread = document.getElementById('chatThread');
+            if (thread) thread.innerHTML = '';
         } catch (e) {
-            console.error('Create chat error', e);
+            console.error('Create chat prep error', e);
         }
     }
 </script>

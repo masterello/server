@@ -6,7 +6,8 @@ import java.util.*
 data class InboxItemDTO(
     val chatId: UUID,
     val lastMessageAt: OffsetDateTime?,
-    val lastMessagePreview: String?
+    val lastMessagePreview: String?,
+    val senderId: UUID?
 )
 
 data class InboxSnapshotDTO(

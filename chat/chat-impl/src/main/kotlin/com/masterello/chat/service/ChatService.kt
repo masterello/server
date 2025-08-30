@@ -4,6 +4,7 @@ import com.masterello.chat.domain.Chat
 import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
+import com.masterello.chat.dto.ChatPageDTO
 import com.masterello.chat.exceptions.ChatCreationValidationException
 import com.masterello.chat.exceptions.TaskNotFoundException
 import com.masterello.chat.exceptions.WorkerNotFoundException
@@ -17,6 +18,7 @@ import com.masterello.user.service.MasterelloUserService
 import com.masterello.user.value.MasterelloUser
 import com.masterello.worker.service.ReadOnlyWorkerService
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -32,7 +34,8 @@ class ChatService(
     private val userService: MasterelloUserService,
     private val chatMapper: ChatMapper,
     private val taskService: ReadOnlyTaskService,
-    private val workerService: ReadOnlyWorkerService
+    private val workerService: ReadOnlyWorkerService,
+    private val applicationEventPublisher: ApplicationEventPublisher
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -100,7 +103,7 @@ class ChatService(
     /**
      * Gets all active chats for the current user.
      */
-    fun getUserChats(page: Int, size: Int): com.masterello.chat.dto.ChatPageDTO {
+    fun getUserChats(page: Int, size: Int): ChatPageDTO {
         val me = getAuthenticatedUserId()
         val pageable = org.springframework.data.domain.PageRequest.of(
             (page.coerceAtLeast(1) - 1), size,
@@ -109,11 +112,11 @@ class ChatService(
                 org.springframework.data.domain.Sort.Order.desc("id")
             )
         )
-        val p = chatRepository.findByUserIdOrWorkerId(me, me, pageable)
+        val p = chatRepository.findNonEmptyChatsFor(me, pageable)
         val participants = p.content.flatMap { listOf(it.userId, it.workerId) }.toSet()
         val info = userService.findAllByIds(participants)
         val items = p.content.map { chatMapper.toDTO(it, info) }
-        return com.masterello.chat.dto.ChatPageDTO(
+        return ChatPageDTO(
             items = items,
             page = page.coerceAtLeast(1),
             size = size,
@@ -135,40 +138,62 @@ class ChatService(
     }
 
     private fun createGeneralChat(userId: UUID, workerId: UUID): Chat {
+        return createChatInternal(
+            userId = userId,
+            workerId = workerId,
+            chatType = ChatType.GENERAL,
+            taskId = null,
+            fallbackFind = { findExistingGeneralChat(userId, workerId) },
+            errorMessage = "Failed to create general chat between $userId and $workerId"
+        )
+    }
+
+    private fun createTaskChat(userId: UUID, workerId: UUID, taskId: UUID): Chat {
+        return createChatInternal(
+            userId = userId,
+            workerId = workerId,
+            chatType = ChatType.TASK_SPECIFIC,
+            taskId = taskId,
+            fallbackFind = { findExistingTaskChat(userId, workerId, taskId) },
+            errorMessage = "Failed to create task chat for task $taskId"
+        )
+    }
+
+    private fun createChatInternal(
+        userId: UUID,
+        workerId: UUID,
+        chatType: ChatType,
+        taskId: UUID?,
+        fallbackFind: () -> Chat?,
+        errorMessage: String
+    ): Chat {
         return try {
-            val now = OffsetDateTime.now()
             val chat = Chat(
                 userId = userId,
                 workerId = workerId,
-                chatType = ChatType.GENERAL,
-                taskId = null,
-                lastMessageAt = now
+                chatType = chatType,
+                taskId = taskId,
+                lastMessageAt = null // do not set; empty chats should not appear until first message
             )
-            chatRepository.save(chat)
+            val saved = chatRepository.save(chat)
+            // Do NOT publish inbox event on creation; appears after first message
+            saved
         } catch (ex: DataIntegrityViolationException) {
             // Handle race condition - try to find the chat that was created by another thread
-            findExistingGeneralChat(userId, workerId)
-                ?: throw ChatCreationValidationException("Failed to create general chat between $userId and $workerId")
+            fallbackFind() ?: throw ChatCreationValidationException(errorMessage)
         }
     }
 
-
-    private fun createTaskChat(userId: UUID, workerId: UUID, taskId: UUID): Chat {
-        return try {
-            val now = OffsetDateTime.now()
-            val chat = Chat(
-                userId = userId,
-                workerId = workerId,
-                chatType = ChatType.TASK_SPECIFIC,
-                taskId = taskId,
-                lastMessageAt = now
-            )
-            chatRepository.save(chat)
-        } catch (ex: DataIntegrityViolationException) {
-            // Handle race condition - try to find the chat that was created by another thread
-            findExistingTaskChat(userId, workerId, taskId)
-                ?: throw ChatCreationValidationException("Failed to create task chat for task $taskId")
-        }
+    private fun publishChatCreatedEvent(saved: Chat) {
+        applicationEventPublisher.publishEvent(
+                ChatInboxEvent(
+                        chatId = saved.id!!,
+                        recipients = listOf(saved.userId, saved.workerId),
+                        lastMessageAt = saved.lastMessageAt,
+                        lastMessagePreview = saved.lastMessagePreview,
+                        senderId = getAuthenticatedUserId()
+                )
+        )
     }
 
     private fun getChatParticipantsInfo(userId: UUID, workerId: UUID): Map<UUID, MasterelloUser> {

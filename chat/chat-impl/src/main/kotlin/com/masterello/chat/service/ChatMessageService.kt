@@ -15,7 +15,8 @@ import java.util.UUID
 class ChatMessageService(
     private val messageRepository: MessageRepository,
     private val chatRepository: ChatRepository,
-    private val messageMapper: MessageMapper
+    private val messageMapper: MessageMapper,
+    private val applicationEventPublisher: org.springframework.context.ApplicationEventPublisher
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -32,6 +33,24 @@ class ChatMessageService(
         val createdAt: OffsetDateTime = saved.createdAt ?: OffsetDateTime.now()
         // Atomic denorm update ("keep the max")
         chatRepository.updateLastMessage(chatId, createdAt, preview)
+        // Publish inbox event for both participants; listener will send after commit
+        try {
+            val chatOpt = chatRepository.findById(chatId)
+            if (chatOpt.isPresent) {
+                val chat = chatOpt.get()
+                applicationEventPublisher.publishEvent(
+                    ChatInboxEvent(
+                        chatId = chatId,
+                        recipients = listOf(chat.userId, chat.workerId),
+                        lastMessageAt = createdAt,
+                        lastMessagePreview = preview,
+                        senderId = createdBy
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            log.warn(e) { "Failed to publish ChatInboxEvent for chat $chatId" }
+        }
         log.info { "saved: $saved" }
         return messageMapper.toDto(saved)
     }

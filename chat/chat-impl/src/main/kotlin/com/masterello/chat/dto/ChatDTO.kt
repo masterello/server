@@ -13,6 +13,6 @@ data class ChatDTO(
     val userName: String,
     val workerName: String,
     val createdAt: OffsetDateTime,
-    val lastMessageAt: OffsetDateTime,
+    val lastMessageAt: OffsetDateTime?,
     val lastMessagePreview: String?
 )
