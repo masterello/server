@@ -1,5 +1,5 @@
 # Stage 1: Build Stage using a slim Gradle JDK
-FROM gradle:8.3.0-jdk20-alpine AS build
+FROM gradle:8.14.3-jdk21-alpine AS build
 WORKDIR /home/gradle/src
 COPY --chown=gradle:gradle . .
 
@@ -7,7 +7,7 @@ COPY --chown=gradle:gradle . .
 RUN gradle build -x test --no-daemon
 
 # Stage 2: Use a lightweight JRE image for the runtime
-FROM eclipse-temurin:20-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 # Expose the application port
 EXPOSE 8090

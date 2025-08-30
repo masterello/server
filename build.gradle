@@ -12,6 +12,26 @@ buildscript {
 
 plugins {
     id('base')
+    id('java')
+    id("org.jetbrains.kotlin.jvm") version "1.9.25" apply false
+    id("org.jetbrains.kotlin.plugin.spring") version "1.9.25" apply false
+    id("org.jetbrains.kotlin.kapt") version "1.9.25" apply false
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.9.25" apply false
+}
+
+subprojects {
+    plugins.withId("java") {
+        java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
+        }
+    }
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        kotlin {
+            jvmToolchain(21)
+        }
+    }
 }
 
 subprojects {
@@ -21,15 +41,15 @@ subprojects {
 
     group = 'com.masterello'
     version = '0.0.1-SNAPSHOT'
-    sourceCompatibility = '20'
+    sourceCompatibility = '21'
 
     repositories {
         mavenCentral()
     }
 
     dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.34'
-        annotationProcessor 'org.projectlombok:lombok:1.18.34'
+        compileOnly 'org.projectlombok:lombok:1.18.38'
+        annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
         implementation 'org.springframework.boot:spring-boot-starter-web'
         implementation 'org.springframework.boot:spring-boot-starter-test'
@@ -43,8 +63,8 @@ subprojects {
         implementation 'io.springfox:springfox-swagger2:2.9.2'
         implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
 
-        testCompileOnly 'org.projectlombok:lombok:1.18.34'
-        testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+        testCompileOnly 'org.projectlombok:lombok:1.18.38'
+        testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
     }
 
     test {

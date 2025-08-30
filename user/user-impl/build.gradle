@@ -17,7 +17,7 @@ dependencies {
 
     testImplementation  project(':auth-contract-test')
     testImplementation  project(':common-test')
-    testImplementation 'org.projectlombok:lombok:1.18.28'
+    testImplementation 'org.projectlombok:lombok:1.18.38'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:junit-jupiter'
