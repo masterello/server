@@ -20,6 +20,7 @@ public class WorkerSearchRequest {
     @Nullable
     private List<City> cities;
     private boolean showTestWorkers;
+    private boolean includeOnline;
     @NotNull
     @Valid
     private PageRequestDTO pageRequest;

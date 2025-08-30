@@ -1,6 +1,5 @@
 package com.masterello.chat.config
 
-import com.masterello.chat.ws.interceptor.AuthHandshakeInterceptor
 import com.masterello.chat.ws.interceptor.WebSocketAuthInterceptor
 import com.masterello.chat.ws.interceptor.WebSocketErrorHandler
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -9,15 +8,17 @@ import org.springframework.messaging.simp.config.ChannelRegistration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
+import org.springframework.web.socket.server.support.DefaultHandshakeHandler
+import java.security.Principal
 
 @ConditionalOnProperty(prefix = "masterello.chat.ws", name = ["enabled"], havingValue = "true", matchIfMissing = true)
 @Configuration
 @EnableWebSocketMessageBroker
-class WebSocketConfig(private val authHandshakeInterceptor: AuthHandshakeInterceptor,
-                      private val webSocketAuthInterceptor: WebSocketAuthInterceptor,
+class WebSocketConfig(private val webSocketAuthInterceptor: WebSocketAuthInterceptor,
                       private val webSocketErrorHandler: WebSocketErrorHandler,
                       private val chatWebSocketProperties: ChatWebSocketProperties) : WebSocketMessageBrokerConfigurer {
 
@@ -42,7 +43,16 @@ class WebSocketConfig(private val authHandshakeInterceptor: AuthHandshakeInterce
         registry
                 .setErrorHandler(webSocketErrorHandler)
                 .addEndpoint("/ws/chat")
-                .addInterceptors(authHandshakeInterceptor) // Register the interceptor
+                .setHandshakeHandler(object : DefaultHandshakeHandler() {
+                    override fun determineUser(
+                        request: org.springframework.http.server.ServerHttpRequest,
+                        wsHandler: org.springframework.web.socket.WebSocketHandler,
+                        attributes: MutableMap<String, Any>
+                    ): Principal? {
+                        return SecurityContextHolder.getContext().authentication
+                    }
+                })
+                .setAllowedOriginPatterns(*chatWebSocketProperties.allowedOriginPatterns.toTypedArray())
                 .withSockJS() // WebSocket connection endpoint
 
     }

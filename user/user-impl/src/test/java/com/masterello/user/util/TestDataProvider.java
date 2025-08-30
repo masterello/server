@@ -36,9 +36,11 @@ public final class TestDataProvider {
     public static final UUID VERIFIED_USER_2 = UUID.fromString(VERIFIED_USER_2_S);
     public static final String VERIFIED_USER_EMAIL = "verified@gmail.com";
     public static final String VERIFIED_USER_PASS = "password";
-    public static final UUID NOT_VERIFIED_LINK_EXPIRED_USER = UUID.fromString("e8b0639f-148c-4f74-b834-bbe04072a999");
+    public static final String NOT_VERIFIED_LINK_EXPIRED_USER_S = "e8b0639f-148c-4f74-b834-bbe04072a999";
+    public static final UUID NOT_VERIFIED_LINK_EXPIRED_USER = UUID.fromString(NOT_VERIFIED_LINK_EXPIRED_USER_S);
     public static final String NOT_VERIFIED_LINK_EXPIRED_USER_EMAIL = "not_verified_link_expired@gmail.com";
-    public static final UUID NOT_VERIFIED_LINK_VALID_USER = UUID.fromString("e8b0639f-148c-4f74-b834-bbe04072a416");
+    public static final String NOT_VERIFIED_LINK_VALID_USER_S = "e8b0639f-148c-4f74-b834-bbe04072a416";
+    public static final UUID NOT_VERIFIED_LINK_VALID_USER = UUID.fromString(NOT_VERIFIED_LINK_VALID_USER_S);
     public static final String NOT_VERIFIED_LINK_VALID_USER_EMAIL = "not_verified_link_valid@gmail.com";
     public static final String ACCESS_TOKEN = "eodTcZFDW4x2P95ZgiXfGK19dbz6FNgHMpOUNLF0Q9ca2GRyi7Nt-5le_tsbHFP7EA6zcCsKIxgERswmo_cWwTnz3c6WxtTSWG3PZ0SX-K7JJ00HiMx4SBu2ESo4LcZH";
 

@@ -17,6 +17,7 @@ import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.WorkerTestConfiguration;
 import com.masterello.worker.domain.Language;
 import com.masterello.worker.dto.PageRequestDTO;
+import com.masterello.worker.dto.ServiceLocationDTO;
 import com.masterello.worker.dto.WorkerInfoDTO;
 import com.masterello.worker.dto.WorkerSearchRequest;
 import com.masterello.worker.dto.WorkerSearchResponse;
@@ -75,7 +76,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     void setUp() {
         when(categoryService.getAllCategories())
                 .thenReturn(List.of(
-                        randomCategory(10, 0 ),
+                        randomCategory(10, 0),
                         randomCategory(15, 0),
                         randomCategory(20, 0),
                         randomCategory(30, 0, false)
@@ -90,13 +91,17 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, null, null));
 
-        WorkerInfoDTO info = WorkerInfoDTO.builder()
+        ServiceLocationDTO serviceLocation = ServiceLocationDTO.builder()
+                .online(true)
+                .cities(List.of(City.BERLIN, City.HAMBURG))
+                .build();
+        WorkerInfoDTO<WorkerServiceDTO> info = WorkerInfoDTO.<WorkerServiceDTO>builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
                 .country(Country.GERMANY)
-                .city(City.BERLIN)
+                .serviceLocation(serviceLocation)
                 .services(services)
                 .languages(List.of(Language.EN))
                 .build();
@@ -119,6 +124,9 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("viber", nullValue())
                     .body("services", hasSize(2))
                     .body("registeredAt", notNullValue())
+                    .body("serviceLocation.online", is(true))
+                    .body("serviceLocation.cities", containsInAnyOrder(
+                            City.BERLIN.getCode(), City.HAMBURG.getCode()))
                     .body("services", containsInAnyOrder(
                             mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
                             mapOf("serviceId", 20, "amount", null, "details", null)
@@ -136,13 +144,17 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, null, null));
 
-        WorkerInfoDTO info = WorkerInfoDTO.builder()
+        ServiceLocationDTO serviceLocation = ServiceLocationDTO.builder()
+                .online(false)
+                .cities(List.of(City.BERLIN))
+                .build();
+        WorkerInfoDTO<WorkerServiceDTO> info = WorkerInfoDTO.<WorkerServiceDTO>builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
                 .country(Country.GERMANY)
-                .city(City.BERLIN)
+                .serviceLocation(serviceLocation)
                 .services(services)
                 .languages(List.of(Language.EN))
                 .build();
@@ -164,6 +176,8 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("phone", is(PHONE))
                     .body("viber", nullValue())
                     .body("services", hasSize(2))
+                    .body("serviceLocation.online", is(false))
+                    .body("serviceLocation.cities", contains(City.BERLIN.getCode()))
                     .body("registeredAt", notNullValue())
                     .body("services", containsInAnyOrder(
                             mapOf("serviceId", 10, "amount", 100, "details", WS_DETAILS),
@@ -181,13 +195,17 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(30, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, null, null));
 
-        WorkerInfoDTO info = WorkerInfoDTO.builder()
+        ServiceLocationDTO serviceLocation = ServiceLocationDTO.builder()
+                .online(false)
+                .cities(List.of(City.BERLIN))
+                .build();
+        WorkerInfoDTO<WorkerServiceDTO> info = WorkerInfoDTO.<WorkerServiceDTO>builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
                 .country(Country.GERMANY)
-                .city(City.BERLIN)
+                .serviceLocation(serviceLocation)
                 .services(services)
                 .languages(List.of(Language.EN))
                 .build();
@@ -220,15 +238,17 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, 200, null));
-//        when(aiService.process(org.mockito.ArgumentMatchers.any(AiPrompt.class), eq(WorkerTranslationService.TranslationResponse.class)))
-//                .thenReturn(Mono.empty());
-        WorkerInfoDTO info = WorkerInfoDTO.builder()
+        ServiceLocationDTO serviceLocation = ServiceLocationDTO.builder()
+                .online(false)
+                .cities(List.of(City.BERLIN))
+                .build();
+        WorkerInfoDTO<WorkerServiceDTO> info = WorkerInfoDTO.<WorkerServiceDTO>builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
                 .country(Country.GERMANY)
-                .city(City.BERLIN)
+                .serviceLocation(serviceLocation)
                 .services(services)
                 .languages(List.of(Language.EN))
                 .build();
@@ -263,13 +283,17 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
                 new WorkerServiceDTO(20, 200, null));
 
-        WorkerInfoDTO info = WorkerInfoDTO.builder()
+        ServiceLocationDTO serviceLocation = ServiceLocationDTO.builder()
+                .online(false)
+                .cities(List.of(City.BERLIN))
+                .build();
+        WorkerInfoDTO<WorkerServiceDTO> info = WorkerInfoDTO.<WorkerServiceDTO>builder()
                 .description(DESCRIPTION)
                 .whatsapp(WHATSAPP)
                 .telegram(TELEGRAM)
                 .phone(PHONE)
                 .country(Country.GERMANY)
-                .city(City.BERLIN)
+                .serviceLocation(serviceLocation)
                 .services(services)
                 .languages(List.of(Language.EN))
                 .build();
@@ -377,7 +401,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("workerInfo.viber", is("plumber-v"))
                     .body("workerInfo.phone", is("+49111111111"))
                     .body("workerInfo.services", hasSize(1))
-                    .body("workerInfo.city", is(City.HAMBURG.getCode()))
+                    .body("workerInfo.serviceLocation.cities", hasItem(City.HAMBURG.getCode()))
                     .body("workerInfo.services",hasItem(
                             allOf(
                                     hasEntry("serviceId", 10),
@@ -418,7 +442,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                     .body("workerInfo.viber", nullValue())
                     .body("workerInfo.phone", nullValue())
                     .body("workerInfo.services", hasSize(1))
-                    .body("workerInfo.city", is(City.HAMBURG.getCode()))
+                    .body("workerInfo.serviceLocation.cities", hasItem(City.HAMBURG.getCode()))
                     .body("workerInfo.services",hasItem(
                             allOf(
                                     hasEntry("serviceId", 10),
@@ -468,7 +492,46 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         //@formatter:on
     }
 
-     @Test
+    @Test
+    @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
+    void patchWorkerInfoCity() {
+
+        String body = "[{\"op\":\"replace\",\"path\":\"/serviceLocation/cities\"," +
+                "\"value\":[\"BE\"]}]";
+
+        //@formatter:off
+        RestAssured
+                .given()
+                    .cookie(tokenCookie())
+                    .body(body)
+                    .accept("application/json")
+                    .contentType("application/json-patch+json")
+                .when()
+                    .patch("/api/worker/{uuid}/info", WORKER_2.toString())
+                .then()
+                    .statusCode(200)
+                    .body("description", is("best electrician"))
+                    .body("whatsapp", is("electrician-w"))
+                    .body("telegram", is("electrician-t"))
+                    .body("viber", is("electrician-v"))
+                    .body("phone", is("+49222222222"))
+                    .body("serviceLocation.online", is(false))
+                    .body("serviceLocation.cities", contains(City.BERLIN.getCode()))
+                    .body("services", hasSize(2))
+                    .body("services", containsInAnyOrder(
+                            allOf(
+                                    hasEntry("serviceId", 10),
+                                    hasEntry("amount", 150)
+                            ),
+                            allOf(
+                                    hasEntry("serviceId", 20),
+                                    hasEntry("amount", 200)
+                            )
+                    ));
+        //@formatter:on
+    }
+
+    @Test
     @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
     void patchWorkerInfoServices_ServiceIdNotFound() {
 
@@ -600,7 +663,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @AuthMocked(userId = USER_S, roles = {AuthZRole.ADMIN})
     void searchWorkers_by_lang_and_service_by_admin(boolean withTestWorkers, String expectedResponseFileName) {
         mockCategories(listOf(), Map.of());
-        if(withTestWorkers) {
+        if (withTestWorkers) {
             mockUsers(Set.of(WORKER_1, WORKER_2, WORKER_3, WORKER_9));
         } else {
             mockUsers(Set.of(WORKER_1, WORKER_2, WORKER_3));
@@ -645,7 +708,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         when(userService.findAllByIds(
                 argThat(actual ->
-                    actual != null && actual.size() == ids.size() && actual.containsAll(ids)))
+                        actual != null && actual.size() == ids.size() && actual.containsAll(ids)))
         ).thenReturn(users);
     }
 
@@ -775,6 +838,41 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
         assertEquals(expectedResponse, actualResponse);
     }
 
+    @Test
+    void searchWorkers_by_city_including_online() {
+        when(userService.findAllByIds(anySet())).thenReturn(getMasterelloTestUsers());
+
+        WorkerSearchRequest request = WorkerSearchRequest.builder()
+                .cities(List.of(City.MUNICH))
+                .includeOnline(true)
+                .pageRequest(PageRequestDTO.builder()
+                        .page(1)
+                        .pageSize(10)
+                        .sort(PageRequestDTO.Sort.builder()
+                                .order(PageRequestDTO.SortOrder.ASC)
+                                .fields(List.of("workerId"))
+                                .build())
+                        .build())
+                .build();
+
+        WorkerSearchResponse expectedResponse = readWorkerFromFile("src/test/resources/responses/workers_search_city_with_online.json");
+
+        //@formatter:off
+        ValidatableResponse validatableResponse = RestAssured
+                .given()
+                    .accept("application/json")
+                    .contentType("application/json")
+                    .body(request)
+                .when()
+                    .post("/api/worker/search")
+                .then()
+                    .statusCode(HttpStatus.OK.value());
+        //@formatter:on
+
+        WorkerSearchResponse actualResponse = validatableResponse.extract().body().as(WorkerSearchResponse.class);
+        assertEquals(expectedResponse, actualResponse);
+    }
+
 
     @Test
     void searchWorkers_noRecords() {
@@ -877,7 +975,7 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
                 .thenReturn(response);
     }
 
-    private <K, V> Map<K,V> mapOf(K k1, V v1, K k2, V v2, K k3, V v3) {
+    private <K, V> Map<K, V> mapOf(K k1, V v1, K k2, V v2, K k3, V v3) {
         val map = new HashMap<K, V>();
         map.put(k1, v1);
         map.put(k2, v2);

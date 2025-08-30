@@ -18,3 +18,7 @@ jobs:
     name: "Build and Check"
     uses: ./.github/workflows/reusable-check.yml
     secrets: inherit
+  dependency-check:
+    name: "OWASP check"
+    uses: ./.github/workflows/owasp.yml
+    secrets: inherit

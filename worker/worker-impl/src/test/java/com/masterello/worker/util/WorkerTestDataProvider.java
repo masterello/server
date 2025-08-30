@@ -9,11 +9,13 @@ import com.masterello.user.value.MasterelloUser;
 import com.masterello.user.value.Role;
 import com.masterello.user.value.UserStatus;
 import com.masterello.worker.domain.Language;
+import com.masterello.worker.domain.ServiceLocation;
 import com.masterello.worker.domain.WorkerInfo;
 import io.restassured.http.Cookie;
 
 import java.time.OffsetDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -70,7 +72,8 @@ public final class WorkerTestDataProvider {
                 true,
                 OffsetDateTime.now(),
                 OffsetDateTime.now(),
-                active
+                active,
+                false
         );
     }
 
@@ -185,7 +188,7 @@ public final class WorkerTestDataProvider {
     public static WorkerInfo getWorkerInfo(UUID workerId) {
         return WorkerInfo.builder()
                 .workerId(workerId)
-                .city(City.BERLIN)
+                .serviceLocation(ServiceLocation.builder().cities(List.of(City.BERLIN)).build())
                 .country(Country.GERMANY)
                 .active(true)
                 .languages(Set.of(Language.EN))

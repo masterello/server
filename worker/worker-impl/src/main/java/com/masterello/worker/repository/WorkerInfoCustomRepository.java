@@ -9,5 +9,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface WorkerInfoCustomRepository {
-    Page<UUID> findWorkerIdsByFilters(List<City> cities, List<Language> languages, List<Integer> serviceIds, boolean shouldShowTestWorkers, Pageable pageable);
+    Page<UUID> findWorkerIdsByFilters(List<City> cities, List<Language> languages, List<Integer> serviceIds, boolean shouldShowTestWorkers, boolean shouldIncludeOnline, Pageable pageable);
 }
