@@ -5,7 +5,8 @@ import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
 import com.masterello.chat.dto.ChatPageDTO
-import com.masterello.chat.exceptions.ChatCreationValidationException
+import com.masterello.chat.exceptions.ChatAlreadyExistsException
+import com.masterello.chat.exceptions.ChatNotFoundException
 import com.masterello.chat.exceptions.TaskNotFoundException
 import com.masterello.chat.exceptions.WorkerNotFoundException
 import com.masterello.chat.mapper.ChatMapper
@@ -18,7 +19,6 @@ import com.masterello.user.service.MasterelloUserService
 import com.masterello.user.value.MasterelloUser
 import com.masterello.worker.service.ReadOnlyWorkerService
 import io.github.oshai.kotlinlogging.KotlinLogging
-import org.springframework.context.ApplicationEventPublisher
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -28,14 +28,13 @@ import java.util.*
 
 @Service
 class ChatService(
-    private val chatRepository: ChatRepository,
-    private val messageRepository: MessageRepository,
-    private val messageMapper: MessageMapper,
-    private val userService: MasterelloUserService,
-    private val chatMapper: ChatMapper,
-    private val taskService: ReadOnlyTaskService,
-    private val workerService: ReadOnlyWorkerService,
-    private val applicationEventPublisher: ApplicationEventPublisher
+        private val chatRepository: ChatRepository,
+        private val messageRepository: MessageRepository,
+        private val messageMapper: MessageMapper,
+        private val userService: MasterelloUserService,
+        private val chatMapper: ChatMapper,
+        private val taskService: ReadOnlyTaskService,
+        private val workerService: ReadOnlyWorkerService,
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -44,16 +43,20 @@ class ChatService(
      * Creates or retrieves a general chat between a user and worker.
      * Authorization is handled at the controller level with @PreAuthorize.
      */
-    fun getOrCreateGeneralChat(userId: UUID, workerId: UUID): ChatDTO {
-        log.info { "Creating/retrieving general chat: user=$userId, worker=$workerId" }
-
-        // Worker must exist
-        validateWorker(workerId)
-        // Try to find existing general chat
+    fun getGeneralChat(userId: UUID, workerId: UUID): ChatDTO {
+        log.info { "Get general chat: user=$userId, worker=$workerId" }
         val chat = findExistingGeneralChat(userId, workerId)
-            ?: createGeneralChat(userId, workerId)
-        
-        // Get participant information and return DTO
+                ?: throw ChatNotFoundException("General chat between $userId and $workerId not found")
+        val participantsInfo = getChatParticipantsInfo(userId, workerId)
+        return chatMapper.toDTO(chat, participantsInfo)
+    }
+
+    fun createGeneralChatPublic(userId: UUID, workerId: UUID): ChatDTO {
+        log.info { "Create general chat: user=$userId, worker=$workerId" }
+        validateWorker(workerId)
+        val existing = findExistingGeneralChat(userId, workerId)
+        if (existing != null) throw ChatAlreadyExistsException("General chat between $userId and $workerId already exists")
+        val chat = createGeneralChat(userId, workerId)
         val participantsInfo = getChatParticipantsInfo(userId, workerId)
         return chatMapper.toDTO(chat, participantsInfo)
     }
@@ -66,24 +69,27 @@ class ChatService(
      * Creates or retrieves a task-specific chat between task owner and worker.
      * Authorization is handled at the controller level with @PreAuthorize.
      */
-    fun getOrCreateTaskChat(taskId: UUID, workerId: UUID): ChatDTO {
+    fun getTaskChat(taskId: UUID, workerId: UUID): ChatDTO {
         val requesterId = getAuthenticatedUserId()
-        
-        log.info { "Creating/retrieving task chat: requester=$requesterId, task=$taskId, worker=$workerId" }
-
-        validateWorker(workerId)
-        // Get task information to determine the actual task owner and assigned worker
+        log.info { "Get task chat: requester=$requesterId, task=$taskId, worker=$workerId" }
         val task = taskService.getTask(taskId)
-            ?: throw TaskNotFoundException("Task $taskId not found")
-        
-        // The chat is always between task owner (userUuid) and assigned worker (workerUuid)
+                ?: throw TaskNotFoundException("Task $taskId not found")
         val taskOwnerId = task.userUuid
-
-        // Try to find existing task chat between task owner and assigned worker
         val chat = findExistingTaskChat(taskOwnerId, workerId, taskId)
-            ?: createTaskChat(taskOwnerId, workerId, taskId)
-        
-        // Get participant information and return DTO
+                ?: throw ChatNotFoundException("Task chat for task $taskId and worker $workerId not found")
+        val participantsInfo = getChatParticipantsInfo(taskOwnerId, workerId)
+        return chatMapper.toDTO(chat, participantsInfo)
+    }
+
+    fun createTaskChatPublic(taskId: UUID, workerId: UUID): ChatDTO {
+        val requesterId = getAuthenticatedUserId()
+        log.info { "Create task chat: requester=$requesterId, task=$taskId, worker=$workerId" }
+        validateWorker(workerId)
+        val task = taskService.getTask(taskId) ?: throw TaskNotFoundException("Task $taskId not found")
+        val taskOwnerId = task.userUuid
+        val existing = findExistingTaskChat(taskOwnerId, workerId, taskId)
+        if (existing != null) throw ChatAlreadyExistsException("Task chat for task $taskId and worker $workerId already exists")
+        val chat = createTaskChat(taskOwnerId, workerId, taskId)
         val participantsInfo = getChatParticipantsInfo(taskOwnerId, workerId)
         return chatMapper.toDTO(chat, participantsInfo)
     }
@@ -94,36 +100,36 @@ class ChatService(
      */
     fun getChatHistory(chatId: UUID, limit: Int, before: OffsetDateTime): ChatHistoryDTO {
         log.info { "Retrieving chat history: chatId=$chatId, limit=$limit" }
-        
+
         // Fetch and return messages
         val messages = fetchMessages(chatId, before, limit)
         return ChatHistoryDTO(messages)
     }
-    
+
     /**
      * Gets all active chats for the current user.
      */
     fun getUserChats(page: Int, size: Int): ChatPageDTO {
         val me = getAuthenticatedUserId()
-        val pageable = org.springframework.data.domain.PageRequest.of(
-            (page.coerceAtLeast(1) - 1), size,
-            org.springframework.data.domain.Sort.by(
-                org.springframework.data.domain.Sort.Order.desc("lastMessageAt"),
-                org.springframework.data.domain.Sort.Order.desc("id")
-            )
+        val pageable = PageRequest.of(
+                (page.coerceAtLeast(1) - 1), size,
+                Sort.by(
+                        Sort.Order.desc("lastMessageAt"),
+                        Sort.Order.desc("id")
+                )
         )
         val p = chatRepository.findNonEmptyChatsFor(me, pageable)
         val participants = p.content.flatMap { listOf(it.userId, it.workerId) }.toSet()
         val info = userService.findAllByIds(participants)
         val items = p.content.map { chatMapper.toDTO(it, info) }
         return ChatPageDTO(
-            items = items,
-            page = page.coerceAtLeast(1),
-            size = size,
-            totalPages = p.totalPages,
-            totalElements = p.totalElements,
-            hasNext = p.hasNext(),
-            hasPrevious = p.hasPrevious()
+                items = items,
+                page = page.coerceAtLeast(1),
+                size = size,
+                totalPages = p.totalPages,
+                totalElements = p.totalElements,
+                hasNext = p.hasNext(),
+                hasPrevious = p.hasPrevious()
         )
     }
 
@@ -133,67 +139,46 @@ class ChatService(
 
     private fun findExistingTaskChat(userId: UUID, workerId: UUID, taskId: UUID): Chat? {
         return chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(
-            userId, workerId, taskId, ChatType.TASK_SPECIFIC
+                userId, workerId, taskId, ChatType.TASK_SPECIFIC
         )
     }
 
     private fun createGeneralChat(userId: UUID, workerId: UUID): Chat {
         return createChatInternal(
-            userId = userId,
-            workerId = workerId,
-            chatType = ChatType.GENERAL,
-            taskId = null,
-            fallbackFind = { findExistingGeneralChat(userId, workerId) },
-            errorMessage = "Failed to create general chat between $userId and $workerId"
+                userId = userId,
+                workerId = workerId,
+                chatType = ChatType.GENERAL,
+                taskId = null
         )
     }
 
     private fun createTaskChat(userId: UUID, workerId: UUID, taskId: UUID): Chat {
         return createChatInternal(
-            userId = userId,
-            workerId = workerId,
-            chatType = ChatType.TASK_SPECIFIC,
-            taskId = taskId,
-            fallbackFind = { findExistingTaskChat(userId, workerId, taskId) },
-            errorMessage = "Failed to create task chat for task $taskId"
+                userId = userId,
+                workerId = workerId,
+                chatType = ChatType.TASK_SPECIFIC,
+                taskId = taskId
         )
     }
 
     private fun createChatInternal(
-        userId: UUID,
-        workerId: UUID,
-        chatType: ChatType,
-        taskId: UUID?,
-        fallbackFind: () -> Chat?,
-        errorMessage: String
+            userId: UUID,
+            workerId: UUID,
+            chatType: ChatType,
+            taskId: UUID?
     ): Chat {
         return try {
             val chat = Chat(
-                userId = userId,
-                workerId = workerId,
-                chatType = chatType,
-                taskId = taskId,
-                lastMessageAt = null // do not set; empty chats should not appear until first message
+                    userId = userId,
+                    workerId = workerId,
+                    chatType = chatType,
+                    taskId = taskId,
             )
-            val saved = chatRepository.save(chat)
-            // Do NOT publish inbox event on creation; appears after first message
-            saved
+            chatRepository.save(chat)
         } catch (ex: DataIntegrityViolationException) {
-            // Handle race condition - try to find the chat that was created by another thread
-            fallbackFind() ?: throw ChatCreationValidationException(errorMessage)
+            // Unique constraint triggered -> chat already exists
+            throw ChatAlreadyExistsException("Chat already exists for participants")
         }
-    }
-
-    private fun publishChatCreatedEvent(saved: Chat) {
-        applicationEventPublisher.publishEvent(
-                ChatInboxEvent(
-                        chatId = saved.id!!,
-                        recipients = listOf(saved.userId, saved.workerId),
-                        lastMessageAt = saved.lastMessageAt,
-                        lastMessagePreview = saved.lastMessagePreview,
-                        senderId = getAuthenticatedUserId()
-                )
-        )
     }
 
     private fun getChatParticipantsInfo(userId: UUID, workerId: UUID): Map<UUID, MasterelloUser> {
@@ -201,13 +186,13 @@ class ChatService(
     }
 
     private fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int) =
-        messageRepository.findByChatIdAndCreatedAtBefore(
-            chatId,
-            before,
-            PageRequest.of(0, limit, Sort.by(Sort.Order.desc("createdAt")))
-        )
-            .map(messageMapper::toDto)
-            .reversed()
-            .toList()
+            messageRepository.findByChatIdAndCreatedAtBefore(
+                    chatId,
+                    before,
+                    PageRequest.of(0, limit, Sort.by(Sort.Order.desc("createdAt")))
+            )
+                    .map(messageMapper::toDto)
+                    .reversed()
+                    .toList()
 
 }

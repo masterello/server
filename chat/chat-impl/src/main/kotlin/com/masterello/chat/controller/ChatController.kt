@@ -23,10 +23,19 @@ class ChatController(
         description = "Creates or retrieves a general chat between current user and specified worker"
     )
     @ApiResponse(responseCode = "200", description = "Returns general chat info")
+    @GetMapping("")
+    @PreAuthorize("@chatSecurity.canCreateGeneralChat(#userId, #workerId)")
+    fun getGeneralChat(
+        @RequestParam("userId") userId: UUID,
+        @RequestParam("workerId") workerId: UUID
+    ): ChatDTO {
+        return chatService.getGeneralChat(userId, workerId)
+    }
+
     @PostMapping("")
     @PreAuthorize("@chatSecurity.canCreateGeneralChat(#request.userId, #request.workerId)")
-    fun getOrCreateGeneralChat(@RequestBody request: GetOrCreateGeneralChatDTO): ChatDTO {
-        return chatService.getOrCreateGeneralChat(request.userId, request.workerId)
+    fun createGeneralChat(@RequestBody request: GetOrCreateGeneralChatDTO): ChatDTO {
+        return chatService.createGeneralChatPublic(request.userId, request.workerId)
     }
 
     @Operation(
@@ -34,10 +43,17 @@ class ChatController(
         description = "Creates or retrieves a chat for a specific task between task owner and worker"
     )
     @ApiResponse(responseCode = "200", description = "Returns task-specific chat info")
+    @GetMapping("/task")
+    @PreAuthorize("@chatSecurity.canCreateTaskChat(#taskId, #workerId)")
+    fun getTaskChat(@RequestParam("taskId") taskId: UUID, @RequestParam("workerId") workerId: UUID
+    ): ChatDTO {
+        return chatService.getTaskChat(taskId, workerId)
+    }
+
     @PostMapping("/task")
     @PreAuthorize("@chatSecurity.canCreateTaskChat(#request.taskId, #request.workerId)")
-    fun getOrCreateTaskChat(@RequestBody request: GetOrCreateTaskChatDTO): ChatDTO {
-        return chatService.getOrCreateTaskChat(request.taskId, request.workerId)
+    fun createTaskChat(@RequestBody request: GetOrCreateTaskChatDTO): ChatDTO {
+        return chatService.createTaskChatPublic(request.taskId, request.workerId)
     }
 
     @Operation(
