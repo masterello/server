@@ -43,5 +43,8 @@ data class Category(
     val updatedDate: OffsetDateTime? = null,
 
     @Column(name = "active")
-    var active: Boolean? = false
+    var active: Boolean? = false,
+
+    @Column(name = "available_online")
+    var availableOnline: Boolean? = false
 )

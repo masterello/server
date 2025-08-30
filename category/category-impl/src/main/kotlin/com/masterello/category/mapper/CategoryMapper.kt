@@ -18,7 +18,8 @@ class CategoryMapper {
             description = dto.description,
             parentCode = dto.parentCode,
             isService = dto.isService,
-            active = dto.active
+            active = dto.active,
+            availableOnline = dto.availableOnline
         )
     }
 
@@ -33,6 +34,7 @@ class CategoryMapper {
         category.parentCode = dto.parentCode
         category.isService = dto.isService
         category.active = dto.active
+        category.availableOnline = dto.availableOnline
     }
 
     fun categoryToCategoryDto(category: Category?): CategoryDto {
@@ -49,7 +51,8 @@ class CategoryMapper {
             isService = category.isService,
             createdDate = category.createdDate,
             updatedDate = category.updatedDate,
-            active = category.active
+            active = category.active,
+            availableOnline = category.availableOnline
         )
     }
 

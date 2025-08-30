@@ -24,7 +24,8 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.is_service,
                 c.created_date,
                 c.updated_date,
-                c.active
+                c.active,
+                c.available_online
             FROM
                 category c
             WHERE
@@ -40,7 +41,8 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.is_service,
                 c.created_date,
                 c.updated_date,
-                c.active
+                c.active,
+                c.available_online
             FROM
                 category c
             INNER JOIN
@@ -62,7 +64,8 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.is_service,
                 c.created_date,
                 c.updated_date,
-                c.active
+                c.active,
+                c.available_online
             FROM
                 category c
             WHERE
@@ -78,7 +81,8 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.is_service,
                 c.created_date,
                 c.updated_date,
-                c.active
+                c.active,
+                c.available_online
             FROM
                 category c
             INNER JOIN
@@ -102,8 +106,9 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.is_service,
                 c.created_date,
                 c.updated_date,
-                c.active
-            FROM
+                c.active,
+                c.available_online
+≈            FROM
                 category c
             WHERE
                 c.category_code = :categoryCode AND c.active = true AND c.is_service = true
@@ -118,7 +123,8 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
                 c.is_service,
                 c.created_date,
                 c.updated_date,
-                c.active
+                c.active,
+                c.available_online
             FROM
                 category c
             INNER JOIN

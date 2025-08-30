@@ -13,7 +13,10 @@
         "whatsapp": "meh-plumber-w",
         "viber": "meh-plumber-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["BE"]
+        },
         "languages": ["DE", "TR"],
         "services": [
           {
@@ -37,7 +40,10 @@
         "whatsapp": "meh-electrician-w",
         "viber": "meh-electrician-v",
         "country": "DE",
-        "city": "BE",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["BE"]
+        },
         "languages": ["DE"],
         "services": [
           {

@@ -91,6 +91,9 @@ masterello:
   chat:
     ws:
       enabled: true
+      allowedOriginPatterns:
+      - https://api.masterello.com
+      - https://masterello.com
   translation:
     deepl:
       apiKey: ${DEEPL_API_KEY}

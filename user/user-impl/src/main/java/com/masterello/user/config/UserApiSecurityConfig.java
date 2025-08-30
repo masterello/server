@@ -47,7 +47,6 @@ public class UserApiSecurityConfig {
         PathPatternRequestMatcher.Builder matcherBuilder = PathPatternRequestMatcher.withDefaults();
         RequestMatcher publicEndpoints = new OrRequestMatcher(
                 matcherBuilder.matcher("/api/user/signup"),
-                matcherBuilder.matcher("/api/user/confirmationLink/**"),
                 matcherBuilder.matcher("/api/user/resetPassword/**")
         );
         AuthFilter authFilter = new AuthFilter(

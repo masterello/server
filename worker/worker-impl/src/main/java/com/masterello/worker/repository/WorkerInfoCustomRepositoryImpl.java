@@ -32,7 +32,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
 
     @Override
     public Page<UUID> findWorkerIdsByFilters(List<City> cities, List<Language> languages, List<Integer> serviceIds,
-                                             boolean shouldShowTestWorkers, Pageable pageable) {
+                                             boolean shouldShowTestWorkers, boolean shouldIncludeOnline, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Object[]> query = cb.createQuery(Object[].class); // Use Object[] to select multiple columns
         Root<WorkerInfo> root = query.from(WorkerInfo.class);
@@ -45,7 +45,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         query.multiselect(selectFields);
 
         // Build predicates
-        Predicate[] predicates = getPredicates(cities, languages, serviceIds, shouldShowTestWorkers, root, cb);
+        Predicate[] predicates = getPredicates(cities, languages, serviceIds, shouldShowTestWorkers, shouldIncludeOnline, root, cb);
 
         // Apply predicates
         query.where(cb.and(predicates)).distinct(true);
@@ -72,7 +72,7 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
         CriteriaBuilder ccb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Long> countQuery = ccb.createQuery(Long.class);
         Root<WorkerInfo> countRoot = countQuery.from(WorkerInfo.class);
-        var countPredicates = getPredicates(cities, languages, serviceIds, shouldShowTestWorkers, countRoot, ccb);
+        var countPredicates = getPredicates(cities, languages, serviceIds, shouldShowTestWorkers, shouldIncludeOnline, countRoot, ccb);
         countQuery.select(ccb.countDistinct(countRoot)).where(ccb.and(countPredicates));
         Long totalElements = entityManager.createQuery(countQuery).getSingleResult();
 
@@ -88,18 +88,37 @@ public class WorkerInfoCustomRepositoryImpl implements WorkerInfoCustomRepositor
     }
 
     @NotNull
-    private static Predicate[] getPredicates(List<City> cities, List<Language> languages, List<Integer> serviceIds,
-                                             boolean shouldShowTestWorkers, Root<WorkerInfo> root, CriteriaBuilder cb) {
+    private static Predicate[] getPredicates(List<City> cities,
+                                             List<Language> languages,
+                                             List<Integer> serviceIds,
+                                             boolean shouldShowTestWorkers,
+                                             boolean shouldIncludeOnline,
+                                             Root<WorkerInfo> root,
+                                             CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
 
         predicates.add(cb.equal(root.get("active"), true));
         predicates.add(cb.equal(root.get("verified"), true));
-        if(!shouldShowTestWorkers){
+        if (!shouldShowTestWorkers) {
             predicates.add(cb.equal(root.get("test"), false));
         }
 
+        // City filter and includeOnline logic
+        Predicate cityPredicate = null;
         if (cities != null && !cities.isEmpty()) {
-            predicates.add(root.get("city").in(cities));
+            Join<WorkerInfo, City> cityJoin = root.join("serviceLocation").join("cities");
+            cityPredicate = cityJoin.in(cities);
+        }
+        Predicate onlinePredicate = null;
+        if (shouldIncludeOnline) {
+            onlinePredicate = cb.isTrue(root.get("serviceLocation").get("online"));
+        }
+        if (cityPredicate != null && onlinePredicate != null) {
+            predicates.add(cb.or(cityPredicate, onlinePredicate));
+        } else if (cityPredicate != null) {
+            predicates.add(cityPredicate);
+        } else if (onlinePredicate != null) {
+            predicates.add(onlinePredicate);
         }
 
         if (languages != null && !languages.isEmpty()) {

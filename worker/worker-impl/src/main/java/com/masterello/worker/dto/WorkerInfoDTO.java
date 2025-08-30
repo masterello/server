@@ -2,7 +2,6 @@ package com.masterello.worker.dto;
 
 import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.security.serialization.AuthGuard;
-import com.masterello.user.value.City;
 import com.masterello.user.value.Country;
 import com.masterello.worker.domain.Language;
 import jakarta.validation.Valid;
@@ -37,8 +36,9 @@ public class WorkerInfoDTO<T extends WorkerServiceDTO> {
     private String instagram;
     @NotNull(message = ErrorCodes.COUNTRY_EMPTY)
     private Country country;
-    @NotNull(message = ErrorCodes.CITY_EMPTY)
-    private City city;
+    @NotNull(message = ErrorCodes.SERVICE_LOCATION_EMPTY)
+    @Valid
+    private ServiceLocationDTO serviceLocation;
     @NotEmpty(message = ErrorCodes.SERVICES_EMPTY)
     @Valid
     private List<T> services;

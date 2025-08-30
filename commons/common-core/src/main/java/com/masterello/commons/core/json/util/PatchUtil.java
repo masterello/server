@@ -15,16 +15,43 @@ public class PatchUtil {
 
     public <T> Set<String> getEditableFields(Class<T> clazz) {
         Set<String> editableFields = new HashSet<>();
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
-            if (field.isAnnotationPresent(Patchable.class)) {
-                editableFields.add(field.getName());
-                if (Collection.class.isAssignableFrom(field.getType())) {
-                    editableFields.add(field.getName() + "/.*");
-                }
+        Set<Class<?>> visited = new HashSet<>();
+        collectEditableFields(clazz, "", editableFields, visited);
+        return editableFields;
+    }
+
+    private void collectEditableFields(Class<?> clazz, String prefix, Set<String> out, Set<Class<?>> visited) {
+        if (clazz == null || isJdkType(clazz)) {
+            return;
+        }
+        if (!visited.add(clazz)) {
+            return; // prevent cycles
+        }
+        for (Field field : clazz.getDeclaredFields()) {
+            if (!field.isAnnotationPresent(Patchable.class)) {
+                continue;
+            }
+            String path = prefix + field.getName();
+            out.add(path);
+            Class<?> type = field.getType();
+            if (Collection.class.isAssignableFrom(type) || type.isArray()) {
+                out.add(path + "/.*");
+            }
+            // Recurse into nested complex types to support nested patchable fields
+            if (!Collection.class.isAssignableFrom(type)
+                    && !type.isArray()
+                    && !isJdkType(type)
+                    && !type.isEnum()) {
+                collectEditableFields(type, path + "/", out, visited);
             }
         }
-        return editableFields;
+    }
+
+    private boolean isJdkType(Class<?> type) {
+        return type.isPrimitive()
+                || type.getName().startsWith("java.")
+                || type.getName().startsWith("jakarta.")
+                || type.getName().startsWith("javax.");
     }
 
     public Set<String> getUpdatedFields(JsonNode source, JsonNode target) {

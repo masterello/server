@@ -69,10 +69,16 @@ masterello:
   openapi:
     oAuthFlow:
       tokenUrl: http:/127.0.0.1:8090/oauth2/token
+  chat:
+    ws:
+      allowedOriginPatterns:
+        - http://127.0.0.1:*
+        - http://localhost:*
 
 logging:
   level:
     org.springframework.messaging.simp.broker.SimpleBrokerMessageHandler: DEBUG
     org.springframework.web.socket.messaging.SubProtocolWebSocketHandler: DEBUG
     org.springframework.messaging.simp: DEBUG
+    com.masterello.chat: DEBUG
 
