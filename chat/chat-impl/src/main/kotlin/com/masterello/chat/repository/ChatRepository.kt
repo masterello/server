@@ -36,4 +36,22 @@ interface ChatRepository : JpaRepository<Chat, UUID> {
         ORDER BY c.createdAt DESC
     """)
     fun findAllChatsForUser(@Param("userId") userId: UUID): List<Chat>
+
+    fun findByUserIdOrWorkerId(userId: UUID, workerId: UUID, pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Chat>
+
+    /**
+     * Atomically update denormalized last message fields. Updates preview only if this timestamp is the newest.
+     */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(
+        "UPDATE Chat c SET " +
+        "c.lastMessageAt = CASE WHEN :createdAt > COALESCE(c.lastMessageAt, :createdAt) THEN :createdAt ELSE c.lastMessageAt END, " +
+        "c.lastMessagePreview = CASE WHEN :createdAt >= COALESCE(c.lastMessageAt, :createdAt) THEN :preview ELSE c.lastMessagePreview END " +
+        "WHERE c.id = :chatId"
+    )
+    fun updateLastMessage(
+        @Param("chatId") chatId: UUID,
+        @Param("createdAt") createdAt: java.time.OffsetDateTime,
+        @Param("preview") preview: String
+    ): Int
 }

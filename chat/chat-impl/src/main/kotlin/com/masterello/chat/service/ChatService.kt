@@ -100,14 +100,28 @@ class ChatService(
     /**
      * Gets all active chats for the current user.
      */
-    fun getUserChats(): List<ChatDTO> {
-        val userId = getAuthenticatedUserId()
-        val chats = chatRepository.findAllChatsForUser(userId)
-        
-        return chats.map { chat ->
-            val participantsInfo = getChatParticipantsInfo(chat.userId, chat.workerId)
-            chatMapper.toDTO(chat, participantsInfo)
-        }
+    fun getUserChats(page: Int, size: Int): com.masterello.chat.dto.ChatPageDTO {
+        val me = getAuthenticatedUserId()
+        val pageable = org.springframework.data.domain.PageRequest.of(
+            (page.coerceAtLeast(1) - 1), size,
+            org.springframework.data.domain.Sort.by(
+                org.springframework.data.domain.Sort.Order.desc("lastMessageAt"),
+                org.springframework.data.domain.Sort.Order.desc("id")
+            )
+        )
+        val p = chatRepository.findByUserIdOrWorkerId(me, me, pageable)
+        val participants = p.content.flatMap { listOf(it.userId, it.workerId) }.toSet()
+        val info = userService.findAllByIds(participants)
+        val items = p.content.map { chatMapper.toDTO(it, info) }
+        return com.masterello.chat.dto.ChatPageDTO(
+            items = items,
+            page = page.coerceAtLeast(1),
+            size = size,
+            totalPages = p.totalPages,
+            totalElements = p.totalElements,
+            hasNext = p.hasNext(),
+            hasPrevious = p.hasPrevious()
+        )
     }
 
     private fun findExistingGeneralChat(userId: UUID, workerId: UUID): Chat? {
@@ -122,11 +136,13 @@ class ChatService(
 
     private fun createGeneralChat(userId: UUID, workerId: UUID): Chat {
         return try {
+            val now = OffsetDateTime.now()
             val chat = Chat(
                 userId = userId,
                 workerId = workerId,
                 chatType = ChatType.GENERAL,
-                taskId = null
+                taskId = null,
+                lastMessageAt = now
             )
             chatRepository.save(chat)
         } catch (ex: DataIntegrityViolationException) {
@@ -139,11 +155,13 @@ class ChatService(
 
     private fun createTaskChat(userId: UUID, workerId: UUID, taskId: UUID): Chat {
         return try {
+            val now = OffsetDateTime.now()
             val chat = Chat(
                 userId = userId,
                 workerId = workerId,
                 chatType = ChatType.TASK_SPECIFIC,
-                taskId = taskId
+                taskId = taskId,
+                lastMessageAt = now
             )
             chatRepository.save(chat)
         } catch (ex: DataIntegrityViolationException) {

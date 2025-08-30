@@ -46,8 +46,11 @@ class ChatController(
     )
     @ApiResponse(responseCode = "200", description = "Returns list of user's chats")
     @GetMapping("/my-chats")
-    fun getUserChats(): List<ChatDTO> {
-        return chatService.getUserChats()
+    fun getUserChats(
+        @RequestParam("page", defaultValue = "1") page: Int,
+        @RequestParam("size", defaultValue = "30") size: Int
+    ): com.masterello.chat.dto.ChatPageDTO {
+        return chatService.getUserChats(page, size)
     }
 
     @Operation(

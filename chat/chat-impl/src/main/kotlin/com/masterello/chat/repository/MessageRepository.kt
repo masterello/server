@@ -13,4 +13,5 @@ interface MessageRepository : JpaRepository<Message, UUID> {
 
     fun findByChatIdAndCreatedAtBefore(chatId : UUID, before: OffsetDateTime, page: PageRequest) : Page<Message>
 
+    fun findTopByChatIdOrderByCreatedAtDesc(chatId: UUID): Message?
 }
