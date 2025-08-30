@@ -54,7 +54,6 @@ class OAuth2AuthorizationToEntityConverterTest {
         // Then
         TokenPair expected = getTokenPair();
 
-        assertNotNull(actual.getId());
         assertNotNull(actual.getIssuedAt());
         assertEquals(expected.getAccessTokenType(), actual.getAccessTokenType());
         assertEquals(expected.getAccessTokenValue(), actual.getAccessTokenValue());

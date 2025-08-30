@@ -203,7 +203,7 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
         ValidatableResponse introspectResponse = getIntrospectResponse(tokens.getAccessToken());
 
         introspectResponse
-                    .body("userId", is(USER_1_ID.toString()))
+                    .body("userId", is(USER_1_ID))
                     .body("username", is(USER_1_EMAIL))
                     .body("emailVerified", is(true))
                     .body("userStatus", is(UserStatus.ACTIVE.name()))
@@ -371,10 +371,9 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
         return RestAssured
                 .given()
                     .header("Authorization", CLIENT_BEARER)
-                    .accept("application/json")
-                    .contentType("application/json")
-                    .queryParam("grant_type", "refresh_token")
-                    .queryParam("refresh_token", refreshToken)
+                    .contentType("application/x-www-form-urlencoded")
+                    .formParam("grant_type", "refresh_token")
+                    .formParam("refresh_token", refreshToken)
                 .when()
                     .post("/oauth2/token")
                 .then();
@@ -399,15 +398,15 @@ public class Oauth2EndpointsIntegrationTest extends AbstractWebIntegrationTest {
 
     private static ValidatableResponse getIntrospectResponse(String accessToken) {
         return RestAssured
-                    .given()
-                        .header("Authorization", CLIENT_BEARER)
-                        .accept("application/json")
-                        .contentType("application/json")
-                        .queryParam("token", accessToken)
-                    .when()
-                        .post("/oauth2/introspect")
-                    .then()
-                        .statusCode(200);
+                .given()
+                    .header("Authorization", CLIENT_BEARER)
+                    .accept("application/json")
+                    .contentType("application/x-www-form-urlencoded")
+                    .formParam("token", accessToken)
+                .when()
+                    .post("/oauth2/introspect")
+                .then()
+                    .statusCode(200);
     }
 
 

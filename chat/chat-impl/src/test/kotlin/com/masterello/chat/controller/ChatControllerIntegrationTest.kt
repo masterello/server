@@ -212,7 +212,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
 
         //@formatter:off
 
-        val response = RestAssured
+        RestAssured
                 .given()
                     .accept("application/json")
                     .contentType("application/json")
@@ -474,7 +474,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
     @AuthMocked(userId = WORKER_WITH_CHAT_S, roles = [AuthZRole.WORKER])
     fun `test fetch history chat not found`() {
         //@formatter:off
-        val response = RestAssured
+        RestAssured
                 .given()
                     .accept("application/json")
                     .contentType("application/json")

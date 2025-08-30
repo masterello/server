@@ -6,7 +6,6 @@ import com.masterello.auth.domain.Authorization;
 import com.masterello.auth.domain.TokenPair;
 import com.masterello.auth.repository.AuthorizationRepository;
 import com.masterello.auth.repository.TokenPairRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.lang.Nullable;
@@ -15,6 +14,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,13 +34,12 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         val authzEntity = oAuth2AuthorizationToEntityConverter.toAuthorizationEntity(authorization);
         val savedAuthz = authorizationRepository.saveAndFlush(authzEntity);
 
-        if(authorization.getAccessToken() != null || authorization.getRefreshToken() != null) {
+        if (authorization.getAccessToken() != null || authorization.getRefreshToken() != null) {
             tokenPairRepository.revokeAllTokensByAuthorizationId(authzEntity.getId());
             val tokenPair = oAuth2AuthorizationToEntityConverter.toTokenPairEntity(authorization);
             tokenPair.setAuthorization(savedAuthz);
-            tokenPairRepository.save(tokenPair);
+            tokenPairRepository.saveAndFlush(tokenPair);
         }
-
     }
 
     @Override

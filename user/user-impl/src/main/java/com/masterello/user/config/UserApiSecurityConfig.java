@@ -14,7 +14,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -30,6 +30,7 @@ public class UserApiSecurityConfig {
     @Bean
     @Order(1)  // Higher priority to match this first
     public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
+        PathPatternRequestMatcher.Builder matcherBuilder = PathPatternRequestMatcher.withDefaults();
         http
                 .securityMatcher("/api/user/admin", "/api/user/admin/**")  // Apply only to /api/user/admin
                 .csrf(AbstractHttpConfigurer::disable)
@@ -43,15 +44,16 @@ public class UserApiSecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain apiUserFilter(HttpSecurity http) throws Exception {
+        PathPatternRequestMatcher.Builder matcherBuilder = PathPatternRequestMatcher.withDefaults();
         RequestMatcher publicEndpoints = new OrRequestMatcher(
-                new AntPathRequestMatcher("/api/user/signup"),
-                new AntPathRequestMatcher("/api/user/resetPassword/**")
+                matcherBuilder.matcher("/api/user/signup"),
+                matcherBuilder.matcher("/api/user/resetPassword/**")
         );
         AuthFilter authFilter = new AuthFilter(
                 new NegatedRequestMatcher(publicEndpoints), authService);
 
         http
-                .securityMatcher("/api/user/**")
+                .securityMatcher(matcherBuilder.matcher("/api/user/**"))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(publicEndpoints).permitAll()
@@ -64,13 +66,14 @@ public class UserApiSecurityConfig {
     @Bean
     @Order(3)
     public SecurityFilterChain apiSupportFilter(HttpSecurity http) throws Exception {
-        RequestMatcher publicEndpoints = new AntPathRequestMatcher("/api/support/contact");
+        PathPatternRequestMatcher.Builder matcherBuilder = PathPatternRequestMatcher.withDefaults();
+        RequestMatcher publicEndpoints = matcherBuilder.matcher("/api/support/contact");
 
         AuthFilter authFilter = new AuthFilter(
                 new NegatedRequestMatcher(publicEndpoints), authService);
 
         http
-                .securityMatcher("/api/support/**")
+                .securityMatcher(matcherBuilder.matcher("/api/support/**"))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(publicEndpoints).permitAll()

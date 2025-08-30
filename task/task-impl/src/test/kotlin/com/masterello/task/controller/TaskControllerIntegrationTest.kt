@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlGroup
 import java.time.Instant
@@ -36,7 +36,7 @@ class TaskControllerIntegrationTest: AbstractWebIntegrationTest() {
 
     val BASE_URL: String = "/api/tasks"
 
-    @MockBean
+    @MockitoBean
     private lateinit var readOnlyWorkerService: ReadOnlyWorkerService
 
     @Test

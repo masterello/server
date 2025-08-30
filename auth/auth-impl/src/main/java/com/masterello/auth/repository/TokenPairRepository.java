@@ -12,9 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface TokenPairRepository extends JpaRepository<TokenPair, String> {
+public interface TokenPairRepository extends JpaRepository<TokenPair, UUID> {
 
 
     Optional<TokenPair> findByAccessTokenValue(String accessToken);

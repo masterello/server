@@ -262,9 +262,7 @@ public class UserServiceTest {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        assertThrows(UserStatusCannotBeUpdatedException.class, () -> {
-            userService.changeStatus(userId, status);
-        });
+        assertThrows(UserStatusCannotBeUpdatedException.class, () -> userService.changeStatus(userId, status));
 
         verify(userRepository, never()).save(any(MasterelloUserEntity.class));
         verify(publisher, never()).publishEvent(any());
