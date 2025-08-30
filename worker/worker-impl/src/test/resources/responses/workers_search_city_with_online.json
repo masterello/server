@@ -1,0 +1,83 @@
+{
+  "workers": [
+    {
+      "uuid": "dda832b4-b8e3-43df-a457-d77043b01751",
+      "title": "Mr.",
+      "name": "worker8",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "fix sinks",
+        "descriptions": {},
+        "country": "DE",
+        "serviceLocation": { "online": true, "cities": ["BE"] },
+        "languages": ["IT"],
+        "services": [ { "serviceId": 12, "amount": 700 } ],
+        "registeredAt": "2024-12-08T15:00:00.111111Z"
+      }
+    },
+    {
+      "uuid": "e4de38bf-168e-41fc-b7b1-b9d74a47529e",
+      "title": "Herr",
+      "name": "worker2",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best electrician",
+        "descriptions": {},
+        "country": "DE",
+        "serviceLocation": { "online": false, "cities": ["M"] },
+        "languages": ["EN","UK"],
+        "services": [ { "serviceId": 10, "amount": 150 }, { "serviceId": 20, "amount": 200 } ],
+        "registeredAt": "2024-12-13T15:00:00.111111Z"
+      }
+    },
+    {
+      "uuid": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
+      "title": "Mr.",
+      "name": "worker1",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "best plumber",
+        "descriptions": {
+          "DE": { "text": "Der beste Klempner", "original": false },
+          "EN": { "text": "best plumber", "original": true },
+          "RU": { "text": "Лучший сантехник", "original": false },
+          "UK": { "text": "Найкращий сантехнік", "original": false }
+        },
+        "country": "DE",
+        "serviceLocation": { "online": false, "cities": ["HH","M","BE"] },
+        "languages": ["DE","RU"],
+        "services": [
+          {
+            "serviceId": 10,
+            "amount": 100,
+            "details": "Price per minute",
+            "translatedDetails": {
+              "EN": { "text": "Price per minute", "original": true },
+              "DE": { "text": "Preis pro Minute", "original": false },
+              "RU": { "text": "Цена за минуту", "original": false },
+              "UK": { "text": "Ціна за хвилину", "original": false }
+            }
+          }
+        ],
+        "registeredAt": "2024-12-14T15:00:00.111111Z"
+      }
+    },
+    {
+      "uuid": "f2e91db9-4ceb-4231-bd4e-c898b441247d",
+      "title": "Mr.",
+      "name": "worker7",
+      "lastname": "workerson",
+      "workerInfo": {
+        "description": "fix toilets",
+        "descriptions": {},
+        "country": "DE",
+        "serviceLocation": { "online": true, "cities": ["BE"] },
+        "languages": ["IT"],
+        "services": [ { "serviceId": 11, "amount": 600 } ],
+        "registeredAt": "2024-12-09T15:00:00.111111Z"
+      }
+    }
+  ],
+  "count": 4
+}
+

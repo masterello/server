@@ -13,7 +13,10 @@
         "whatsapp": "electrician-w",
         "viber": "electrician-v",
         "country": "DE",
-        "city": "M",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["M"]
+        },
         "languages": ["EN", "UK"],
         "services": [
           {
@@ -35,13 +38,15 @@
       "lastname": "workerson",
       "workerInfo": {
         "description": "best plumber",
-        "descriptions": {},
         "phone": "+49111111111",
         "telegram": "plumber-t",
         "whatsapp": "plumber-w",
         "viber": "plumber-v",
         "country": "DE",
-        "city": "HH",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["HH", "M", "BE"]
+        },
         "languages": ["DE", "RU"],
         "services": [
           {

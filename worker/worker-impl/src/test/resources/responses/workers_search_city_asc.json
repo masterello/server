@@ -9,7 +9,10 @@
         "description": "best electrician",
         "descriptions": {},
         "country": "DE",
-        "city": "M",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["M"]
+        },
         "languages": ["EN", "UK"],
         "services": [
           {
@@ -32,7 +35,10 @@
       "workerInfo": {
         "description": "best plumber",
         "country": "DE",
-        "city": "HH",
+        "serviceLocation": {
+          "online": false,
+          "cities": ["HH", "M", "BE"]
+        },
         "languages": [
           "DE",
           "RU"
