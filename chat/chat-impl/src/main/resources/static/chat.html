@@ -3,8 +3,8 @@
 <head>
     <title>WebSocket Chat</title>
     <meta charset="UTF-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.1/stomp.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     <style>
         table {
             width: 100%;
@@ -80,7 +80,6 @@
     // Global/init variables to avoid undefined access
     window.addEventListener('load', initApp);
     var currentUser = null;
-    var wsSessionIdGlobal = null;
     window.connectedChats = window.connectedChats || {};
     var connectedChats = window.connectedChats; // chatId -> entry
     var multiPresenceInterval = null;
@@ -143,55 +142,30 @@
         } finally { chat.loadingOlder = false; }
     }
 
-    function connectToChat() {
+    async function connectToChat() {
         var chatId = document.getElementById('chatId').value;
         if (!chatId) {
             alert("Please get or create a chat first.");
             return;
         }
-
-        var socket = new SockJS('/ws/chat');
-        stompClient = Stomp.over(socket);
-
-        stompClient.connect({}, function (frame) {
-            console.log("Connected: " + frame);
-            var wsSessionId = frame && frame.headers ? frame.headers['session'] : null;
-            if (!wsSessionId) { console.warn('No STOMP session id in CONNECTED frame'); }
-
+        try {
+            await ensureWebSocketConnected();
             // Subscribe to the messages topic
             stompClient.subscribe('/topic/messages/' + chatId, function (messageOutput) {
                 var message = JSON.parse(messageOutput.body);
                 addMessageToMap(message);
                 displayMessages();
             });
-
-
-            // Subscribe to WS status for this session
-            if (wsSessionId) {
-                stompClient.subscribe('/topic/ws-status/' + wsSessionId, function (statusOutput) {
-                    try {
-                        var status = JSON.parse(statusOutput.body);
-                        if (status.type === 'EXPIRED') {
-                            console.warn('WS session ' + status.sessionId + ' expired. Please reauth via BFF.');
-                        }
-                    } catch (e) {
-                        console.warn('WS status parse error', e);
-                    }
-                });
-            }
-
             // Subscribe to typing updates
             stompClient.subscribe('/topic/typing/' + chatId, function (typingOutput) {
                 var evt = JSON.parse(typingOutput.body);
                 updateTyping(evt);
             });
-
-
             // Fetch chat history
             fetchChatHistory(chatId);
-        }, function (error) {
+        } catch (error) {
             console.error("Connection error:", error);
-        });
+        }
     }
 
     async function fetchChatHistory(chatId) {
@@ -257,7 +231,7 @@
         }
 
         if (message) {
-            stompClient.send("/ws/sendMessage/" + chatId, {}, message);
+            stompClient.publish({ destination: "/ws/sendMessage/" + chatId, body: message });
             document.getElementById('message').value = ''; // Clear input after sending
         } else {
             alert("Please type a message.");
@@ -490,12 +464,23 @@
 
     async function ensureWebSocketConnected() {
         if (stompClient && stompClient.connected) return;
+        if (!stompClient) {
+            if (!window.StompJs || !window.StompJs.Client) {
+                console.error('STOMP UMD not available on window.StompJs. Check script tag.');
+            }
+            stompClient = new window.StompJs.Client({
+                webSocketFactory: function() {
+                    return new SockJS('/ws/chat', null, { transports: ['websocket','xhr-streaming','xhr-polling'] });
+                },
+                reconnectDelay: 2000,
+                heartbeatIncoming: 10000,
+                heartbeatOutgoing: 10000,
+                debug: function(str) { /* console.log('[STOMP]', str); */ }
+            });
+        }
         return new Promise(function(resolve, reject) {
-            var socket = new SockJS('/ws/chat');
-            stompClient = Stomp.over(socket);
-            stompClient.connect({}, function (frame) {
+            stompClient.onConnect = function(frame) {
                 console.log('WS Connected:', frame);
-                wsSessionIdGlobal = frame && frame.headers ? frame.headers['session'] : null;
                 var composerInput = document.getElementById('chatInput');
                 if (composerInput) {
                     composerInput.addEventListener('input', function(){ if (window.selectedChatId) handleTypingMulti(window.selectedChatId); });
@@ -503,10 +488,22 @@
                 // If we already know currentUser, subscribe inbox now
                 try { if (currentUser && (currentUser.uuid || currentUser.id)) subscribeInbox(); } catch(e){}
                 resolve();
-            }, function (error) {
-                console.error('WS connection error:', error);
-                reject(error);
-            });
+            };
+            stompClient.onStompError = function(frame) {
+                console.error('Broker error:', frame.headers['message'], frame.body);
+            };
+            stompClient.onWebSocketError = function(event) {
+                console.error('WebSocket error:', event);
+            };
+            stompClient.onWebSocketClose = function(evt) {
+                console.warn('WS closed', evt && evt.code);
+            };
+            if (!stompClient.active) {
+                stompClient.activate();
+            } else if (!stompClient.connected) {
+                // If previously deactivated but not connected yet
+                stompClient.activate();
+            }
         });
     }
 
@@ -935,17 +932,17 @@
     function sendMessageMulti(chatId, inputEl) {
         var msg = (inputEl.value || '').trim();
         if (!msg) return;
-        stompClient.send('/ws/sendMessage/' + chatId, {}, msg);
+        stompClient.publish({ destination: '/ws/sendMessage/' + chatId, body: msg });
         inputEl.value = '';
     }
 
     var typingTimers = {}; // chatId -> timeoutId
     function handleTypingMulti(chatId) {
         if (!stompClient || !stompClient.connected) return;
-        stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: true }));
+        stompClient.publish({ destination: '/ws/typing/' + chatId, body: JSON.stringify({ started: true }) });
         if (typingTimers[chatId]) clearTimeout(typingTimers[chatId]);
         typingTimers[chatId] = setTimeout(function(){
-            stompClient.send('/ws/typing/' + chatId, {}, JSON.stringify({ started: false }));
+            stompClient.publish({ destination: '/ws/typing/' + chatId, body: JSON.stringify({ started: false }) });
         }, 1500);
     }
 
