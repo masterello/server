@@ -26,9 +26,9 @@
 <body>
 <div>
     <h2>Chat</h2>
-    <div class="chat-app" style="display:flex; gap:20px; min-height:70vh;">
+    <div class="chat-app" style="display:flex; gap:20px; height:80vh; overflow:hidden;">
         <!-- Sidebar -->
-        <aside id="chatSidebar" style="width:320px; border-right:1px solid #eee; padding-right:12px;">
+        <aside id="chatSidebar" style="width:320px; border-right:1px solid #eee; padding-right:12px; display:flex; flex-direction:column; height:100%; overflow:hidden;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <h3 style="margin:8px 0;">My messages</h3>
                 <button onclick="openNewChatPanel()" title="Create new chat" style="padding:6px 10px;">+ New</button>
@@ -44,7 +44,7 @@
                     <button onclick="closeNewChatPanel()" style="padding:6px 10px;">Cancel</button>
                 </div>
             </div>
-            <div id="chatList" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+            <div id="chatList" style="margin-top:10px; display:flex; flex-direction:column; gap:8px; flex:1; overflow:auto; min-height:0;">
                 <!-- chat rows inserted here -->
             </div>
             <div id="chatPager" style="margin-top:10px; display:flex; align-items:center; gap:8px;">
@@ -56,7 +56,7 @@
             </div>
         </aside>
         <!-- Main -->
-        <main id="chatMain" style="flex:1; display:flex; flex-direction:column;">
+        <main id="chatMain" style="flex:1; display:flex; flex-direction:column; height:100%; overflow:hidden;">
             <div id="chatHeader" style="height:48px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eee;">
                 <div id="chatTitle" style="font-weight:600;">Select a chat</div>
                 <div id="chatStatus">
@@ -64,7 +64,7 @@
                     <span id="typingBadge" style="display:none; color:#666; font-style:italic;">typing…</span>
                 </div>
             </div>
-            <div id="chatThread" style="flex:1; overflow:auto; padding:12px; background:#fafafa; border-radius:8px; margin-top:8px;">
+            <div id="chatThread" style="flex:1; overflow:auto; padding:12px; background:#fafafa; border-radius:8px; margin-top:8px; min-height:0;">
                 <!-- messages inserted here -->
             </div>
             <div id="composer" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
@@ -123,6 +123,22 @@
         } catch (error) {
             console.error("Error creating or retrieving chat:", error);
         }
+    }
+
+    async function loadOlderMessages(chatId) {
+        var chat = connectedChats[chatId]; if (!chat) return;
+        if (chat.loadingOlder) return;
+        // determine 'before' as oldestAt or oldest message createdAt
+        var oldest = chat.oldestAt;
+        if (!oldest) {
+            var arr = Array.from(chat.messages.values()).sort(function(a,b){ return new Date(a && a.createdAt) - new Date(b && b.createdAt); });
+            if (arr.length > 0) oldest = arr[0].createdAt;
+        }
+        if (!oldest) return; // nothing to load against
+        chat.loadingOlder = true;
+        try {
+            await fetchChatHistoryMulti(chatId, { limit: 15, before: oldest, prepend: true, scrollToBottom: false });
+        } finally { chat.loadingOlder = false; }
     }
 
     function connectToChat() {
@@ -545,7 +561,7 @@
     function createChatEntry(chatId) {
         // create hidden data entry for subscriptions/messages if not exists
         if (!connectedChats[chatId]) {
-            connectedChats[chatId] = { messages: new Map(), elements: {}, subscriptions: [], meta: { userName: myChatsIndex[chatId]?.userName || '', workerName: myChatsIndex[chatId]?.workerName || '' }, unread: 0, historyLoaded: false };
+            connectedChats[chatId] = { messages: new Map(), elements: {}, subscriptions: [], meta: { userName: myChatsIndex[chatId]?.userName || '', workerName: myChatsIndex[chatId]?.workerName || '' }, unread: 0, historyLoaded: false, loadingOlder: false, oldestAt: null };
         }
     }
 
@@ -575,9 +591,19 @@
         updatePresenceHeader(chatId);
         updateTypingHeader(chatId);
         // Always (re)fetch recent history to avoid missing messages received while chat was not selected
-        fetchChatHistoryMulti(chatId);
-        // Render thread
-        renderMessagesMulti(chatId);
+        fetchChatHistoryMulti(chatId, { limit: 15, scrollToBottom: true });
+        // Attach infinite scroll for older messages
+        var threadEl = document.getElementById('chatThread');
+        if (threadEl) {
+            threadEl.onscroll = async function() {
+                try {
+                    // near top
+                    if (this.scrollTop <= 10) {
+                        await loadOlderMessages(chatId);
+                    }
+                } catch (e) { console.warn('load older error', e); }
+            };
+        }
         // Save selected
         window.selectedChatId = chatId;
     }
@@ -679,7 +705,7 @@
                         updateBadge(chatId, chat.unread);
                     }
                 }
-                if (window.selectedChatId === chatId) renderMessagesMulti(chatId);
+                if (window.selectedChatId === chatId) renderMessagesMulti(chatId, { scrollToBottom: true });
             } catch(e) { console.warn('message parse error', e); }
         }));
         subs.push(stompClient.subscribe('/topic/typing/' + chatId, function (typingOutput) {
@@ -693,23 +719,51 @@
         if (connectedChats[chatId]) connectedChats[chatId].subscriptions = subs;
     }
 
-    async function fetchChatHistoryMulti(chatId) {
+    async function fetchChatHistoryMulti(chatId, opts) {
+        opts = opts || {};
+        var limit = opts.limit || 15;
+        var before = opts.before || null;
+        var prepend = !!opts.prepend;
+        var scrollToBottom = !!opts.scrollToBottom;
         try {
-            const resp = await fetch('/api/chat/' + encodeURIComponent(chatId) + '/history?limit=50', { credentials: 'include' });
+            var url = '/api/chat/' + encodeURIComponent(chatId) + '/history?limit=' + encodeURIComponent(limit);
+            if (before) url += '&before=' + encodeURIComponent(before);
+            const resp = await fetch(url, { credentials: 'include' });
             if (!resp.ok) return;
             const history = await resp.json();
             var chat = connectedChats[chatId];
             if (!chat) return;
-            ((history && history.messages) || []).forEach(function(m){
+            var prevHeight = 0, threadEl = document.getElementById('chatThread');
+            if (prepend && threadEl) prevHeight = threadEl.scrollHeight;
+            var msgs = ((history && history.messages) || []);
+            msgs.forEach(function(m){
                 if (m && m.id && !chat.messages.has(m.id)) chat.messages.set(m.id, m);
             });
+            // Update oldestAt
+            msgs.forEach(function(m){
+                if (!m || !m.createdAt) return;
+                if (!chat.oldestAt || new Date(m.createdAt) < new Date(chat.oldestAt)) chat.oldestAt = m.createdAt;
+            });
             chat.historyLoaded = true;
-            renderMessagesMulti(chatId);
+            renderMessagesMulti(chatId, { scrollToBottom: scrollToBottom, preserveTopGap: prepend, prevHeight: prevHeight });
+            // If we prepended, maintain scroll position
+            if (prepend && threadEl) {
+                var newHeight = threadEl.scrollHeight;
+                var delta = newHeight - prevHeight;
+                threadEl.scrollTop = threadEl.scrollTop + delta;
+            }
+            // Track if there might be more
+            chat.hasMore = (msgs.length >= limit);
         } catch (e) { console.warn('history error', e); }
     }
 
-    function renderMessagesMulti(chatId) {
+    function renderMessagesMulti(chatId, options) {
+        options = options || {};
         var thread = document.getElementById('chatThread');
+        var atBottom = false;
+        if (thread) {
+            atBottom = Math.abs(thread.scrollHeight - thread.clientHeight - thread.scrollTop) < 5;
+        }
         thread.innerHTML = '';
         var chat = connectedChats[chatId]; if (!chat) return;
         var myId = (currentUser && (currentUser.uuid || currentUser.id)) || null;
@@ -738,7 +792,9 @@
             wrap.appendChild(bubble);
             thread.appendChild(wrap);
         });
-        thread.scrollTop = thread.scrollHeight;
+        if (options.scrollToBottom || atBottom) {
+            thread.scrollTop = thread.scrollHeight;
+        }
     }
 
     function getCounterpartId(chatId) {
