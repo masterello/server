@@ -89,7 +89,7 @@ class ChatServiceTest {
     // === General Chat Tests ===
 
     @Test
-    fun `getOrCreateGeneralChat should return existing general chat if found`() {
+    fun `getGeneralChat should return existing general chat if found`() {
         val existingChat = createGeneralChat(userId, workerId)
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
                 .thenReturn(existingChat)
@@ -115,7 +115,7 @@ class ChatServiceTest {
                 )
         )
 
-        val result = chatService.getOrCreateGeneralChat(userId, workerId)
+        val result = chatService.getGeneralChat(userId, workerId)
 
         assertEquals(existingChat.id, result.id)
         assertEquals(ChatType.GENERAL, result.chatType)
@@ -129,7 +129,7 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `getOrCreateGeneralChat should create new general chat if none exists`() {
+    fun `createGeneralChatPublic should create new general chat if none exists`() {
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
                 .thenReturn(null)
         whenever(chatRepository.save(Mockito.any(Chat::class.java))).thenAnswer {
@@ -159,7 +159,7 @@ class ChatServiceTest {
             )
         }
 
-        val result = chatService.getOrCreateGeneralChat(userId, workerId)
+        val result = chatService.createGeneralChatPublic(userId, workerId)
 
         assertNotNull(result)
         assertEquals(ChatType.GENERAL, result.chatType)
@@ -171,11 +171,10 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `getOrCreateGeneralChat should handle race condition on creation`() {
+    fun `createGeneralChatPublic should throw already exists on race`() {
         val existingChat = createGeneralChat(userId, workerId)
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
                 .thenReturn(null)
-                .thenReturn(existingChat) // Second call after race condition
         whenever(chatRepository.save(Mockito.any(Chat::class.java)))
                 .thenThrow(DataIntegrityViolationException("Duplicate key"))
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
@@ -200,30 +199,28 @@ class ChatServiceTest {
                 )
         )
 
-        val result = chatService.getOrCreateGeneralChat(userId, workerId)
-
-        assertEquals(existingChat.id, result.id)
-        assertEquals(ChatType.GENERAL, result.chatType)
-        verify(chatRepository, times(2)).findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL)
+        assertThrows<com.masterello.chat.exceptions.ChatAlreadyExistsException> {
+            chatService.createGeneralChatPublic(userId, workerId)
+        }
     }
 
     @Test
-    fun `getOrCreateGeneralChat should throw exception if race condition fails`() {
+    fun `createGeneralChatPublic should throw already exists when duplicate`() {
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
                 .thenReturn(null)
         whenever(chatRepository.save(Mockito.any(Chat::class.java)))
                 .thenThrow(DataIntegrityViolationException("Duplicate key"))
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
 
-        assertThrows<ChatCreationValidationException> {
-            chatService.getOrCreateGeneralChat(userId, workerId)
+        assertThrows<com.masterello.chat.exceptions.ChatAlreadyExistsException> {
+            chatService.createGeneralChatPublic(userId, workerId)
         }
     }
 
     // === Task Chat Tests ===
 
     @Test
-    fun `getOrCreateTaskChat should return existing task chat if found`() {
+    fun `getTaskChat should return existing task chat if found`() {
         val task = task(taskId, userId, workerId) // task owner = userId, assigned worker = workerId
         val existingChat = createTaskChat(userId, workerId, taskId)
 
@@ -252,7 +249,7 @@ class ChatServiceTest {
                 )
         )
 
-        val result = chatService.getOrCreateTaskChat(taskId, workerId)
+        val result = chatService.getTaskChat(taskId, workerId)
 
         assertEquals(existingChat.id, result.id)
         assertEquals(ChatType.TASK_SPECIFIC, result.chatType)
@@ -264,7 +261,7 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `getOrCreateTaskChat should create new task chat if none exists`() {
+    fun `createTaskChatPublic should create new task chat if none exists`() {
         val task = task(taskId, userId, workerId) // task owner = userId, assigned worker = workerId
 
         whenever(taskService.getTask(taskId)).thenReturn(task)
@@ -297,7 +294,7 @@ class ChatServiceTest {
             )
         }
 
-        val result = chatService.getOrCreateTaskChat(taskId, workerId)
+        val result = chatService.createTaskChatPublic(taskId, workerId)
 
         assertNotNull(result)
         assertEquals(ChatType.TASK_SPECIFIC, result.chatType)
@@ -348,8 +345,8 @@ class ChatServiceTest {
         val chat1 = createGeneralChat(userId, workerId)
         val chat2 = createTaskChat(userId, UUID.randomUUID(), taskId)
 
-        whenever(chatRepository.findAllChatsForUser(userId))
-                .thenReturn(listOf(chat1, chat2))
+        whenever(chatRepository.findNonEmptyChatsFor(eq(userId), any()))
+                .thenReturn(PageImpl(listOf(chat1, chat2), PageRequest.of(0,2), 2))
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
                 mapOf(
                         userId to buildUser(userId, "John", "Doe"),
@@ -378,9 +375,9 @@ class ChatServiceTest {
             )
         }
 
-        val result = chatService.getUserChats(0,2)
+        val result = chatService.getUserChats(1,2)
 
-        assertEquals(2, result.size)
+        assertEquals(2, result.items.size)
         assertTrue(result.items.any { it.chatType == ChatType.GENERAL })
         assertTrue(result.items.any { it.chatType == ChatType.TASK_SPECIFIC })
     }
