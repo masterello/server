@@ -56,7 +56,7 @@
             </div>
         </aside>
         <!-- Main -->
-        <main id="chatMain" style="flex:1; display:flex; flex-direction:column; height:100%; overflow:hidden;">
+        <main id="chatMain" style="flex:1; display:flex; flex-direction:column; height:100%; overflow:hidden; position:relative;">
             <div id="chatHeader" style="height:48px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #eee;">
                 <div id="chatTitle" style="font-weight:600;">Select a chat</div>
                 <div id="chatStatus">
@@ -67,6 +67,7 @@
             <div id="chatThread" style="flex:1; overflow:auto; padding:12px; background:#fafafa; border-radius:8px; margin-top:8px; min-height:0;">
                 <!-- messages inserted here -->
             </div>
+            <button id="jumpToLatestBtn" onclick="jumpToLatest()" style="display:none; position:absolute; right:16px; bottom:64px; z-index:5; padding:8px 12px; border:1px solid #2b6cb0; background:#fff; color:#2b6cb0; border-radius:16px; box-shadow:0 2px 6px rgba(0,0,0,0.08); cursor:pointer;">0 new messages — Jump to latest</button>
             <div id="composer" style="margin-top:8px; display:flex; gap:8px; align-items:center;">
                 <input id="chatInput" type="text" placeholder="Message..." style="flex:1; padding:10px; border:1px solid #ddd; border-radius:6px;">
                 <button id="sendBtn" onclick="sendFromComposer()" style="padding:10px 14px;">Send ➤</button>
@@ -86,6 +87,7 @@
     var myChatsIndex = {}; // id -> chat object from /api/chat/my-chats
     var userPresence = {}; // userId -> { status, lastSeen }
     var chatPage = { page: 1, size: 10, totalPages: 1, hasNext: false, hasPrevious: false };
+    var unreadCounts = {}; // chatId -> unread count persisted across list refreshes
 
     var stompClient = null;
     var inboxSubscribed = false;
@@ -344,6 +346,12 @@
                     var dto = JSON.parse(msg.body);
                     if (dto && dto.chatId) {
                         var cid = dto.chatId;
+                        // Increment unread for non-selected chat
+                        if (window.selectedChatId !== cid) {
+                            unreadCounts[cid] = (unreadCounts[cid] || 0) + 1;
+                            // If row exists already, reflect immediately
+                            updateBadge(cid, unreadCounts[cid]);
+                        }
                         // Update cache if exists
                         if (myChatsIndex[cid]) {
                             myChatsIndex[cid].lastMessageAt = dto.lastMessageAt;
@@ -469,6 +477,8 @@
         row.appendChild(badge);
         row.onclick = function(){ selectChat(c.id); };
         list.appendChild(row);
+        // Initialize badge from persisted unread count
+        if (typeof unreadCounts[c.id] === 'number') updateBadge(c.id, unreadCounts[c.id]);
     }
 
     function updateBadge(chatId, count) {
@@ -561,7 +571,7 @@
     function createChatEntry(chatId) {
         // create hidden data entry for subscriptions/messages if not exists
         if (!connectedChats[chatId]) {
-            connectedChats[chatId] = { messages: new Map(), elements: {}, subscriptions: [], meta: { userName: myChatsIndex[chatId]?.userName || '', workerName: myChatsIndex[chatId]?.workerName || '' }, unread: 0, historyLoaded: false, loadingOlder: false, oldestAt: null };
+            connectedChats[chatId] = { messages: new Map(), elements: {}, subscriptions: [], meta: { userName: myChatsIndex[chatId]?.userName || '', workerName: myChatsIndex[chatId]?.workerName || '' }, unread: (unreadCounts[chatId]||0), historyLoaded: false, loadingOlder: false, oldestAt: null, newWhileScrolled: 0 };
         }
     }
 
@@ -584,7 +594,7 @@
         Array.from(document.querySelectorAll('#chatList .row')).forEach(function(el){ el.style.background = 'transparent'; });
         var row = document.getElementById('row-' + chatId); if (row) row.style.background = '#eef7ff';
         // Reset unread
-        connectedChats[chatId].unread = 0; updateBadge(chatId, 0);
+        connectedChats[chatId].unread = 0; unreadCounts[chatId] = 0; updateBadge(chatId, 0);
         // Update title with counterpart name only
         var titleEl = document.getElementById('chatTitle');
         if (titleEl) titleEl.textContent = getCounterpartName(chatId);
@@ -597,11 +607,17 @@
         if (threadEl) {
             threadEl.onscroll = async function() {
                 try {
-                    // near top
+                    // near top -> load older
                     if (this.scrollTop <= 10) {
                         await loadOlderMessages(chatId);
                     }
-                } catch (e) { console.warn('load older error', e); }
+                    // near bottom -> clear jump indicator and newWhileScrolled
+                    var nearBottom = Math.abs(this.scrollHeight - this.clientHeight - this.scrollTop) < 5;
+                    if (nearBottom) {
+                        var chat = connectedChats[chatId]; if (chat) chat.newWhileScrolled = 0;
+                        updateJumpToLatest(chatId);
+                    }
+                } catch (e) { console.warn('scroll handler error', e); }
             };
         }
         // Save selected
@@ -699,13 +715,27 @@
                 var message = JSON.parse(messageOutput.body);
                 if (message && message.id && !chat.messages.has(message.id)) {
                     chat.messages.set(message.id, message);
+                    var thread = document.getElementById('chatThread');
+                    var atBottom = false;
+                    if (thread) atBottom = Math.abs(thread.scrollHeight - thread.clientHeight - thread.scrollTop) < 5;
                     // If not selected, bump unread
                     if (window.selectedChatId !== chatId) {
                         chat.unread = (chat.unread || 0) + 1;
+                        unreadCounts[chatId] = chat.unread;
                         updateBadge(chatId, chat.unread);
                     }
+                    // If selected but user is scrolled up, show jump indicator
+                    if (window.selectedChatId === chatId && !atBottom) {
+                        chat.newWhileScrolled = (chat.newWhileScrolled || 0) + 1;
+                        updateJumpToLatest(chatId);
+                    }
                 }
-                if (window.selectedChatId === chatId) renderMessagesMulti(chatId, { scrollToBottom: true });
+                if (window.selectedChatId === chatId) {
+                    var thread = document.getElementById('chatThread');
+                    var atBottom = false;
+                    if (thread) atBottom = Math.abs(thread.scrollHeight - thread.clientHeight - thread.scrollTop) < 5;
+                    renderMessagesMulti(chatId, { scrollToBottom: atBottom });
+                }
             } catch(e) { console.warn('message parse error', e); }
         }));
         subs.push(stompClient.subscribe('/topic/typing/' + chatId, function (typingOutput) {
@@ -795,6 +825,8 @@
         if (options.scrollToBottom || atBottom) {
             thread.scrollTop = thread.scrollHeight;
         }
+        // Update jump-to-latest visibility based on current state
+        updateJumpToLatest(chatId);
     }
 
     function getCounterpartId(chatId) {
@@ -949,6 +981,30 @@
         var panel = document.getElementById('newChatPanel');
         if (panel) panel.style.display = 'none';
     }
+    function updateJumpToLatest(chatId) {
+        var btn = document.getElementById('jumpToLatestBtn');
+        var thread = document.getElementById('chatThread');
+        if (!btn || !thread) return;
+        if (window.selectedChatId !== chatId) { btn.style.display = 'none'; return; }
+        var chat = connectedChats[chatId]; if (!chat) { btn.style.display = 'none'; return; }
+        var nearBottom = Math.abs(thread.scrollHeight - thread.clientHeight - thread.scrollTop) < 5;
+        var count = chat.newWhileScrolled || 0;
+        if (!nearBottom && count > 0) {
+            btn.textContent = count + (count === 1 ? ' new message — Jump to latest' : ' new messages — Jump to latest');
+            btn.style.display = 'inline-block';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+    function jumpToLatest() {
+        var chatId = window.selectedChatId; if (!chatId) return;
+        var chat = connectedChats[chatId]; if (!chat) return;
+        var thread = document.getElementById('chatThread'); if (!thread) return;
+        thread.scrollTop = thread.scrollHeight;
+        chat.newWhileScrolled = 0;
+        updateJumpToLatest(chatId);
+    }
+
     async function loadWorkersForDropdown() {
         try {
             const body = {
