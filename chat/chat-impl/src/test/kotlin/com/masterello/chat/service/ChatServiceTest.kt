@@ -87,33 +87,35 @@ class ChatServiceTest {
     }
 
     // === General Chat Tests ===
-    
+
     @Test
-    fun `getOrCreateGeneralChat should return existing general chat if found`() {
+    fun `getGeneralChat should return existing general chat if found`() {
         val existingChat = createGeneralChat(userId, workerId)
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
-            .thenReturn(existingChat)
+                .thenReturn(existingChat)
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                workerId to buildUser(workerId, "Jane", "Worker")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        workerId to buildUser(workerId, "Jane", "Worker")
+                )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(chatMapper.toDTO(eq(existingChat), any())).thenReturn(
-            ChatDTO(
-                id = existingChat.id!!,
-                userId = existingChat.userId,
-                workerId = existingChat.workerId,
-                userName = "John Doe",
-                workerName = "Jane Worker",
-                chatType = existingChat.chatType,
-                taskId = existingChat.taskId,
-                createdAt = existingChat.createdAt!!
-            )
+                ChatDTO(
+                        id = existingChat.id!!,
+                        userId = existingChat.userId,
+                        workerId = existingChat.workerId,
+                        userName = "John Doe",
+                        workerName = "Jane Worker",
+                        chatType = existingChat.chatType,
+                        taskId = existingChat.taskId,
+                        createdAt = existingChat.createdAt!!,
+                        lastMessageAt = null,
+                        lastMessagePreview = null
+                )
         )
 
-        val result = chatService.getOrCreateGeneralChat(userId, workerId)
+        val result = chatService.getGeneralChat(userId, workerId)
 
         assertEquals(existingChat.id, result.id)
         assertEquals(ChatType.GENERAL, result.chatType)
@@ -127,35 +129,37 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `getOrCreateGeneralChat should create new general chat if none exists`() {
+    fun `createGeneralChatPublic should create new general chat if none exists`() {
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
-            .thenReturn(null)
+                .thenReturn(null)
         whenever(chatRepository.save(Mockito.any(Chat::class.java))).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             createGeneralChat(chat.userId, chat.workerId)
         }
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                workerId to buildUser(workerId, "Jane", "Worker")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        workerId to buildUser(workerId, "Jane", "Worker")
+                )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(chatMapper.toDTO(any<Chat>(), any())).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             ChatDTO(
-                id = chat.id!!,
-                userId = chat.userId,
-                workerId = chat.workerId,
-                userName = "John Doe",
-                workerName = "Jane Worker",
-                chatType = chat.chatType,
-                taskId = chat.taskId,
-                createdAt = chat.createdAt!!
+                    id = chat.id!!,
+                    userId = chat.userId,
+                    workerId = chat.workerId,
+                    userName = "John Doe",
+                    workerName = "Jane Worker",
+                    chatType = chat.chatType,
+                    taskId = chat.taskId,
+                    createdAt = chat.createdAt!!,
+                    lastMessageAt = null,
+                    lastMessagePreview = null
             )
         }
 
-        val result = chatService.getOrCreateGeneralChat(userId, workerId)
+        val result = chatService.createGeneralChatPublic(userId, workerId)
 
         assertNotNull(result)
         assertEquals(ChatType.GENERAL, result.chatType)
@@ -167,161 +171,164 @@ class ChatServiceTest {
     }
 
     @Test
-    fun `getOrCreateGeneralChat should handle race condition on creation`() {
+    fun `createGeneralChatPublic should throw already exists on race`() {
         val existingChat = createGeneralChat(userId, workerId)
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
-            .thenReturn(null)
-            .thenReturn(existingChat) // Second call after race condition
+                .thenReturn(null)
         whenever(chatRepository.save(Mockito.any(Chat::class.java)))
-            .thenThrow(DataIntegrityViolationException("Duplicate key"))
+                .thenThrow(DataIntegrityViolationException("Duplicate key"))
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                workerId to buildUser(workerId, "Jane", "Worker")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        workerId to buildUser(workerId, "Jane", "Worker")
+                )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(chatMapper.toDTO(eq(existingChat), any())).thenReturn(
-            ChatDTO(
-                id = existingChat.id!!,
-                userId = existingChat.userId,
-                workerId = existingChat.workerId,
-                userName = "John Doe",
-                workerName = "Jane Worker",
-                chatType = existingChat.chatType,
-                taskId = existingChat.taskId,
-                createdAt = existingChat.createdAt!!
-            )
+                ChatDTO(
+                        id = existingChat.id!!,
+                        userId = existingChat.userId,
+                        workerId = existingChat.workerId,
+                        userName = "John Doe",
+                        workerName = "Jane Worker",
+                        chatType = existingChat.chatType,
+                        taskId = existingChat.taskId,
+                        createdAt = existingChat.createdAt!!,
+                        lastMessageAt = null,
+                        lastMessagePreview = null
+                )
         )
 
-        val result = chatService.getOrCreateGeneralChat(userId, workerId)
-
-        assertEquals(existingChat.id, result.id)
-        assertEquals(ChatType.GENERAL, result.chatType)
-        verify(chatRepository, times(2)).findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL)
+        assertThrows<com.masterello.chat.exceptions.ChatAlreadyExistsException> {
+            chatService.createGeneralChatPublic(userId, workerId)
+        }
     }
 
     @Test
-    fun `getOrCreateGeneralChat should throw exception if race condition fails`() {
+    fun `createGeneralChatPublic should throw already exists when duplicate`() {
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
-            .thenReturn(null)
+                .thenReturn(null)
         whenever(chatRepository.save(Mockito.any(Chat::class.java)))
-            .thenThrow(DataIntegrityViolationException("Duplicate key"))
+                .thenThrow(DataIntegrityViolationException("Duplicate key"))
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
 
-        assertThrows<ChatCreationValidationException> {
-            chatService.getOrCreateGeneralChat(userId, workerId)
+        assertThrows<com.masterello.chat.exceptions.ChatAlreadyExistsException> {
+            chatService.createGeneralChatPublic(userId, workerId)
         }
     }
 
     // === Task Chat Tests ===
-    
+
     @Test
-    fun `getOrCreateTaskChat should return existing task chat if found`() {
+    fun `getTaskChat should return existing task chat if found`() {
         val task = task(taskId, userId, workerId) // task owner = userId, assigned worker = workerId
         val existingChat = createTaskChat(userId, workerId, taskId)
-        
+
         whenever(taskService.getTask(taskId)).thenReturn(task)
         whenever(chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(userId, workerId, taskId, ChatType.TASK_SPECIFIC))
-            .thenReturn(existingChat)
+                .thenReturn(existingChat)
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                workerId to buildUser(workerId, "Jane", "Worker")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        workerId to buildUser(workerId, "Jane", "Worker")
+                )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(chatMapper.toDTO(eq(existingChat), any())).thenReturn(
-            ChatDTO(
-                id = existingChat.id!!,
-                userId = existingChat.userId,
-                workerId = existingChat.workerId,
-                userName = "John Doe",
-                workerName = "Jane Worker",
-                chatType = existingChat.chatType,
-                taskId = existingChat.taskId,
-                createdAt = existingChat.createdAt!!
-            )
+                ChatDTO(
+                        id = existingChat.id!!,
+                        userId = existingChat.userId,
+                        workerId = existingChat.workerId,
+                        userName = "John Doe",
+                        workerName = "Jane Worker",
+                        chatType = existingChat.chatType,
+                        taskId = existingChat.taskId,
+                        createdAt = existingChat.createdAt!!,
+                        lastMessageAt = null,
+                        lastMessagePreview = null
+                )
         )
 
-        val result = chatService.getOrCreateTaskChat(taskId, workerId)
+        val result = chatService.getTaskChat(taskId, workerId)
 
         assertEquals(existingChat.id, result.id)
         assertEquals(ChatType.TASK_SPECIFIC, result.chatType)
         assertEquals(taskId, result.taskId)
         assertEquals(userId, result.userId)
         assertEquals(workerId, result.workerId)
-        
+
         Mockito.verify(chatRepository, Mockito.never()).save(Mockito.any())
     }
 
     @Test
-    fun `getOrCreateTaskChat should create new task chat if none exists`() {
+    fun `createTaskChatPublic should create new task chat if none exists`() {
         val task = task(taskId, userId, workerId) // task owner = userId, assigned worker = workerId
-        
+
         whenever(taskService.getTask(taskId)).thenReturn(task)
         whenever(chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(userId, workerId, taskId, ChatType.TASK_SPECIFIC))
-            .thenReturn(null)
+                .thenReturn(null)
         whenever(chatRepository.save(Mockito.any(Chat::class.java))).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             createTaskChat(chat.userId, chat.workerId, taskId)
         }
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                workerId to buildUser(workerId, "Jane", "Worker")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        workerId to buildUser(workerId, "Jane", "Worker")
+                )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
         whenever(chatMapper.toDTO(any<Chat>(), any())).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             ChatDTO(
-                id = chat.id!!,
-                userId = chat.userId,
-                workerId = chat.workerId,
-                userName = "John Doe",
-                workerName = "Jane Worker",
-                chatType = chat.chatType,
-                taskId = chat.taskId,
-                createdAt = chat.createdAt!!
+                    id = chat.id!!,
+                    userId = chat.userId,
+                    workerId = chat.workerId,
+                    userName = "John Doe",
+                    workerName = "Jane Worker",
+                    chatType = chat.chatType,
+                    taskId = chat.taskId,
+                    createdAt = chat.createdAt!!,
+                    lastMessageAt = null,
+                    lastMessagePreview = null
             )
         }
 
-        val result = chatService.getOrCreateTaskChat(taskId, workerId)
+        val result = chatService.createTaskChatPublic(taskId, workerId)
 
         assertNotNull(result)
         assertEquals(ChatType.TASK_SPECIFIC, result.chatType)
         assertEquals(taskId, result.taskId)
         assertEquals(userId, result.userId)
         assertEquals(workerId, result.workerId)
-        
+
         Mockito.verify(chatRepository).save(Mockito.any(Chat::class.java))
     }
 
     // === Chat History Tests ===
-    
+
     @Test
     fun `getChatHistory should return message history`() {
         val chatId = UUID.randomUUID()
         val before = OffsetDateTime.now()
         val limit = 10
-        
+
         val mockMessages = listOf(
-            createMockMessage(UUID.randomUUID(), chatId, "Hello", userId),
-            createMockMessage(UUID.randomUUID(), chatId, "Hi there", workerId)
+                createMockMessage(UUID.randomUUID(), chatId, "Hello", userId),
+                createMockMessage(UUID.randomUUID(), chatId, "Hi there", workerId)
         )
         val mockPage = PageImpl(mockMessages)
-        
+
         whenever(messageRepository.findByChatIdAndCreatedAtBefore(eq(chatId), eq(before), any<PageRequest>()))
-            .thenReturn(mockPage)
+                .thenReturn(mockPage)
         whenever(messageMapper.toDto(any())).thenAnswer {
             val message = it.getArgument<com.masterello.chat.domain.Message>(0)
             ChatMessageDTO(
-                id = message.id!!, 
-                chatId = message.chatId!!, 
-                message = message.message!!, 
-                createdBy = message.createdBy!!, 
-                createdAt = message.createdAt!!
+                    id = message.id!!,
+                    chatId = message.chatId!!,
+                    message = message.message!!,
+                    createdBy = message.createdBy!!,
+                    createdAt = message.createdAt!!,
             )
         }
 
@@ -332,97 +339,99 @@ class ChatServiceTest {
     }
 
     // === User Chats Tests ===
-    
+
     @Test
     fun `getUserChats should return all active chats for user`() {
         val chat1 = createGeneralChat(userId, workerId)
         val chat2 = createTaskChat(userId, UUID.randomUUID(), taskId)
-        
-        whenever(chatRepository.findAllChatsForUser(userId))
-            .thenReturn(listOf(chat1, chat2))
+
+        whenever(chatRepository.findNonEmptyChatsFor(eq(userId), any()))
+                .thenReturn(PageImpl(listOf(chat1, chat2), PageRequest.of(0,2), 2))
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                workerId to buildUser(workerId, "Jane", "Worker")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        workerId to buildUser(workerId, "Jane", "Worker")
+                )
         )
         whenever(userService.findAllByIds(setOf(userId, chat2.workerId))).thenReturn(
-            mapOf(
-                userId to buildUser(userId, "John", "Doe"),
-                chat2.workerId to buildUser(chat2.workerId, "Bob", "Builder")
-            )
+                mapOf(
+                        userId to buildUser(userId, "John", "Doe"),
+                        chat2.workerId to buildUser(chat2.workerId, "Bob", "Builder")
+                )
         )
         whenever(chatMapper.toDTO(any<Chat>(), any())).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             ChatDTO(
-                id = chat.id!!,
-                userId = chat.userId,
-                workerId = chat.workerId,
-                userName = "John Doe",
-                workerName = if (chat.chatType == ChatType.GENERAL) "Jane Worker" else "Bob Builder",
-                chatType = chat.chatType,
-                taskId = chat.taskId,
-                createdAt = chat.createdAt!!
+                    id = chat.id!!,
+                    userId = chat.userId,
+                    workerId = chat.workerId,
+                    userName = "John Doe",
+                    workerName = if (chat.chatType == ChatType.GENERAL) "Jane Worker" else "Bob Builder",
+                    chatType = chat.chatType,
+                    taskId = chat.taskId,
+                    createdAt = chat.createdAt!!,
+                    lastMessageAt = null,
+                    lastMessagePreview = null
             )
         }
 
-        val result = chatService.getUserChats()
+        val result = chatService.getUserChats(1,2)
 
-        assertEquals(2, result.size)
-        assertTrue(result.any { it.chatType == ChatType.GENERAL })
-        assertTrue(result.any { it.chatType == ChatType.TASK_SPECIFIC })
+        assertEquals(2, result.items.size)
+        assertTrue(result.items.any { it.chatType == ChatType.GENERAL })
+        assertTrue(result.items.any { it.chatType == ChatType.TASK_SPECIFIC })
     }
 
     // === Helper Methods ===
-    
+
     private fun createGeneralChat(userId: UUID, workerId: UUID): Chat {
         return Chat(
-            id = UUID.randomUUID(),
-            userId = userId,
-            workerId = workerId,
-            chatType = ChatType.GENERAL,
-            taskId = null,
-            createdAt = OffsetDateTime.now(),
+                id = UUID.randomUUID(),
+                userId = userId,
+                workerId = workerId,
+                chatType = ChatType.GENERAL,
+                taskId = null,
+                createdAt = OffsetDateTime.now(),
         )
     }
-    
+
     private fun createTaskChat(userId: UUID, workerId: UUID, taskId: UUID): Chat {
         return Chat(
-            id = UUID.randomUUID(),
-            userId = userId,
-            workerId = workerId,
-            chatType = ChatType.TASK_SPECIFIC,
-            taskId = taskId,
-            createdAt = OffsetDateTime.now(),
+                id = UUID.randomUUID(),
+                userId = userId,
+                workerId = workerId,
+                chatType = ChatType.TASK_SPECIFIC,
+                taskId = taskId,
+                createdAt = OffsetDateTime.now(),
         )
     }
-    
+
     private fun createMockMessage(
-        id: UUID, 
-        chatId: UUID, 
-        messageText: String, 
-        createdBy: UUID
+            id: UUID,
+            chatId: UUID,
+            messageText: String,
+            createdBy: UUID
     ): com.masterello.chat.domain.Message {
         return com.masterello.chat.domain.Message(
-            id = id,
-            chatId = chatId,
-            message = messageText,
-            createdBy = createdBy,
-            createdAt = OffsetDateTime.now()
+                id = id,
+                chatId = chatId,
+                message = messageText,
+                createdBy = createdBy,
+                createdAt = OffsetDateTime.now()
         )
     }
-    
+
     private fun task(taskUuid: UUID, userId: UUID, workerId: UUID): TaskDto {
         return TaskDto(
-            uuid = taskUuid,
-            userUuid = userId,
-            workerUuid = workerId,
-            categoryCode = 123,
-            name = "Test Task",
-            description = "Test task description",
-            status = TaskStatus.NEW,
-            createdDate = OffsetDateTime.now(),
-            updatedDate = OffsetDateTime.now()
+                uuid = taskUuid,
+                userUuid = userId,
+                workerUuid = workerId,
+                categoryCode = 123,
+                name = "Test Task",
+                description = "Test task description",
+                status = TaskStatus.NEW,
+                createdDate = OffsetDateTime.now(),
+                updatedDate = OffsetDateTime.now()
         )
     }
 }

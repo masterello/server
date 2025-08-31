@@ -44,6 +44,13 @@ data class Chat(
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
     val createdAt: OffsetDateTime? = null,
+
+    // Denormalized fields for fast inbox ordering
+    @Column(name = "last_message_at")
+    var lastMessageAt: OffsetDateTime? = null,
+
+    @Column(name = "last_message_preview", length = 200)
+    var lastMessagePreview: String? = null,
 ) {
     init {
         // Business rule validation

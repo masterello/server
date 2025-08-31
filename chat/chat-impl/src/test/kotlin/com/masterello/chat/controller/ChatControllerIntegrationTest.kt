@@ -276,9 +276,8 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .accept("application/json")
                     .contentType("application/json")
                     .cookie(tokenCookie())
-                    .body(chat)
                 .`when`()
-                    .post("/api/chat/task")
+                    .get("/api/chat/task?taskId=$TASK_ID&workerId=$WORKER_WITH_CHAT")
                 .then()
                     .statusCode(200)
         //@formatter:on
@@ -317,9 +316,8 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                     .accept("application/json")
                     .contentType("application/json")
                     .cookie(tokenCookie())
-                    .body(chat)
                 .`when`()
-                    .post("/api/chat/task")
+                    .get("/api/chat/task?taskId=$TASK_ID&workerId=$WORKER_WITH_CHAT")
                 .then()
                     .statusCode(200)
         //@formatter:on
@@ -438,9 +436,10 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .statusCode(200)
         //@formatter:on
 
-        val chats = response.extract().body().jsonPath().getList(".", ChatDTO::class.java)
-        assertNotNull(chats)
-        // Should contain the existing chat from test data
+        val page = response.extract().body().`as`(com.masterello.chat.dto.ChatPageDTO::class.java)
+        assertNotNull(page)
+        // Should contain items from test data
+        assertNotNull(page.items)
     }
 
     @ParameterizedTest

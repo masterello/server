@@ -1,6 +1,5 @@
 package com.masterello.chat.dto
 
-import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.OffsetDateTime
 import java.util.*
 
