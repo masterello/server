@@ -31,9 +31,19 @@
         <aside id="chatSidebar" style="width:320px; border-right:1px solid #eee; padding-right:12px;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
                 <h3 style="margin:8px 0;">My messages</h3>
-                <button onclick="createNewChat()" title="Create new chat" style="padding:6px 10px;">+ New</button>
+                <button onclick="openNewChatPanel()" title="Create new chat" style="padding:6px 10px;">+ New</button>
             </div>
             <input id="chatSearch" type="text" placeholder="Search" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
+            <div id="newChatPanel" style="display:none; margin-top:8px; border:1px solid #eee; border-radius:6px; padding:8px;">
+                <div style="margin-bottom:6px; font-weight:600;">Start chat with worker</div>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <select id="workerDropdown" style="flex:1; padding:6px; border:1px solid #ddd; border-radius:6px;">
+                        <option value="">Loading workers…</option>
+                    </select>
+                    <button onclick="confirmStartChatWithWorker()" style="padding:6px 10px;">Start</button>
+                    <button onclick="closeNewChatPanel()" style="padding:6px 10px;">Cancel</button>
+                </div>
+            </div>
             <div id="chatList" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
                 <!-- chat rows inserted here -->
             </div>
@@ -79,7 +89,7 @@
 
     var stompClient = null;
     var inboxSubscribed = false;
-    var pendingChat = null; // { partnerType: 'worker'|'user', partnerId: string } when composing before chat exists
+    var pendingChat = null; // { partnerType: 'worker'|'user', partnerId: string, partnerName?: string } when composing before chat exists
 
     async function getOrCreateChat() {
         const userId = document.getElementById('userId').value;
@@ -866,6 +876,106 @@
             clearInterval(multiPresenceInterval);
             multiPresenceInterval = null;
         }
+    }
+
+    async function openNewChatPanel() {
+        try {
+            if (!currentUser) {
+                const userResp = await fetch('/api/user', { credentials: 'include' });
+                if (userResp.ok) currentUser = await userResp.json();
+            }
+            var panel = document.getElementById('newChatPanel');
+            if (panel) panel.style.display = 'block';
+            loadWorkersForDropdown();
+        } catch (e) { console.warn('open panel error', e); }
+    }
+    function closeNewChatPanel() {
+        var panel = document.getElementById('newChatPanel');
+        if (panel) panel.style.display = 'none';
+    }
+    async function loadWorkersForDropdown() {
+        try {
+            const body = {
+                pageRequest: {
+                    page: 1,
+                    pageSize: 20,
+                    sort: { order: 'ASC', fields: ['workerId'] }
+                }
+            };
+            const resp = await fetch('/api/worker/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(body)
+            });
+            if (!resp.ok) { console.warn('load workers status', resp.status); return; }
+            const data = await resp.json();
+            const items = Array.isArray(data.workers) ? data.workers : (Array.isArray(data.items) ? data.items : (Array.isArray(data) ? data : []));
+            var dd = document.getElementById('workerDropdown'); if (!dd) return;
+            dd.innerHTML = '';
+            items.forEach(function(w){
+                var wid = w.uuid || w.id || w.workerId;
+                if (!wid) return;
+                var baseName = '';
+                if (w.name || w.lastname) {
+                    baseName = ((w.name || '') + ' ' + (w.lastname || '')).trim();
+                }
+                // Fallback to workerInfo.description if no base name
+                if (!baseName && w.workerInfo && w.workerInfo.description) baseName = w.workerInfo.description;
+                var name = baseName || (w.displayName || w.username || String(wid));
+                var opt = document.createElement('option'); opt.value = String(wid); opt.textContent = name; dd.appendChild(opt);
+            });
+            if (dd.options.length === 0) { var opt = document.createElement('option'); opt.value=''; opt.textContent='No workers found'; dd.appendChild(opt); }
+        } catch (e) { console.warn('load workers error', e); }
+    }
+    async function confirmStartChatWithWorker() {
+        try {
+            var dd = document.getElementById('workerDropdown');
+            if (!dd || !dd.value) { alert('Select a worker'); return; }
+            var workerId = dd.value;
+            var workerName = dd.options[dd.selectedIndex] ? dd.options[dd.selectedIndex].textContent : workerId;
+            if (!currentUser) {
+                const userResp = await fetch('/api/user', { credentials: 'include' });
+                if (userResp.ok) currentUser = await userResp.json();
+            }
+            var myId = currentUser && (currentUser.uuid || currentUser.id);
+            if (!myId) { alert('Cannot determine current user id'); return; }
+            // Try GET first to open existing chat
+            let got = await fetch('/api/chat?userId=' + encodeURIComponent(myId) + '&workerId=' + encodeURIComponent(workerId), { credentials: 'include' });
+            if (got.ok) {
+                const chat = await got.json();
+                const chatId = chat.id || chat.chatId;
+                myChatsIndex[chatId] = chat;
+                closeNewChatPanel();
+                selectChat(chatId);
+                return;
+            }
+            // Not found -> create
+            const resp = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ userId: myId, workerId: workerId })
+            });
+            if (!resp.ok && resp.status !== 409) { alert('Failed to create chat: ' + resp.status); return; }
+            if (resp.status === 409) {
+                // Race: it exists now, try open again
+                got = await fetch('/api/chat?userId=' + encodeURIComponent(myId) + '&workerId=' + encodeURIComponent(workerId), { credentials: 'include' });
+                if (got.ok) {
+                    const chat = await got.json(); const chatId = chat.id || chat.chatId; myChatsIndex[chatId] = chat; closeNewChatPanel(); selectChat(chatId); return;
+                }
+                alert('Chat exists but cannot load now'); return;
+            }
+            const chat = await resp.json();
+            const chatId = chat.id || chat.chatId;
+            myChatsIndex[chatId] = chat;
+            closeNewChatPanel();
+            // Show proper name in header
+            var titleEl = document.getElementById('chatTitle'); if (titleEl) titleEl.textContent = workerName;
+            createChatEntry(chatId);
+            subscribeChat(chatId);
+            selectChat(chatId);
+        } catch (e) { console.error('confirmStartChatWithWorker error', e); }
     }
 
     async function createNewChat() {
