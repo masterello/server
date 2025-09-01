@@ -70,6 +70,19 @@ class ChatController(
     }
 
     @Operation(
+        summary = "Get user's chats (infinite scroll)",
+        description = "Cursor-based retrieval of chats ordered by lastMessageAt desc"
+    )
+    @ApiResponse(responseCode = "200", description = "Returns scroll page of user's chats")
+    @GetMapping("/my-chats/scroll")
+    fun getUserChatsScroll(
+        @RequestParam(value = "cursor", required = false) cursor: OffsetDateTime?,
+        @RequestParam(value = "limit", defaultValue = "30") limit: Int
+    ): com.masterello.chat.dto.ChatScrollDTO {
+        return chatService.getUserChatsScroll(cursor, limit)
+    }
+
+    @Operation(
         summary = "Get chat history", 
         description = "Retrieves message history for a specific chat"
     )

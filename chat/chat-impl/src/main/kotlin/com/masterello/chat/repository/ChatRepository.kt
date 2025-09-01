@@ -48,6 +48,35 @@ interface ChatRepository : JpaRepository<Chat, UUID> {
     ): org.springframework.data.domain.Page<Chat>
 
     /**
+     * Cursor-based fetch of non-empty chats for infinite scroll, ordered by lastMessageAt DESC, id DESC.
+     * First page (no cursor):
+     */
+    @Query(
+        "SELECT c FROM Chat c " +
+        "WHERE (c.userId = :me OR c.workerId = :me) " +
+        "AND c.lastMessageAt IS NOT NULL"
+    )
+    fun findNonEmptyChatsForScrollFirstPage(
+        @Param("me") me: UUID,
+        pageable: org.springframework.data.domain.Pageable
+    ): List<Chat>
+
+    /**
+     * Subsequent pages (with cursor before lastMessageAt):
+     */
+    @Query(
+        "SELECT c FROM Chat c " +
+        "WHERE (c.userId = :me OR c.workerId = :me) " +
+        "AND c.lastMessageAt IS NOT NULL " +
+        "AND c.lastMessageAt < :cursor"
+    )
+    fun findNonEmptyChatsForScrollAfter(
+        @Param("me") me: UUID,
+        @Param("cursor") cursor: java.time.OffsetDateTime,
+        pageable: org.springframework.data.domain.Pageable
+    ): List<Chat>
+
+    /**
      * Atomically update denormalized last message fields. Updates preview only if this timestamp is the newest.
      */
     @org.springframework.data.jpa.repository.Modifying
