@@ -5,6 +5,7 @@ import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
 import com.masterello.chat.dto.ChatPageDTO
+import com.masterello.chat.dto.ChatScrollDTO
 import com.masterello.chat.exceptions.ChatAlreadyExistsException
 import com.masterello.chat.exceptions.ChatNotFoundException
 import com.masterello.chat.exceptions.TaskNotFoundException
@@ -130,6 +131,36 @@ class ChatService(
                 totalElements = p.totalElements,
                 hasNext = p.hasNext(),
                 hasPrevious = p.hasPrevious()
+        )
+    }
+
+    /**
+     * Cursor-based fetch of user's chats for infinite scroll.
+     */
+    fun getUserChatsScroll(cursor: OffsetDateTime?, limit: Int): ChatScrollDTO {
+        val me = getAuthenticatedUserId()
+        val pageable = PageRequest.of(
+            0,
+            limit,
+            Sort.by(
+                Sort.Order.desc("lastMessageAt"),
+                Sort.Order.desc("id")
+            )
+        )
+        val list = if (cursor == null) {
+            chatRepository.findNonEmptyChatsForScrollFirstPage(me, pageable)
+        } else {
+            chatRepository.findNonEmptyChatsForScrollAfter(me, cursor, pageable)
+        }
+        val participants = list.flatMap { listOf(it.userId, it.workerId) }.toSet()
+        val info = userService.findAllByIds(participants)
+        val items = list.map { chatMapper.toDTO(it, info) }
+        val nextCursor = list.lastOrNull()?.lastMessageAt
+        val hasMore = list.size >= limit
+        return ChatScrollDTO(
+            items = items,
+            nextCursor = nextCursor,
+            hasMore = hasMore
         )
     }
 

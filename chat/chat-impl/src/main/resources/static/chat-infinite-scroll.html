@@ -47,13 +47,6 @@
             <div id="chatList" style="margin-top:10px; display:flex; flex-direction:column; gap:8px; flex:1; overflow:auto; min-height:0;">
                 <!-- chat rows inserted here -->
             </div>
-            <div id="chatPager" style="margin-top:10px; display:flex; align-items:center; gap:8px;">
-                <button id="prevPageBtn" onclick="prevChatsPage()" style="padding:6px 10px;">Prev</button>
-                <span>Page</span>
-                <input id="pageInput" type="number" min="1" value="1" style="width:60px; padding:4px;" onkeydown="if(event.key==='Enter'){gotoChatsPage();}">
-                <span id="totalPagesLabel"></span>
-                <button id="nextPageBtn" onclick="nextChatsPage()" style="padding:6px 10px;">Next</button>
-            </div>
         </aside>
         <!-- Main -->
         <main id="chatMain" style="flex:1; display:flex; flex-direction:column; height:100%; overflow:hidden; position:relative;">
@@ -86,6 +79,9 @@
     var myChatsIndex = {}; // id -> chat object from /api/chat/my-chats
     var userPresence = {}; // userId -> { status, lastSeen }
     var chatPage = { page: 1, size: 10, totalPages: 1, hasNext: false, hasPrevious: false };
+    var chatsCursor = null; // OffsetDateTime string for next page
+    var chatsHasMore = true;
+    var chatsLoading = false;
     var unreadCounts = {}; // chatId -> unread count persisted across list refreshes
 
     var stompClient = null;
@@ -251,6 +247,16 @@
             chatPage.page = 1;
             await loadCurrentUserAndChats(true);
             wireSearch();
+            // Wire infinite scroll for chat list
+            var list = document.getElementById('chatList');
+            if (list) {
+                list.addEventListener('scroll', async function(){
+                    try {
+                        var nearBottom = (this.scrollTop + this.clientHeight) >= (this.scrollHeight - 30);
+                        if (nearBottom) { await loadMoreChatsIfNeeded(); }
+                    } catch(e) { console.warn('chat list scroll error', e); }
+                });
+            }
             // Select first chat if present
             var firstId = Object.keys(myChatsIndex)[0];
             if (firstId) selectChat(firstId);
@@ -273,34 +279,12 @@
         }
 
         try {
-            const url = '/api/chat/my-chats?page=' + encodeURIComponent(chatPage.page) + '&size=' + encodeURIComponent(chatPage.size);
-            const chatsResp = await fetch(url, { credentials: 'include' });
-            if (!chatsResp.ok) {
-                console.warn('Failed to load chats, status', chatsResp.status);
-                return;
+            if (reset) {
+                chatsCursor = null; chatsHasMore = true; chatsLoading = false;
+                var listEl = document.getElementById('chatList'); if (listEl) listEl.innerHTML = '';
+                myChatsIndex = {};
             }
-            const pageDto = await chatsResp.json();
-            const items = (pageDto && pageDto.items) || [];
-            chatPage.totalPages = pageDto && typeof pageDto.totalPages === 'number' ? pageDto.totalPages : 1;
-            chatPage.hasNext = !!(pageDto && pageDto.hasNext);
-            chatPage.hasPrevious = !!(pageDto && pageDto.hasPrevious);
-            updatePagerUI();
-            const list = document.getElementById('chatList');
-            if (reset) { list.innerHTML = ''; myChatsIndex = {}; }
-            var newlySeen = {};
-            items.forEach(function(c) {
-                if (!c || !c.id) return;
-                myChatsIndex[c.id] = c;
-                appendChatRow(c);
-                // mark counterpart for presence subscription
-                var me = currentUser && (currentUser.uuid || currentUser.id);
-                var counterpartId = (me && c.userId === me) ? c.workerId : (me && c.workerId === me ? c.userId : (c.workerId || c.userId));
-                if (counterpartId && !newlySeen[counterpartId]) newlySeen[counterpartId] = true;
-            });
-            // Subscribe to per-user presence for newly loaded counterparts
-            if (stompClient && stompClient.connected) {
-                Object.keys(newlySeen).forEach(function(uid){ subscribeUserPresence(uid); });
-            }
+            await loadMoreChatsIfNeeded(true);
             // Optionally select a chat after list refresh
             if (selectAfterId && myChatsIndex[selectAfterId]) {
                 selectChat(selectAfterId);
@@ -331,13 +315,43 @@
                             myChatsIndex[cid].lastMessageAt = dto.lastMessageAt;
                             myChatsIndex[cid].lastMessagePreview = dto.lastMessagePreview;
                         }
-                        // Keep server as source of truth for ordering/pagination
+                        // Keep server as source of truth for ordering
                         loadCurrentUserAndChats(true);
                     }
                 } catch(e){ console.warn('inbox parse error', e); }
             });
             inboxSubscribed = true;
         } catch (e) { console.warn('inbox subscribe error', e); }
+    }
+
+    async function loadMoreChatsIfNeeded(force) {
+        if (!chatsHasMore && !force) return;
+        if (chatsLoading && !force) return;
+        chatsLoading = true;
+        try {
+            var url = '/api/chat/my-chats/scroll?limit=' + encodeURIComponent(chatPage.size);
+            if (chatsCursor) url += '&cursor=' + encodeURIComponent(chatsCursor);
+            const resp = await fetch(url, { credentials: 'include' });
+            if (!resp.ok) { console.warn('scroll fetch status', resp.status); return; }
+            const data = await resp.json();
+            const items = Array.isArray(data.items) ? data.items : [];
+            const list = document.getElementById('chatList');
+            var newlySeen = {};
+            items.forEach(function(c){
+                if (!c || !c.id) return;
+                myChatsIndex[c.id] = c;
+                appendChatRow(c);
+                var me = currentUser && (currentUser.uuid || currentUser.id);
+                var counterpartId = (me && c.userId === me) ? c.workerId : (me && c.workerId === me ? c.userId : (c.workerId || c.userId));
+                if (counterpartId && !newlySeen[counterpartId]) newlySeen[counterpartId] = true;
+            });
+            if (stompClient && stompClient.connected) {
+                Object.keys(newlySeen).forEach(function(uid){ subscribeUserPresence(uid); });
+            }
+            chatsCursor = data.nextCursor || null;
+            chatsHasMore = !!data.hasMore;
+        } catch (e) { console.warn('load more chats error', e); }
+        finally { chatsLoading = false; }
     }
 
     function wireSearch() {
@@ -354,37 +368,7 @@
         });
     }
 
-    function updatePagerUI() {
-        var prevBtn = document.getElementById('prevPageBtn');
-        var nextBtn = document.getElementById('nextPageBtn');
-        var pageInput = document.getElementById('pageInput');
-        var totalLbl = document.getElementById('totalPagesLabel');
-        if (pageInput) pageInput.value = chatPage.page;
-        if (totalLbl) totalLbl.textContent = 'of ' + (chatPage.totalPages || 1);
-        if (prevBtn) prevBtn.disabled = !chatPage.hasPrevious || chatPage.page <= 1;
-        if (nextBtn) nextBtn.disabled = !chatPage.hasNext || (chatPage.totalPages && chatPage.page >= chatPage.totalPages);
-    }
-
-    function prevChatsPage() {
-        if (chatPage.page > 1) {
-            chatPage.page -= 1;
-            loadCurrentUserAndChats(true);
-        }
-    }
-    function nextChatsPage() {
-        if (chatPage.hasNext && (!chatPage.totalPages || chatPage.page < chatPage.totalPages)) {
-            chatPage.page += 1;
-            loadCurrentUserAndChats(true);
-        }
-    }
-    function gotoChatsPage() {
-        var pageInput = document.getElementById('pageInput');
-        var val = parseInt(pageInput && pageInput.value ? pageInput.value : '1', 10);
-        if (!isNaN(val) && val >= 1 && (!chatPage.totalPages || val <= chatPage.totalPages)) {
-            chatPage.page = val;
-            loadCurrentUserAndChats(true);
-        }
-    }
+    // Pagination UI removed for infinite scroll
 
     function formatChatTime(ts) {
         if (!ts) return '';
