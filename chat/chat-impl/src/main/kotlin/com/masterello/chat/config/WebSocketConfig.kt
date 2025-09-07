@@ -53,7 +53,6 @@ class WebSocketConfig(private val webSocketAuthInterceptor: WebSocketAuthInterce
                     }
                 })
                 .setAllowedOriginPatterns(*chatWebSocketProperties.allowedOriginPatterns.toTypedArray())
-                .withSockJS() // WebSocket connection endpoint
 
     }
 

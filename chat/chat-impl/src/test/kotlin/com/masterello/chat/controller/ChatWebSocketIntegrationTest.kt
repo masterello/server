@@ -86,7 +86,7 @@ class ChatWebSocketIntegrationTest : AbstractWebIntegrationTest() {
         headers.add("Cookie", "${tokenCookie.name}=${tokenCookie.value}")
 
         return stompClient
-                .connectAsync("ws://localhost:$port/ws/chat/websocket", WebSocketHttpHeaders(headers), TestStompSessionHandler())
+                .connectAsync("ws://localhost:$port/ws/chat", WebSocketHttpHeaders(headers), TestStompSessionHandler())
                 .get(1, TimeUnit.SECONDS)
     }
 

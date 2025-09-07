@@ -3,7 +3,6 @@
 <head>
     <title>WebSocket Chat</title>
     <meta charset="UTF-8">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
     <style>
         table {
@@ -452,10 +451,10 @@
             if (!window.StompJs || !window.StompJs.Client) {
                 console.error('STOMP UMD not available on window.StompJs. Check script tag.');
             }
+            var scheme = (location.protocol === 'https:' ? 'wss' : 'ws');
+            var url = scheme + '://' + location.host + '/ws/chat';
             stompClient = new window.StompJs.Client({
-                webSocketFactory: function() {
-                    return new SockJS('/ws/chat', null, { transports: ['websocket','xhr-streaming','xhr-polling'] });
-                },
+                brokerURL: url,
                 reconnectDelay: 2000,
                 heartbeatIncoming: 10000,
                 heartbeatOutgoing: 10000,
