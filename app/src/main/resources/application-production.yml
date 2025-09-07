@@ -97,6 +97,11 @@ masterello:
   translation:
     deepl:
       apiKey: ${DEEPL_API_KEY}
+  ai:
+    enabled: true
+    model: gpt-5-nano
+    endpoint: https://api.openai.com/v1
+    accessKey: ${OPEN_AI_API_KEY}
 
 management:
   health:

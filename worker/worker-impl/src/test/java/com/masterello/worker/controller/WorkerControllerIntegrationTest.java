@@ -1,6 +1,8 @@
 package com.masterello.worker.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.masterello.ai.model.AiPrompt;
+import com.masterello.ai.service.AiService;
 import com.masterello.auth.data.AuthZRole;
 import com.masterello.auth.extension.AuthMocked;
 import com.masterello.category.dto.CategoryBulkRequest;
@@ -8,6 +10,8 @@ import com.masterello.category.dto.CategoryDto;
 import com.masterello.category.service.ReadOnlyCategoryService;
 import com.masterello.commons.core.validation.ErrorCodes;
 import com.masterello.commons.test.AbstractWebIntegrationTest;
+import com.masterello.translation.dto.TranslationLanguage;
+import com.masterello.translation.dto.TranslationResponseDTO;
 import com.masterello.translation.service.TranslationService;
 import com.masterello.user.service.MasterelloUserService;
 import com.masterello.user.value.City;
@@ -16,6 +20,7 @@ import com.masterello.user.value.MasterelloTestUser;
 import com.masterello.user.value.MasterelloUser;
 import com.masterello.worker.WorkerTestConfiguration;
 import com.masterello.worker.domain.Language;
+import com.masterello.worker.dto.ModerationResult;
 import com.masterello.worker.dto.PageRequestDTO;
 import com.masterello.worker.dto.ServiceLocationDTO;
 import com.masterello.worker.dto.WorkerInfoDTO;
@@ -31,11 +36,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlGroup;
+import reactor.core.publisher.Mono;
 
 import java.io.File;
 import java.util.HashMap;
@@ -52,6 +59,7 @@ import static org.hibernate.internal.util.collections.CollectionHelper.listOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @SqlGroup({
@@ -70,7 +78,10 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Autowired
     private ServiceValidator serviceValidator;
     @Autowired
-    private TranslationService aiService;
+    private TranslationService translationService;
+
+    @Autowired
+    private AiService aiService;
 
     @BeforeEach
     void setUp() {
@@ -86,6 +97,12 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.WORKER})
     void storeWorkerInfo() {
+        when(translationService.translate(ArgumentMatchers.any(String.class), ArgumentMatchers.any(TranslationLanguage.class)))
+                .thenReturn(new TranslationResponseDTO(TranslationLanguage.EN, ""));
+
+        when(aiService.process(ArgumentMatchers.any(AiPrompt.class), ArgumentMatchers.any()))
+                .thenReturn(Mono.just(new ModerationResult(ModerationResult.Decision.ALLOW, new String[]{"all good"}, "all good")));
+
         when(userService.findById(WORKER_6))
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
@@ -234,6 +251,12 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = WORKER_6_S, roles = {AuthZRole.ADMIN})
     void storeWorkerInfo_by_admin() {
+        when(translationService.translate(ArgumentMatchers.any(String.class), ArgumentMatchers.any(TranslationLanguage.class)))
+                .thenReturn(new TranslationResponseDTO(TranslationLanguage.EN, ""));
+
+        when(aiService.process(ArgumentMatchers.any(AiPrompt.class), ArgumentMatchers.any()))
+                .thenReturn(Mono.just(new ModerationResult(ModerationResult.Decision.ALLOW, new String[]{"all good"}, "all good")));
+
         when(userService.findById(WORKER_6))
                 .thenReturn(Optional.of(getMasterelloTestUsers().get(WORKER_6)));
         List<WorkerServiceDTO> services = List.of(new WorkerServiceDTO(10, 100, WS_DETAILS),
@@ -579,6 +602,12 @@ class WorkerControllerIntegrationTest extends AbstractWebIntegrationTest {
     @Test
     @AuthMocked(userId = WORKER_2_S, roles = {AuthZRole.WORKER})
     void patchWorkerInfo() {
+        when(translationService.translate(ArgumentMatchers.any(String.class), ArgumentMatchers.any(TranslationLanguage.class)))
+                .thenReturn(new TranslationResponseDTO(TranslationLanguage.EN, ""));
+
+        when(aiService.process(ArgumentMatchers.any(AiPrompt.class), ArgumentMatchers.any()))
+                .thenReturn(Mono.just(new ModerationResult(ModerationResult.Decision.ALLOW, new String[]{"all good"}, "all good")));
+
         String body = "[{\"op\":\"replace\",\"path\":\"/description\",\"value\":\"Not that good plumber\"}," +
                 "{\"op\":\"replace\",\"path\":\"/phone\",\"value\":\"new phone\"}," +
                 "{\"op\":\"replace\",\"path\":\"/whatsapp\",\"value\":\"new whatsapp\"}," +
