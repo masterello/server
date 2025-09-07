@@ -107,3 +107,7 @@ management:
   health:
     mail:
       enabled: false
+
+logging:
+  level:
+    com.masterello.chat.config.LoggingHandshakeInterceptor: DEBUG
