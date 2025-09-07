@@ -21,10 +21,9 @@ class DefaultAiService(
         val request = ChatRequest(
                 model = aiConfigProperties.model,
                 messages = listOfNotNull(
-                        prompt.systemMessage?.let { Message("system", it) },
+                        prompt.systemMessage?.let { Message("developer", it) },
                         prompt.userMessage?.let { Message("user", it) }
-                ),
-                temperature = 0.0
+                )
         )
 
         return openAIWebClient.post()
@@ -90,7 +89,6 @@ class DefaultAiService(
     data class ChatRequest(
             val model: String,
             val messages: List<Message>,
-            val temperature: Double
     )
 
     data class ChatRequestByRef(

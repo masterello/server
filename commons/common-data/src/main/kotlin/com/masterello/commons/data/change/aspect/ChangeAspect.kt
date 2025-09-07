@@ -1,6 +1,7 @@
-package com.masterello.translation.aspect
+package com.masterello.commons.data.change.aspect
 
 import com.masterello.commons.async.MasterelloEventPublisher
+import com.masterello.commons.data.change.event.FieldChangedEvent
 import jakarta.persistence.ElementCollection
 import jakarta.persistence.EntityManager
 import jakarta.persistence.Id
@@ -12,21 +13,19 @@ import org.springframework.stereotype.Component
 import java.lang.reflect.Field
 import kotlin.reflect.KClass
 
-
 @Aspect
 @Component
-class TranslationAspect(private val entityManager: EntityManager,
-                        private val eventPublisher: MasterelloEventPublisher
+class ChangeAspect(
+    private val entityManager: EntityManager,
+    private val eventPublisher: MasterelloEventPublisher
 ) {
 
     @Pointcut("execution(* org.springframework.data.jpa.repository.JpaRepository+.save*(..)) || execution(* org.springframework.data.jpa.repository.JpaRepository+.saveAndFlush(..))")
-    fun repositorySaveMethods() {
-    }
+    fun repositorySaveMethods() {}
 
     @Around("repositorySaveMethods()")
     fun aroundSave(pjp: ProceedingJoinPoint): Any? {
         val entity = pjp.args.firstOrNull() ?: return pjp.proceed()
-
         val id = getEntityId(entity) ?: return pjp.proceed()
 
         val existing = entityManager.find(entity.javaClass, id)
@@ -34,17 +33,21 @@ class TranslationAspect(private val entityManager: EntityManager,
         for (field in entity.javaClass.declaredFields) {
             field.isAccessible = true
 
-            val translated = field.getAnnotation(Translated::class.java)
-            val translatedCollection = field.getAnnotation(TranslatedCollection::class.java)
-            if (translated != null || translatedCollection != null) {
-                if (field.isAnnotationPresent(ElementCollection::class.java)) {
-                    processEmbeddedCollections(field, existing, entity)
-                    continue
-                }
+            val onChange = field.getAnnotation(OnChange::class.java)
+            val onChangeCollection = field.getAnnotation(OnChangeCollection::class.java)
+
+            if (onChange == null && onChangeCollection == null) continue
+
+            if (onChangeCollection != null && field.isAnnotationPresent(ElementCollection::class.java)) {
+                processEmbeddedCollections(field, existing, entity)
+                continue
+            }
+
+            if (onChange != null) {
                 val oldValue = existing?.let { field.get(it) }
                 val newValue = field.get(entity)
                 if (oldValue != newValue) {
-                    fireTranslatedEvent(translated.event, entity, id, newValue)
+                    fireEvent(onChange.event, entity, id, newValue)
                 }
             }
         }
@@ -52,7 +55,7 @@ class TranslationAspect(private val entityManager: EntityManager,
     }
 
     private fun processEmbeddedCollections(field: Field, existing: Any?, entity: Any) {
-        val oldCollection = existing?.let {field.get(existing) as? Collection<*>}
+        val oldCollection = existing?.let { field.get(existing) as? Collection<*> }
         val newCollection = field.get(entity) as? Collection<*>
 
         val oldMap = oldCollection?.associateBy { getEmbeddedKey(it!!) } ?: emptyMap()
@@ -64,43 +67,35 @@ class TranslationAspect(private val entityManager: EntityManager,
 
             val clazz = newItem?.javaClass ?: oldItem!!.javaClass
             for (embeddedField in clazz.declaredFields) {
-                val embeddedAnnotation = embeddedField.getAnnotation(Translated::class.java) ?: continue
+                val embeddedOnChange = embeddedField.getAnnotation(OnChange::class.java) ?: continue
                 embeddedField.isAccessible = true
                 val newVal = newItem?.let { embeddedField.get(newItem) }
                 val oldVal = oldItem?.let { embeddedField.get(oldItem) }
-
                 if (oldVal != newVal) {
-                    fireTranslatedEvent(embeddedAnnotation.event, entity, key, newVal)
+                    fireEvent(embeddedOnChange.event, entity, key, newVal)
                 }
             }
         }
     }
 
-    fun getEmbeddedKey(obj: Any): Any {
+    private fun getEmbeddedKey(obj: Any): Any {
         return obj::class.java.declaredFields
-                .firstOrNull { it.isAnnotationPresent(TranslationKey::class.java) }
-                ?.apply { isAccessible = true }
-                ?.get(obj)
-                ?: throw NoSuchFieldError("No field marked as translation key")
+            .firstOrNull { it.isAnnotationPresent(OnChangeKey::class.java) }
+            ?.apply { isAccessible = true }
+            ?.get(obj)
+            ?: throw NoSuchFieldError("No field marked as OnChangeKey")
     }
 
-    private fun fireTranslatedEvent(
-            eventClass: KClass<out TranslatedFieldChangedEvent<*, *, *>>,
-            entity: Any,
-            id: Any,
-            newValue: Any?
-    ) {
+    private fun fireEvent(eventClass: KClass<out FieldChangedEvent<*, *, *>>, entity: Any, id: Any, newValue: Any?) {
         try {
-            val constructor = eventClass.java.constructors
-                    .find { ctor ->
-                        val params = ctor.parameterTypes
-                        params.size == 3 &&
-                                params[0].isAssignableFrom(entity.javaClass) &&
-                                params[1].isAssignableFrom(id.javaClass) &&
-                                (newValue == null || params[2].isAssignableFrom(newValue.javaClass))
-                    }
-                    ?: throw NoSuchMethodException("No suitable constructor found for ${eventClass.simpleName}")
-            val event = constructor.newInstance(entity, id, newValue) as TranslatedFieldChangedEvent<*, *, *>
+            val constructor = eventClass.java.constructors.find { ctor ->
+                val params = ctor.parameterTypes
+                params.size == 3 &&
+                    params[0].isAssignableFrom(entity.javaClass) &&
+                    params[1].isAssignableFrom(id.javaClass) &&
+                    (newValue == null || params[2].isAssignableFrom(newValue.javaClass))
+            } ?: throw NoSuchMethodException("No suitable constructor found for ${eventClass.simpleName}")
+            val event = constructor.newInstance(entity, id, newValue) as  FieldChangedEvent<*, *, *>
             eventPublisher.publishEvent(event)
         } catch (ex: Exception) {
             throw RuntimeException("Failed to create or publish event: ${eventClass.simpleName}", ex)
@@ -109,8 +104,9 @@ class TranslationAspect(private val entityManager: EntityManager,
 
     private fun getEntityId(entity: Any): Any? {
         return entity::class.java.declaredFields
-                .firstOrNull { it.isAnnotationPresent(Id::class.java) }
-                ?.apply { isAccessible = true }
-                ?.get(entity)
+            .firstOrNull { it.isAnnotationPresent(Id::class.java) }
+            ?.apply { isAccessible = true }
+            ?.get(entity)
     }
 }
+

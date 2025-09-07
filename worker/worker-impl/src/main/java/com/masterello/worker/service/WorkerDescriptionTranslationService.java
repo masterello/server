@@ -6,7 +6,6 @@ import com.masterello.worker.repository.WorkerDescriptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -22,7 +21,6 @@ public class WorkerDescriptionTranslationService {
     private final WorkerTranslationService workerTranslationService;
     private final TranslationLanguageMapper languageMapper;
 
-    @Async
     public void translateWorkerDescription(UUID workerId, String newDescription) {
         log.info("Cleanup all translations for worker: {}", workerId);
         workerDescriptionRepository.deleteAllByWorkerId(workerId);
