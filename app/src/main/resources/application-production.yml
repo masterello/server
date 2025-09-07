@@ -92,8 +92,9 @@ masterello:
     ws:
       enabled: true
       allowedOriginPatterns:
-      - https://*.masterello.com
       - https://masterello.com
+      - https://*.masterello.com:*
+
   translation:
     deepl:
       apiKey: ${DEEPL_API_KEY}
