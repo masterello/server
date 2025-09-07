@@ -43,6 +43,7 @@ class WebSocketConfig(private val webSocketAuthInterceptor: WebSocketAuthInterce
         registry
                 .setErrorHandler(webSocketErrorHandler)
                 .addEndpoint("/ws/chat")
+                .addInterceptors(LoggingHandshakeInterceptor())
                 .setHandshakeHandler(object : DefaultHandshakeHandler() {
                     override fun determineUser(
                         request: org.springframework.http.server.ServerHttpRequest,
