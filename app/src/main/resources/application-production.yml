@@ -92,7 +92,7 @@ masterello:
     ws:
       enabled: true
       allowedOriginPatterns:
-      - https://api.masterello.com
+      - https://*.masterello.com
       - https://masterello.com
   translation:
     deepl:
