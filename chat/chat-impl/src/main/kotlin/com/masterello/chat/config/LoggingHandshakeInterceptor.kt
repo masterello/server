@@ -20,14 +20,19 @@ class LoggingHandshakeInterceptor : HandshakeInterceptor {
         val uri = request.uri
         val headers = request.headers
         val origin = headers.getFirst("Origin")
-        val cookie = headers.getFirst("Cookie")
+        val cookieHeaderCombined = headers["Cookie"]?.joinToString("; ") ?: headers.getFirst("Cookie")
+        val cookiePresent = !cookieHeaderCombined.isNullOrBlank()
+        val cookieKeys = if (!cookiePresent) emptyList() else cookieHeaderCombined!!.split(";")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { it.substringBefore("=") }
         val upgrade = headers.getFirst("Upgrade")
         val connection = headers.getFirst("Connection")
         val host = headers.getFirst("Host")
         val xff = headers.getFirst("X-Forwarded-For")
         val proto = headers.getFirst("X-Forwarded-Proto")
         val forwardedHost = headers.getFirst("X-Forwarded-Host")
-        log.debug { "[WS-HS] before uri=$uri host=$host origin=$origin upgrade=$upgrade connection=$connection cookiePresent=${!cookie.isNullOrBlank()} xff=$xff xfproto=$proto xfhost=$forwardedHost remote=${servletReq?.remoteAddr}" }
+        log.debug { "[WS-HS] before uri=$uri host=$host origin=$origin upgrade=$upgrade connection=$connection cookiePresent=$cookiePresent cookieKeys=$cookieKeys xff=$xff xfproto=$proto xfhost=$forwardedHost remote=${servletReq?.remoteAddr}" }
         return true
     }
 
