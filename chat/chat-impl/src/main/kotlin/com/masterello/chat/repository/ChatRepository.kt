@@ -81,12 +81,13 @@ interface ChatRepository : JpaRepository<Chat, UUID> {
      */
     @org.springframework.data.jpa.repository.Modifying
     @Query(
-        "UPDATE Chat c SET c.lastMessageAt = :createdAt, c.lastMessagePreview = :preview " +
+        "UPDATE Chat c SET c.lastMessageAt = :createdAt, c.lastMessageBy = :createdBy, c.lastMessagePreview = :preview " +
         "WHERE c.id = :chatId AND (c.lastMessageAt IS NULL OR :createdAt >= c.lastMessageAt)"
     )
     fun updateLastMessage(
         @Param("chatId") chatId: UUID,
         @Param("createdAt") createdAt: java.time.OffsetDateTime,
+        @Param("createdBy") createdBy: UUID,
         @Param("preview") preview: String
     ): Int
 }

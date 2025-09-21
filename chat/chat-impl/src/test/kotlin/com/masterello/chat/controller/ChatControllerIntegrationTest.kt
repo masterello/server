@@ -264,10 +264,6 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
         val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatBefore)
-        val chat= GetOrCreateTaskChatDTO(
-                taskId = TASK_ID,
-                workerId = WORKER_WITH_CHAT
-        )
 
         //@formatter:off
 

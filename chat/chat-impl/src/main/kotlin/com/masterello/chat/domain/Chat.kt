@@ -49,6 +49,9 @@ data class Chat(
     @Column(name = "last_message_at")
     var lastMessageAt: OffsetDateTime? = null,
 
+    @Column(name = "last_message_by")
+    var lastMessageBy: UUID? = null,
+
     @Column(name = "last_message_preview", length = 200)
     var lastMessagePreview: String? = null,
 ) {

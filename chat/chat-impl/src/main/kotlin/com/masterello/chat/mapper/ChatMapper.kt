@@ -30,6 +30,7 @@ class ChatMapper {
             workerName = getName(worker),
             createdAt = createdAt,
             lastMessageAt = chat.lastMessageAt,
+            lastMessageBy = chat.lastMessageBy,
             lastMessagePreview = chat.lastMessagePreview
         )
     }
