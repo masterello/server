@@ -111,6 +111,7 @@ class ChatServiceTest {
                         taskId = existingChat.taskId,
                         createdAt = existingChat.createdAt!!,
                         lastMessageAt = null,
+                        lastMessageBy = null,
                         lastMessagePreview = null
                 )
         )
@@ -155,6 +156,7 @@ class ChatServiceTest {
                     taskId = chat.taskId,
                     createdAt = chat.createdAt!!,
                     lastMessageAt = null,
+                    lastMessageBy = null,
                     lastMessagePreview = null
             )
         }
@@ -195,6 +197,7 @@ class ChatServiceTest {
                         taskId = existingChat.taskId,
                         createdAt = existingChat.createdAt!!,
                         lastMessageAt = null,
+                        lastMessageBy = null,
                         lastMessagePreview = null
                 )
         )
@@ -245,6 +248,7 @@ class ChatServiceTest {
                         taskId = existingChat.taskId,
                         createdAt = existingChat.createdAt!!,
                         lastMessageAt = null,
+                        lastMessageBy = null,
                         lastMessagePreview = null
                 )
         )
@@ -290,6 +294,7 @@ class ChatServiceTest {
                     taskId = chat.taskId,
                     createdAt = chat.createdAt!!,
                     lastMessageAt = null,
+                    lastMessageBy = null,
                     lastMessagePreview = null
             )
         }
@@ -371,6 +376,7 @@ class ChatServiceTest {
                     taskId = chat.taskId,
                     createdAt = chat.createdAt!!,
                     lastMessageAt = null,
+                    lastMessageBy = null,
                     lastMessagePreview = null
             )
         }

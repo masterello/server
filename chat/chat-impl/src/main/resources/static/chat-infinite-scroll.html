@@ -313,6 +313,8 @@
                         if (myChatsIndex[cid]) {
                             myChatsIndex[cid].lastMessageAt = dto.lastMessageAt;
                             myChatsIndex[cid].lastMessagePreview = dto.lastMessagePreview;
+                            // Track who sent the last message for prefixing the preview
+                            myChatsIndex[cid].lastMessageBy = dto.senderId;
                         }
                         // Keep server as source of truth for ordering
                         loadCurrentUserAndChats(true);
@@ -423,7 +425,16 @@
         preview.style.whiteSpace = 'nowrap';
         preview.style.overflow = 'hidden';
         preview.style.textOverflow = 'ellipsis';
-        preview.textContent = c.lastMessagePreview || '';
+        // Prefix "Me:" if the last message was sent by the current user
+        try {
+            var me = currentUser && (currentUser.uuid || currentUser.id);
+            var lastBy = c && c.lastMessageBy;
+            var isMe = me && lastBy && (('' + lastBy) === ('' + me));
+            var prefix = isMe ? 'Me: ' : '';
+            preview.textContent = prefix + (c.lastMessagePreview || '');
+        } catch (e) {
+            preview.textContent = c.lastMessagePreview || '';
+        }
 
         leftCol.appendChild(topLine);
         leftCol.appendChild(preview);

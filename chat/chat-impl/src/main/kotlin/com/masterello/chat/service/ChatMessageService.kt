@@ -31,8 +31,7 @@ class ChatMessageService(
         )
         val preview = if (messageText.length > 180) messageText.substring(0, 180) else messageText
         val createdAt: OffsetDateTime = saved.createdAt ?: OffsetDateTime.now()
-        // Atomic denorm update ("keep the max")
-        chatRepository.updateLastMessage(chatId, createdAt, preview)
+        chatRepository.updateLastMessage(chatId, createdAt, createdBy, preview)
         // Publish inbox event for both participants; listener will send after commit
         try {
             val chatOpt = chatRepository.findById(chatId)
