@@ -2,10 +2,7 @@ package com.masterello.chat.service
 
 import com.masterello.chat.domain.Chat
 import com.masterello.chat.domain.ChatType
-import com.masterello.chat.dto.ChatDTO
-import com.masterello.chat.dto.ChatHistoryDTO
-import com.masterello.chat.dto.ChatPageDTO
-import com.masterello.chat.dto.ChatScrollDTO
+import com.masterello.chat.dto.*
 import com.masterello.chat.exceptions.ChatAlreadyExistsException
 import com.masterello.chat.exceptions.ChatNotFoundException
 import com.masterello.chat.exceptions.TaskNotFoundException
@@ -13,6 +10,7 @@ import com.masterello.chat.exceptions.WorkerNotFoundException
 import com.masterello.chat.mapper.ChatMapper
 import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.ChatRepository
+import com.masterello.chat.repository.MessageReadRepository
 import com.masterello.chat.repository.MessageRepository
 import com.masterello.commons.security.util.AuthContextUtil.getAuthenticatedUserId
 import com.masterello.task.service.ReadOnlyTaskService
@@ -36,6 +34,7 @@ class ChatService(
         private val chatMapper: ChatMapper,
         private val taskService: ReadOnlyTaskService,
         private val workerService: ReadOnlyWorkerService,
+        private val messageReadRepository: MessageReadRepository,
 ) {
 
     private val log = KotlinLogging.logger {}
@@ -140,12 +139,12 @@ class ChatService(
     fun getUserChatsScroll(cursor: OffsetDateTime?, limit: Int): ChatScrollDTO {
         val me = getAuthenticatedUserId()
         val pageable = PageRequest.of(
-            0,
-            limit,
-            Sort.by(
-                Sort.Order.desc("lastMessageAt"),
-                Sort.Order.desc("id")
-            )
+                0,
+                limit,
+                Sort.by(
+                        Sort.Order.desc("lastMessageAt"),
+                        Sort.Order.desc("id")
+                )
         )
         val list = if (cursor == null) {
             chatRepository.findNonEmptyChatsForScrollFirstPage(me, pageable)
@@ -158,9 +157,9 @@ class ChatService(
         val nextCursor = list.lastOrNull()?.lastMessageAt
         val hasMore = list.size >= limit
         return ChatScrollDTO(
-            items = items,
-            nextCursor = nextCursor,
-            hasMore = hasMore
+                items = items,
+                nextCursor = nextCursor,
+                hasMore = hasMore
         )
     }
 
@@ -216,14 +215,17 @@ class ChatService(
         return userService.findAllByIds(setOf(userId, workerId))
     }
 
-    private fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int) =
-            messageRepository.findByChatIdAndCreatedAtBefore(
-                    chatId,
-                    before,
-                    PageRequest.of(0, limit, Sort.by(Sort.Order.desc("createdAt")))
-            )
-                    .map(messageMapper::toDto)
-                    .reversed()
-                    .toList()
+    fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int): List<ChatMessageDTO> {
+        val pageRequest = PageRequest.of(0, limit, Sort.by("createdAt").descending())
+        val messages = messageRepository.findByChatIdAndCreatedAtBefore(chatId, before, pageRequest)
+        val ids = messages.mapNotNull { it.id }
+        val reads = if (ids.isNotEmpty()) {
+            messageReadRepository.findAllByMessageIds(ids).groupBy { it.id.messageId }
+        } else emptyMap()
 
+        return messages
+                .map { m -> messageMapper.toDto(m, reads.getOrDefault(m.id, emptyList())) }
+                .reversed()
+                .toList()
+    }
 }

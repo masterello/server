@@ -54,4 +54,7 @@ interface MessageReadRepository : JpaRepository<MessageRead, MessageReadId> {
         @Param("visibleUpto") visibleUpto: OffsetDateTime,
         @Param("readAt") readAt: OffsetDateTime
     ): Int
+
+    @Query("select r from MessageRead r where r.id.messageId in :messageIds AND readAt IS NOT NULL")
+    fun findAllByMessageIds(@Param("messageIds") messageIds: List<UUID>): List<MessageRead>
 }

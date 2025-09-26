@@ -33,7 +33,7 @@ class ChatMessageService(
         publishInboxEvent(chat, message)
 
         log.info { "saved: $message" }
-        return messageMapper.toDto(message)
+        return messageMapper.toDto(message, emptyList())
     }
 
     private fun publishInboxEvent(chat: Chat, message: Message) {

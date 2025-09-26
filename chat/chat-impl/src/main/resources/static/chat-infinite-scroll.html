@@ -734,9 +734,27 @@
         subs.push(stompClient.subscribe('/topic/read-receipts/' + chatId, function (rcpt) {
             try {
                 var dto = JSON.parse(rcpt.body);
-                // If it's my own receipt, we may already have cleared badges. No-op for now.
-                // If it's counterpart's receipt, this is where you'd update per-message "seen" ticks.
-                // Keeping minimal wiring here.
+                var chat = connectedChats[chatId]; if (!chat) return;
+                var readerId = dto.readerId;
+                var applyTo = function(predicate){
+                    chat.messages.forEach(function(m){
+                        try {
+                            if (!predicate(m)) return;
+                            if (!Array.isArray(m.messageReadBy)) m.messageReadBy = [];
+                            var idx = m.messageReadBy.findIndex(function(x){ return String(x.readerId) === String(readerId); });
+                            var entry = { readerId: readerId, readAt: dto.readAt };
+                            if (idx >= 0) m.messageReadBy[idx] = entry; else m.messageReadBy.push(entry);
+                        } catch(_){}
+                    });
+                };
+                if (Array.isArray(dto.messageIds) && dto.messageIds.length > 0) {
+                    var idSet = {};
+                    dto.messageIds.forEach(function(id){ idSet[String(id)] = true; });
+                    applyTo(function(m){ return idSet[String(m.id)] === true; });
+                } else if (dto.visibleUpTo) {
+                    applyTo(function(m){ return new Date(m.createdAt) <= new Date(dto.visibleUpTo); });
+                }
+                if (window.selectedChatId === chatId) renderMessagesMulti(chatId, { scrollToBottom: false });
             } catch(e) { console.warn('read receipt parse error', e); }
         }));
         if (connectedChats[chatId]) connectedChats[chatId].subscriptions = subs;
@@ -791,30 +809,49 @@
         var chat = connectedChats[chatId]; if (!chat) return;
         var myId = (currentUser && (currentUser.uuid || currentUser.id)) || null;
         var arr = Array.from(chat.messages.values()).sort(function(a,b){ return new Date(a && a.createdAt) - new Date(b && b.createdAt); });
-        arr.forEach(function(m){
-            var isOwn = myId && m && (m.createdBy === myId);
-            var bubble = document.createElement('div');
-            bubble.style.maxWidth = '65%';
-            bubble.style.margin = '6px 0';
-            bubble.style.padding = '8px 10px';
-            bubble.style.borderRadius = '12px';
-            bubble.style.display = 'inline-block';
-            if (isOwn) {
-                bubble.style.background = '#2b6cb0'; // blue
-                bubble.style.color = '#ffffff';
-                bubble.style.borderTopRightRadius = '4px';
-            } else {
-                bubble.style.background = '#eeeeee'; // neutral gray for counterpart
-                bubble.style.color = '#111111';
-                bubble.style.borderTopLeftRadius = '4px';
-            }
-            bubble.textContent = m.message;
-            var wrap = document.createElement('div');
-            wrap.style.display = 'flex';
-            wrap.style.justifyContent = isOwn ? 'flex-end' : 'flex-start';
-            wrap.appendChild(bubble);
-            thread.appendChild(wrap);
-        });
+            arr.forEach(function(m){
+                var isOwn = myId && m && (m.createdBy === myId);
+                var bubbleWrap = document.createElement('div');
+                bubbleWrap.style.display = 'flex';
+                bubbleWrap.style.flexDirection = 'column';
+                bubbleWrap.style.alignItems = isOwn ? 'flex-end' : 'flex-start';
+
+                var bubble = document.createElement('div');
+                bubble.id = 'msg-' + m.id;
+                bubble.style.maxWidth = '65%';
+                bubble.style.margin = '6px 0 2px 0';
+                bubble.style.padding = '8px 10px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.display = 'inline-block';
+                if (isOwn) {
+                    bubble.style.background = '#2b6cb0'; // blue
+                    bubble.style.color = '#ffffff';
+                    bubble.style.borderTopRightRadius = '4px';
+                } else {
+                    bubble.style.background = '#eeeeee'; // neutral gray for counterpart
+                    bubble.style.color = '#111111';
+                    bubble.style.borderTopLeftRadius = '4px';
+                }
+                bubble.textContent = m.message;
+
+                bubbleWrap.appendChild(bubble);
+
+                // Seen indicator for my messages
+                if (isOwn) {
+                    var reads = Array.isArray(m.messageReadBy) ? m.messageReadBy : [];
+                    var counterpartId = getCounterpartId(chatId);
+                    var receipt = reads.find(function(x){ return String(x.readerId) === String(counterpartId); });
+                    var meta = document.createElement('div');
+                    meta.style.fontSize = '11px';
+                    meta.style.color = isOwn ? '#dbeafe' : '#666';
+                    meta.style.marginTop = '0px';
+                    meta.style.padding = '0 2px';
+                    meta.textContent = receipt && receipt.readAt ? ('Seen ' + new Date(receipt.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '';
+                    bubbleWrap.appendChild(meta);
+                }
+
+                thread.appendChild(bubbleWrap);
+            });
         if (options.scrollToBottom || atBottom) {
             thread.scrollTop = thread.scrollHeight;
         }

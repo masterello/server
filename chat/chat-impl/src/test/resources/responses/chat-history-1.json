@@ -5,70 +5,90 @@
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "I need someone to walk my Labrador twice a day while I’m at work.",
       "createdBy": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
-      "createdAt": "2025-01-12T10:17:00+00:00"
+      "createdAt": "2025-01-12T10:17:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "4d5e6f7a-dddd-eeee-ffff-111111111111",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Sure! What times are you thinking for the walks?",
       "createdBy": "57bc029c-d8e3-458f-b25a-7f73283cec98",
-      "createdAt": "2025-01-12T10:18:00+00:00"
+      "createdAt": "2025-01-12T10:18:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "5e6f7a8b-2222-3333-4444-555555555555",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Around 9 AM and 5 PM would be perfect.",
       "createdBy": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
-      "createdAt": "2025-01-12T10:19:00+00:00"
+      "createdAt": "2025-01-12T10:19:00+00:00",
+      "messageReadBy": [
+        {
+          "readerId": "57bc029c-d8e3-458f-b25a-7f73283cec98",
+          "readAt": "2025-01-12T10:30:00+00:00"
+        }
+      ]
     },
     {
       "id": "6f7a8b9c-6666-7777-8888-999999999999",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Got it. How long would you like each walk to be?",
       "createdBy": "57bc029c-d8e3-458f-b25a-7f73283cec98",
-      "createdAt": "2025-01-12T10:20:00+00:00"
+      "createdAt": "2025-01-12T10:20:00+00:00",
+      "messageReadBy": [
+        {
+          "readerId": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
+          "readAt": "2025-01-12T10:31:00+00:00"
+        }
+      ]
     },
     {
       "id": "7a8b9c0d-aaaa-bbbb-cccc-dddddddddddd",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "About 30 minutes per walk should be enough.",
       "createdBy": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
-      "createdAt": "2025-01-12T10:21:00+00:00"
+      "createdAt": "2025-01-12T10:21:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "8b9c0d1e-eeee-ffff-1111-222222222222",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Great! I charge $15 per walk. Does that work for you?",
       "createdBy": "57bc029c-d8e3-458f-b25a-7f73283cec98",
-      "createdAt": "2025-01-12T10:22:00+00:00"
+      "createdAt": "2025-01-12T10:22:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "9c0d1e2f-4444-5555-6666-777777777777",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Yes, that’s fine. Are you available to start tomorrow?",
       "createdBy": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
-      "createdAt": "2025-01-12T10:23:00+00:00"
+      "createdAt": "2025-01-12T10:23:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "0d1e2f3a-8888-9999-aaaa-bbbbbbbbbbbb",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Yes, I can start tomorrow. What’s your address?",
       "createdBy": "57bc029c-d8e3-458f-b25a-7f73283cec98",
-      "createdAt": "2025-01-12T10:24:00+00:00"
+      "createdAt": "2025-01-12T10:24:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "1e2f3a4b-cccc-dddd-eeee-ffffffffffff",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "It’s 123 Maple Street. Do you need anything else?",
       "createdBy": "bb2c6e16-2228-4ac1-8482-1f3548672b43",
-      "createdAt": "2025-01-12T10:25:00+00:00"
+      "createdAt": "2025-01-12T10:25:00+00:00",
+      "messageReadBy": []
     },
     {
       "id": "2f3a4b5c-1111-2222-3333-444444444444",
       "chatId": "e5fcf8dd-b6be-4a36-a85a-e2d952cc6254",
       "message": "Nope, that’s all. I’ll be there at 9 AM. See you then!",
       "createdBy": "57bc029c-d8e3-458f-b25a-7f73283cec98",
-      "createdAt": "2025-01-12T10:26:00+00:00"
+      "createdAt": "2025-01-12T10:26:00+00:00",
+      "messageReadBy": []
     }
   ]
 }

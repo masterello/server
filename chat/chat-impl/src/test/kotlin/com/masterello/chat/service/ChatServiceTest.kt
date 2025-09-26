@@ -7,10 +7,10 @@ import com.masterello.chat.domain.Chat
 import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatMessageDTO
-import com.masterello.chat.exceptions.ChatCreationValidationException
 import com.masterello.chat.mapper.ChatMapper
 import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.ChatRepository
+import com.masterello.chat.repository.MessageReadRepository
 import com.masterello.chat.repository.MessageRepository
 import com.masterello.commons.security.data.MasterelloAuthentication
 import com.masterello.task.dto.TaskDto
@@ -26,7 +26,9 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.whenever
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -57,6 +59,10 @@ class ChatServiceTest {
 
     @Mock
     private lateinit var userService: MasterelloUserService
+
+    @Mock
+    private lateinit var messageReadRepository: MessageReadRepository
+
 
     @InjectMocks
     private lateinit var chatService: ChatService
@@ -321,7 +327,7 @@ class ChatServiceTest {
 
         whenever(messageRepository.findByChatIdAndCreatedAtBefore(eq(chatId), eq(before), any<PageRequest>()))
                 .thenReturn(mockPage)
-        whenever(messageMapper.toDto(any())).thenAnswer {
+        whenever(messageMapper.toDto(any(), any())).thenAnswer {
             val message = it.getArgument<com.masterello.chat.domain.Message>(0)
             ChatMessageDTO(
                     id = message.id!!,
