@@ -596,12 +596,16 @@
                     if (nearBottom) {
                         var chat = connectedChats[chatId]; if (chat) chat.newWhileScrolled = 0;
                         updateJumpToLatest(chatId);
+                        // Mark visible as read when at bottom
+                        try { await markReadVisible(chatId); } catch(_){}
                     }
                 } catch (e) { console.warn('scroll handler error', e); }
             };
         }
         // Save selected
         window.selectedChatId = chatId;
+        // After selecting, optimistically mark visible messages as read
+        setTimeout(function(){ markReadVisible(chatId).catch(function(e){ console.warn('markReadVisible failed', e); }); }, 0);
     }
 
     async function connectSelectedChat() {
@@ -725,6 +729,15 @@
                 chat.typing = evt; // stored for header UI
                 if (window.selectedChatId === chatId) updateTypingHeader(chatId);
             } catch(e) { console.warn('typing parse error', e); }
+        }));
+        // Read receipts subscription for realtime ticks/badge updates
+        subs.push(stompClient.subscribe('/topic/read-receipts/' + chatId, function (rcpt) {
+            try {
+                var dto = JSON.parse(rcpt.body);
+                // If it's my own receipt, we may already have cleared badges. No-op for now.
+                // If it's counterpart's receipt, this is where you'd update per-message "seen" ticks.
+                // Keeping minimal wiring here.
+            } catch(e) { console.warn('read receipt parse error', e); }
         }));
         if (connectedChats[chatId]) connectedChats[chatId].subscriptions = subs;
     }
@@ -961,6 +974,25 @@
         var panel = document.getElementById('newChatPanel');
         if (panel) panel.style.display = 'none';
     }
+    async function markReadVisible(chatId) {
+        try {
+            var chat = connectedChats[chatId]; if (!chat) return;
+            // Find the latest message timestamp we have
+            var latest = null;
+            chat.messages.forEach(function(m){ if (m && m.createdAt) { if (!latest || new Date(m.createdAt) > new Date(latest)) latest = m.createdAt; } });
+            if (!latest) return;
+            // POST mark-read up to latest visible
+            await fetch('/api/chat/' + encodeURIComponent(chatId) + '/read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ visibleUpTo: latest })
+            });
+            // Optimistically clear unread badge for this chat
+            unreadCounts[chatId] = 0; updateBadge(chatId, 0);
+        } catch (e) { console.warn('markReadVisible error', e); }
+    }
+
     function updateJumpToLatest(chatId) {
         var btn = document.getElementById('jumpToLatestBtn');
         var thread = document.getElementById('chatThread');

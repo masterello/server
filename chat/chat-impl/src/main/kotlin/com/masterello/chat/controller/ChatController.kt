@@ -4,7 +4,10 @@ import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
 import com.masterello.chat.dto.GetOrCreateGeneralChatDTO
 import com.masterello.chat.dto.GetOrCreateTaskChatDTO
+import com.masterello.chat.dto.MarkReadRequest
+import com.masterello.chat.service.ChatReadService
 import com.masterello.chat.service.ChatService
+import com.masterello.commons.security.util.AuthContextUtil
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.security.access.prepost.PreAuthorize
@@ -15,7 +18,8 @@ import java.util.*
 @RestController
 @RequestMapping("/api/chat")
 class ChatController(
-    private val chatService: ChatService
+    private val chatService: ChatService,
+    private val chatReadService: ChatReadService
 ) {
 
     @Operation(
@@ -95,5 +99,16 @@ class ChatController(
         @RequestParam(value = "before", required = false, defaultValue = "#{T(java.time.OffsetDateTime).now()}") before: OffsetDateTime
     ): ChatHistoryDTO {
         return chatService.getChatHistory(chatId, limit, before)
+    }
+
+    @PostMapping("{chatId}/read")
+    @PreAuthorize("@chatSecurity.canAccessChat(#chatId)")
+    fun markRead(
+        @PathVariable("chatId") chatId: UUID,
+        @RequestBody request: MarkReadRequest
+    ): Map<String, Any> {
+        val readerId = AuthContextUtil.getAuthenticatedUserId()
+        val updated = chatReadService.markRead(chatId, readerId, request)
+        return mapOf("updated" to updated)
     }
 }
