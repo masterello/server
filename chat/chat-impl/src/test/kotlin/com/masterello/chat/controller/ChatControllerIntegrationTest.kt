@@ -19,8 +19,8 @@ import com.masterello.chat.ChatTestDataProvider.Companion.tokenCookie
 import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
-import com.masterello.chat.dto.GetOrCreateGeneralChatDTO
-import com.masterello.chat.dto.GetOrCreateTaskChatDTO
+import com.masterello.chat.dto.CreateGeneralChatDTO
+import com.masterello.chat.dto.CreateTaskChatDTO
 import com.masterello.chat.repository.ChatRepository
 import com.masterello.commons.test.AbstractWebIntegrationTest
 import com.masterello.task.service.ReadOnlyTaskService
@@ -69,7 +69,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
         val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatBefore)
-        val chat= GetOrCreateTaskChatDTO(
+        val chat= CreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
          )
@@ -110,7 +110,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
         val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNull(chatBefore)
-        val chat= GetOrCreateTaskChatDTO(
+        val chat= CreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -147,7 +147,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.empty())
 
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chat= GetOrCreateTaskChatDTO(
+        val chat= CreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -176,7 +176,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.of(buildWorker(WORKER)))
 
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
-        val chat= GetOrCreateTaskChatDTO(
+        val chat= CreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -205,7 +205,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(workerService.getWorkerInfo(WORKER)).thenReturn(Optional.of(buildWorker(WORKER)))
 
         whenever(taskService.getTask(TASK_ID)).thenReturn(null)
-        val chat= GetOrCreateTaskChatDTO(
+        val chat= CreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -231,7 +231,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
     @Test
     fun `test chat request fails for anonymous user`() {
 
-        val chat= GetOrCreateTaskChatDTO(
+        val chat= CreateTaskChatDTO(
                 taskId = TASK_ID,
                 workerId = WORKER
         )
@@ -264,10 +264,6 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
         val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatBefore)
-        val chat= GetOrCreateTaskChatDTO(
-                taskId = TASK_ID,
-                workerId = WORKER_WITH_CHAT
-        )
 
         //@formatter:off
 
@@ -304,10 +300,6 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
         whenever(taskService.getTask(TASK_ID)).thenReturn(task)
         val chatBefore = chatRepository.findByUserIdAndWorkerIdAndTaskIdAndChatType(USER, WORKER_WITH_CHAT, TASK_ID, ChatType.TASK_SPECIFIC)
         assertNotNull(chatBefore)
-        val chat= GetOrCreateTaskChatDTO(
-                taskId = TASK_ID,
-                workerId = WORKER_WITH_CHAT
-        )
 
         //@formatter:off
 
@@ -352,7 +344,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .accept("application/json")
                 .contentType("application/json")
                 .cookie(tokenCookie())
-                .with().body(GetOrCreateGeneralChatDTO(WORKER, USER))
+                .with().body(CreateGeneralChatDTO(WORKER, USER))
             .`when`()
                 .post("/api/chat")
             .then()
@@ -385,7 +377,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
                 .accept("application/json")
                 .contentType("application/json")
                 .cookie(tokenCookie())
-                .with().body(GetOrCreateGeneralChatDTO(WORKER, USER))
+                .with().body(CreateGeneralChatDTO(WORKER, USER))
             .`when`()
                 .post("/api/chat")
             .then()
@@ -407,7 +399,7 @@ class ChatControllerIntegrationTest : AbstractWebIntegrationTest() {
             .given()
                 .accept("application/json")
                 .contentType("application/json")
-                .with().body(GetOrCreateGeneralChatDTO(WORKER, USER))
+                .with().body(CreateGeneralChatDTO(WORKER, USER))
             .`when`()
                 .post("/api/chat")
             .then()

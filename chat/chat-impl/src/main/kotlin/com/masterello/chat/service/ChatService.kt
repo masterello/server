@@ -47,8 +47,10 @@ class ChatService(
         log.info { "Get general chat: user=$userId, worker=$workerId" }
         val chat = findExistingGeneralChat(userId, workerId)
                 ?: throw ChatNotFoundException("General chat between $userId and $workerId not found")
+        val me = getAuthenticatedUserId()
+        val unread = messageReadRepository.countByIdRecipientIdAndChatIdAndReadAtIsNull(me, chat.id!!)
         val participantsInfo = getChatParticipantsInfo(userId, workerId)
-        return chatMapper.toDTO(chat, participantsInfo)
+        return chatMapper.toDTO(chat, participantsInfo, unread)
     }
 
     fun createGeneralChatPublic(userId: UUID, workerId: UUID): ChatDTO {

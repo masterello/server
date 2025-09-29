@@ -57,4 +57,5 @@ interface MessageReadRepository : JpaRepository<MessageRead, MessageReadId> {
 
     @Query("select r from MessageRead r where r.id.messageId in :messageIds AND readAt IS NOT NULL")
     fun findAllByMessageIds(@Param("messageIds") messageIds: List<UUID>): List<MessageRead>
+    fun countByIdRecipientIdAndChatIdAndReadAtIsNull(recipientId: UUID, chatId: UUID): Long
 }

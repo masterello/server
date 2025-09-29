@@ -2,8 +2,8 @@ package com.masterello.chat.controller
 
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatHistoryDTO
-import com.masterello.chat.dto.GetOrCreateGeneralChatDTO
-import com.masterello.chat.dto.GetOrCreateTaskChatDTO
+import com.masterello.chat.dto.CreateGeneralChatDTO
+import com.masterello.chat.dto.CreateTaskChatDTO
 import com.masterello.chat.dto.MarkReadRequest
 import com.masterello.chat.service.ChatReadService
 import com.masterello.chat.service.ChatService
@@ -38,7 +38,7 @@ class ChatController(
 
     @PostMapping("")
     @PreAuthorize("@chatSecurity.canCreateGeneralChat(#request.userId, #request.workerId)")
-    fun createGeneralChat(@RequestBody request: GetOrCreateGeneralChatDTO): ChatDTO {
+    fun createGeneralChat(@RequestBody request: CreateGeneralChatDTO): ChatDTO {
         return chatService.createGeneralChatPublic(request.userId, request.workerId)
     }
 
@@ -56,7 +56,7 @@ class ChatController(
 
     @PostMapping("/task")
     @PreAuthorize("@chatSecurity.canCreateTaskChat(#request.taskId, #request.workerId)")
-    fun createTaskChat(@RequestBody request: GetOrCreateTaskChatDTO): ChatDTO {
+    fun createTaskChat(@RequestBody request: CreateTaskChatDTO): ChatDTO {
         return chatService.createTaskChatPublic(request.taskId, request.workerId)
     }
 
