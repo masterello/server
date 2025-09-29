@@ -10,7 +10,7 @@ import java.util.*
 @Component
 class ChatMapper {
     
-    fun toDTO(chat: Chat, chatParticipantsInfo: Map<UUID, MasterelloUser>): ChatDTO {
+    fun toDTO(chat: Chat, chatParticipantsInfo: Map<UUID, MasterelloUser>, unreadCount: Long = 0): ChatDTO {
         // Null safety checks
         val chatId = chat.id ?: throw IllegalStateException("Chat ID cannot be null")
         val createdAt = chat.createdAt ?: throw IllegalStateException("Chat created timestamp cannot be null")
@@ -30,7 +30,8 @@ class ChatMapper {
             workerName = getName(worker),
             createdAt = createdAt,
             lastMessageAt = chat.lastMessageAt,
-            lastMessagePreview = chat.lastMessagePreview
+            lastMessagePreview = chat.lastMessagePreview,
+            unreadCount = unreadCount
         )
     }
 

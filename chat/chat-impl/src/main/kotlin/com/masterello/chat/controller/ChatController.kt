@@ -111,4 +111,12 @@ class ChatController(
         val updated = chatReadService.markRead(chatId, readerId, request)
         return mapOf("updated" to updated)
     }
+
+    @Operation(summary = "Get total unread count for current user")
+    @GetMapping("/unread/total")
+    fun getTotalUnread(): Map<String, Any> {
+        val uid = AuthContextUtil.getAuthenticatedUserId()
+        val total = chatReadService.totalUnread(uid)
+        return mapOf("total" to total)
+    }
 }

@@ -121,7 +121,11 @@ class ChatService(
         val p = chatRepository.findNonEmptyChatsFor(me, pageable)
         val participants = p.content.flatMap { listOf(it.userId, it.workerId) }.toSet()
         val info = userService.findAllByIds(participants)
-        val items = p.content.map { chatMapper.toDTO(it, info) }
+        val unreadMap: Map<UUID, Long> = messageReadRepository.unreadPerChat(me)
+                .associate { it.getChatId() to it.getUnread() }
+        val items = p.content.map { c ->
+            chatMapper.toDTO(c, info, unreadMap[c.id!!] ?: 0L)
+        }
         return ChatPageDTO(
                 items = items,
                 page = page.coerceAtLeast(1),
@@ -153,7 +157,10 @@ class ChatService(
         }
         val participants = list.flatMap { listOf(it.userId, it.workerId) }.toSet()
         val info = userService.findAllByIds(participants)
-        val items = list.map { chatMapper.toDTO(it, info) }
+        val unreadMap: Map<UUID, Long> = messageReadRepository.unreadPerChat(me).associate { it.getChatId() to it.getUnread() }
+        val items = list.map { c ->
+            chatMapper.toDTO(c, info, unreadMap[c.id!!] ?: 0L)
+        }
         val nextCursor = list.lastOrNull()?.lastMessageAt
         val hasMore = list.size >= limit
         return ChatScrollDTO(

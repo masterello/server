@@ -29,7 +29,10 @@
         <!-- Sidebar -->
         <aside id="chatSidebar" style="width:320px; border-right:1px solid #eee; padding-right:12px; display:flex; flex-direction:column; height:100%; overflow:hidden;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
-                <h3 style="margin:8px 0;">My messages</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:8px 0;">My messages</h3>
+                    <span id="totalUnreadBadge" class="badge" style="display:none;" title="Total unread">0</span>
+                </div>
                 <button onclick="openNewChatPanel()" title="Create new chat" style="padding:6px 10px;">+ New</button>
             </div>
             <input id="chatSearch" type="text" placeholder="Search" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
@@ -246,6 +249,8 @@
             chatPage.page = 1;
             await loadCurrentUserAndChats(true);
             wireSearch();
+            // Fetch server-side total unread to account for chats not yet paged in
+            try { await fetchTotalUnread(); } catch(_) {}
             // Wire infinite scroll for chat list
             var list = document.getElementById('chatList');
             if (list) {
@@ -308,6 +313,8 @@
                             unreadCounts[cid] = (unreadCounts[cid] || 0) + 1;
                             // If row exists already, reflect immediately
                             updateBadge(cid, unreadCounts[cid]);
+                            // Also refresh total unread from server to include off-screen chats
+                            fetchTotalUnread().catch(function(_){});
                         }
                         // Update cache if exists
                         if (myChatsIndex[cid]) {
@@ -434,6 +441,8 @@
         row.appendChild(badge);
         row.onclick = function(){ selectChat(c.id); };
         list.appendChild(row);
+        // Initialize badge from DTO unreadCount if provided; persist to unreadCounts
+        if (typeof c.unreadCount === 'number') unreadCounts[c.id] = c.unreadCount;
         // Initialize badge from persisted unread count
         if (typeof unreadCounts[c.id] === 'number') updateBadge(c.id, unreadCounts[c.id]);
     }
@@ -443,7 +452,48 @@
         if (!b) return;
         if (count > 0) { b.style.display = 'inline-block'; b.textContent = '+' + count; }
         else { b.style.display = 'none'; b.textContent = '0'; }
+        // Also refresh the total unread badge
+        updateTotalUnread();
     }
+
+    function updateTotalUnread() {
+        try {
+            var total = 0;
+            Object.keys(unreadCounts).forEach(function(id){
+                var v = unreadCounts[id] || 0;
+                if (typeof v === 'number' && v > 0) total += v;
+            });
+            var badge = document.getElementById('totalUnreadBadge');
+            if (!badge) return;
+            if (total > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = String(total);
+            } else {
+                badge.style.display = 'none';
+                badge.textContent = '0';
+            }
+        } catch (e) { console.warn('updateTotalUnread error', e); }
+    }
+
+    async function fetchTotalUnread() {
+        try {
+            const resp = await fetch('/api/chat/unread/total', { credentials: 'include' });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const total = Number(data && data.total);
+            var badge = document.getElementById('totalUnreadBadge');
+            if (!badge) return;
+            if (!isNaN(total) && total > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = String(total);
+            } else {
+                badge.style.display = 'none';
+                badge.textContent = '0';
+            }
+        } catch (e) { console.warn('fetchTotalUnread error', e); }
+    }
+
+    // NOTE: No separate unread snapshot fetch; counts are provided per chat item via unreadCount
 
     async function ensureWebSocketConnected() {
         if (stompClient && stompClient.connected) return;
@@ -1027,6 +1077,8 @@
             });
             // Optimistically clear unread badge for this chat
             unreadCounts[chatId] = 0; updateBadge(chatId, 0);
+            // Refresh total unread from server to ensure accuracy across all chats
+            fetchTotalUnread().catch(function(_){});
         } catch (e) { console.warn('markReadVisible error', e); }
     }
 

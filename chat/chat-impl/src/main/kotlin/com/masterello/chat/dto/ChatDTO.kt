@@ -14,5 +14,6 @@ data class ChatDTO(
     val workerName: String,
     val createdAt: OffsetDateTime,
     val lastMessageAt: OffsetDateTime?,
-    val lastMessagePreview: String?
+    val lastMessagePreview: String?,
+    val unreadCount: Long = 0
 )

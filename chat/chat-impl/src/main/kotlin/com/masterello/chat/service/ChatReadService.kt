@@ -26,16 +26,20 @@ class ChatReadService(
         if (updated > 0) {
             // Broadcast read receipt to chat topic for realtime UI updates
             messagingTemplate.convertAndSend(
-                "/topic/read-receipts/$chatId",
-                ReadReceiptDTO(
-                    chatId = chatId,
-                    readerId = readerId,
-                    readAt = now,
-                    messageIds = request.messageIds,
-                    visibleUpTo = request.visibleUpTo ?: now
-                )
+                    "/topic/read-receipts/$chatId",
+                    ReadReceiptDTO(
+                            chatId = chatId,
+                            readerId = readerId,
+                            readAt = now,
+                            messageIds = request.messageIds,
+                            visibleUpTo = request.visibleUpTo ?: now
+                    )
             )
         }
         return updated
+    }
+
+    fun totalUnread(recipientId: UUID): Long {
+        return messageReadRepository.countByIdRecipientIdAndReadAtIsNull(recipientId)
     }
 }
