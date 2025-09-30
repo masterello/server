@@ -11,24 +11,24 @@ import java.util.UUID
 @Entity
 @Table(name = "message_reads")
 data class MessageRead(
-    @EmbeddedId
-    val id: MessageReadId,
+        @EmbeddedId
+        val id: MessageReadId,
 
-    @Column(name = "chat_id", nullable = false)
-    val chatId: UUID,
+        @Column(name = "chat_id", nullable = false)
+        val chatId: UUID,
 
-    @Column(name = "read_at")
-    var readAt: OffsetDateTime? = null,
+        @Column(name = "read_at")
+        var readAt: OffsetDateTime? = null,
 
-    @Column(name = "created_at", nullable = false)
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
+        @Column(name = "created_at", nullable = false)
+        val createdAt: OffsetDateTime = OffsetDateTime.now()
 )
 
 @Embeddable
 data class MessageReadId(
-    @Column(name = "message_id")
-    val messageId: UUID,
+        @Column(name = "message_id")
+        val messageId: UUID,
 
-    @Column(name = "recipient_id")
-    val recipientId: UUID
+        @Column(name = "recipient_id")
+        val recipientId: UUID
 )
