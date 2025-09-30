@@ -9,6 +9,9 @@ import com.masterello.chat.ChatTestDataProvider.Companion.USER
 import com.masterello.chat.ChatTestDataProvider.Companion.WORKER_WITH_CHAT
 import com.masterello.chat.ChatTestDataProvider.Companion.tokenCookie
 import com.masterello.chat.dto.ChatMessageDTO
+import com.masterello.chat.dto.InboxItemDTO
+import com.masterello.chat.repository.ChatRepository
+import com.masterello.chat.repository.MessageReadRepository
 import com.masterello.commons.test.AbstractWebIntegrationTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -44,6 +47,10 @@ class ChatWebSocketIntegrationTest : AbstractWebIntegrationTest() {
     private lateinit var stompClient: WebSocketStompClient
     @Autowired
     private lateinit var objectMapper: ObjectMapper
+    @Autowired
+    private lateinit var chatRepository: ChatRepository
+    @Autowired
+    private lateinit var messageReadRepository: MessageReadRepository
 
     @BeforeEach
     fun setup() {
@@ -54,26 +61,57 @@ class ChatWebSocketIntegrationTest : AbstractWebIntegrationTest() {
     }
 
     @Test
-    fun `test new messages received`() {
+    fun `test new messages received and inbox + read tracking`() {
         val userSession = initTheSessionForUser(USER, listOf(AuthZRole.USER))
-        val userQueue = subscribe(userSession)
+        val userQueue = subscribeMessages(userSession)
+        val userInbox = subscribeInbox(userSession, USER)
 
 
         val workerSession = initTheSessionForUser(WORKER_WITH_CHAT, listOf(AuthZRole.WORKER))
-        val workerQueue  = subscribe(workerSession)
+        val workerQueue  = subscribeMessages(workerSession)
+        val workerInbox = subscribeInbox(workerSession, WORKER_WITH_CHAT)
 
+        val baseUnreadForWorker = messageReadRepository.countByIdRecipientIdAndReadAtIsNull(WORKER_WITH_CHAT)
         userSession.send("/ws/sendMessage/$CHAT", "Message to worker")
 
         val messageW1 = workerQueue.poll(1, TimeUnit.SECONDS)
-        assertEquals(messageW1.message, "Message to worker")
+        assertEquals("Message to worker", messageW1.message)
         val messageU1 = userQueue.poll(1, TimeUnit.SECONDS)
-        assertEquals(messageU1.message, "Message to worker")
+        assertEquals("Message to worker", messageU1.message)
+        // Chat denorm updated
+        val chatAfterUserMsg = chatRepository.findById(CHAT).get()
+        assertEquals("Message to worker", chatAfterUserMsg.lastMessagePreview)
+        // Inbox events for both participants
+        val inboxForWorker1 = workerInbox.poll(1, TimeUnit.SECONDS)
+        assertEquals(CHAT, inboxForWorker1.chatId)
+        assertEquals("Message to worker", inboxForWorker1.lastMessagePreview)
+        assertEquals(USER, inboxForWorker1.senderId)
+        val inboxForUser1 = userInbox.poll(1, TimeUnit.SECONDS)
+        assertEquals(CHAT, inboxForUser1.chatId)
+        assertEquals("Message to worker", inboxForUser1.lastMessagePreview)
+        assertEquals(USER, inboxForUser1.senderId)
+        // Read tracking: unread for worker increased
+        val unreadForWorker = messageReadRepository.countByIdRecipientIdAndReadAtIsNull(WORKER_WITH_CHAT)
+        assertEquals(baseUnreadForWorker + 1, unreadForWorker)
 
+        val baseUnreadForUser = messageReadRepository.countByIdRecipientIdAndReadAtIsNull(USER)
         workerSession.send("/ws/sendMessage/$CHAT", "Message to user")
         val messageW2 = workerQueue.poll(1, TimeUnit.SECONDS)
-        assertEquals(messageW2.message, "Message to user")
+        assertEquals("Message to user", messageW2.message)
         val messageU2 = userQueue.poll(1, TimeUnit.SECONDS)
-        assertEquals(messageU2.message, "Message to user")
+        assertEquals("Message to user", messageU2.message)
+        val chatAfterWorkerMsg = chatRepository.findById(CHAT).get()
+        assertEquals("Message to user", chatAfterWorkerMsg.lastMessagePreview)
+        val inboxForUser2 = userInbox.poll(1, TimeUnit.SECONDS)
+        assertEquals(CHAT, inboxForUser2.chatId)
+        assertEquals("Message to user", inboxForUser2.lastMessagePreview)
+        assertEquals(WORKER_WITH_CHAT, inboxForUser2.senderId)
+        val inboxForWorker2 = workerInbox.poll(1, TimeUnit.SECONDS)
+        assertEquals(CHAT, inboxForWorker2.chatId)
+        assertEquals("Message to user", inboxForWorker2.lastMessagePreview)
+        assertEquals(WORKER_WITH_CHAT, inboxForWorker2.senderId)
+        val unreadForUser = messageReadRepository.countByIdRecipientIdAndReadAtIsNull(USER)
+        assertEquals(baseUnreadForUser + 1, unreadForUser)
     }
 
     private fun initTheSessionForUser(userId: UUID, roles: List<AuthZRole>): StompSession {
@@ -90,10 +128,16 @@ class ChatWebSocketIntegrationTest : AbstractWebIntegrationTest() {
                 .get(1, TimeUnit.SECONDS)
     }
 
-    private fun subscribe(session: StompSession): BlockingQueue<ChatMessageDTO> {
+    private fun subscribeMessages(session: StompSession): BlockingQueue<ChatMessageDTO> {
         val queue = LinkedBlockingQueue<ChatMessageDTO>();
         session.subscribe("/topic/messages/$CHAT", TestStompFrameHandler(queue))
         return queue;
+    }
+
+    private fun subscribeInbox(session: StompSession, userId: UUID): BlockingQueue<InboxItemDTO> {
+        val queue = LinkedBlockingQueue<InboxItemDTO>()
+        session.subscribe("/topic/inbox/$userId", TestInboxFrameHandler(queue))
+        return queue
     }
 
     private fun authenticate(userId: UUID, roles: List<AuthZRole>) {
@@ -104,24 +148,6 @@ class ChatWebSocketIntegrationTest : AbstractWebIntegrationTest() {
                         .userRoles(roles)
                         .emailVerified(true)
                         .build()))
-    }
-    private fun getExpectedHistory(): List<ChatMessageDTO> {
-        return listOf(
-                ChatMessageDTO(
-                        id = UUID.fromString("1f4e6b79-bc8e-4b7e-9f1a-5ad9e85645f2"),
-                        chatId = CHAT,
-                        message = "Hello, World!",
-                        createdBy = USER,
-                        createdAt = OffsetDateTime.parse("2025-01-12T10:15:30+00:00")
-                ),
-                ChatMessageDTO(
-                        id = UUID.fromString("2a6f4c8d-d0e6-476d-a0d1-3b9b6c5c78e9"),
-                        chatId = CHAT,
-                        message = "How are you?",
-                        createdBy = WORKER_WITH_CHAT,
-                        createdAt = OffsetDateTime.parse("2025-01-12T10:16:30+00:00")
-                )
-        )
     }
 }
 
@@ -142,5 +168,14 @@ private class TestStompFrameHandler (
 
     override fun handleFrame(headers: StompHeaders, payload: Any?) {
         queue.add(payload as ChatMessageDTO)
+    }
+}
+
+private class TestInboxFrameHandler(
+    private val queue: BlockingQueue<InboxItemDTO>
+) : StompFrameHandler {
+    override fun getPayloadType(headers: StompHeaders): Type = InboxItemDTO::class.java
+    override fun handleFrame(headers: StompHeaders, payload: Any?) {
+        queue.add(payload as InboxItemDTO)
     }
 }

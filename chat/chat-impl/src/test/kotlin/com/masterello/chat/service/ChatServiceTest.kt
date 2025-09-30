@@ -7,10 +7,11 @@ import com.masterello.chat.domain.Chat
 import com.masterello.chat.domain.ChatType
 import com.masterello.chat.dto.ChatDTO
 import com.masterello.chat.dto.ChatMessageDTO
-import com.masterello.chat.exceptions.ChatCreationValidationException
 import com.masterello.chat.mapper.ChatMapper
 import com.masterello.chat.mapper.MessageMapper
 import com.masterello.chat.repository.ChatRepository
+import com.masterello.chat.repository.MessageReadRepository
+import com.masterello.chat.repository.MessageReadRepository.UnreadPerChat
 import com.masterello.chat.repository.MessageRepository
 import com.masterello.commons.security.data.MasterelloAuthentication
 import com.masterello.task.dto.TaskDto
@@ -26,7 +27,9 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
-import org.mockito.kotlin.*
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.whenever
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
@@ -34,6 +37,8 @@ import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
 import java.time.OffsetDateTime
 import java.util.*
+
+private const val UNREAD_MESSAGES = 5L
 
 class ChatServiceTest {
 
@@ -57,6 +62,10 @@ class ChatServiceTest {
 
     @Mock
     private lateinit var userService: MasterelloUserService
+
+    @Mock
+    private lateinit var messageReadRepository: MessageReadRepository
+
 
     @InjectMocks
     private lateinit var chatService: ChatService
@@ -99,8 +108,10 @@ class ChatServiceTest {
                         workerId to buildUser(workerId, "Jane", "Worker")
                 )
         )
+        whenever(messageReadRepository.countByIdRecipientIdAndChatIdAndReadAtIsNull(userId, existingChat.id!!))
+                .thenReturn(UNREAD_MESSAGES)
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
-        whenever(chatMapper.toDTO(eq(existingChat), any())).thenReturn(
+        whenever(chatMapper.toDTO(eq(existingChat), any(), eq(UNREAD_MESSAGES))).thenReturn(
                 ChatDTO(
                         id = existingChat.id!!,
                         userId = existingChat.userId,
@@ -111,7 +122,8 @@ class ChatServiceTest {
                         taskId = existingChat.taskId,
                         createdAt = existingChat.createdAt!!,
                         lastMessageAt = null,
-                        lastMessagePreview = null
+                        lastMessagePreview = null,
+                        unreadCount = UNREAD_MESSAGES
                 )
         )
 
@@ -132,9 +144,10 @@ class ChatServiceTest {
     fun `createGeneralChatPublic should create new general chat if none exists`() {
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
                 .thenReturn(null)
+        val chatId = UUID.randomUUID()
         whenever(chatRepository.save(Mockito.any(Chat::class.java))).thenAnswer {
             val chat = it.getArgument<Chat>(0)
-            createGeneralChat(chat.userId, chat.workerId)
+            createGeneralChat(chat.userId, chat.workerId, chatId)
         }
         whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
                 mapOf(
@@ -143,7 +156,7 @@ class ChatServiceTest {
                 )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
-        whenever(chatMapper.toDTO(any<Chat>(), any())).thenAnswer {
+        whenever(chatMapper.toDTO(any<Chat>(), any(), eq(0))).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             ChatDTO(
                     id = chat.id!!,
@@ -155,7 +168,8 @@ class ChatServiceTest {
                     taskId = chat.taskId,
                     createdAt = chat.createdAt!!,
                     lastMessageAt = null,
-                    lastMessagePreview = null
+                    lastMessagePreview = null,
+                    unreadCount = 0
             )
         }
 
@@ -174,30 +188,10 @@ class ChatServiceTest {
     fun `createGeneralChatPublic should throw already exists on race`() {
         val existingChat = createGeneralChat(userId, workerId)
         whenever(chatRepository.findByUserIdAndWorkerIdAndChatType(userId, workerId, ChatType.GENERAL))
-                .thenReturn(null)
+                .thenReturn(existingChat)
         whenever(chatRepository.save(Mockito.any(Chat::class.java)))
                 .thenThrow(DataIntegrityViolationException("Duplicate key"))
-        whenever(userService.findAllByIds(setOf(userId, workerId))).thenReturn(
-                mapOf(
-                        userId to buildUser(userId, "John", "Doe"),
-                        workerId to buildUser(workerId, "Jane", "Worker")
-                )
-        )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
-        whenever(chatMapper.toDTO(eq(existingChat), any())).thenReturn(
-                ChatDTO(
-                        id = existingChat.id!!,
-                        userId = existingChat.userId,
-                        workerId = existingChat.workerId,
-                        userName = "John Doe",
-                        workerName = "Jane Worker",
-                        chatType = existingChat.chatType,
-                        taskId = existingChat.taskId,
-                        createdAt = existingChat.createdAt!!,
-                        lastMessageAt = null,
-                        lastMessagePreview = null
-                )
-        )
 
         assertThrows<com.masterello.chat.exceptions.ChatAlreadyExistsException> {
             chatService.createGeneralChatPublic(userId, workerId)
@@ -234,7 +228,7 @@ class ChatServiceTest {
                 )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
-        whenever(chatMapper.toDTO(eq(existingChat), any())).thenReturn(
+        whenever(chatMapper.toDTO(eq(existingChat), any(), eq(0))).thenReturn(
                 ChatDTO(
                         id = existingChat.id!!,
                         userId = existingChat.userId,
@@ -245,7 +239,8 @@ class ChatServiceTest {
                         taskId = existingChat.taskId,
                         createdAt = existingChat.createdAt!!,
                         lastMessageAt = null,
-                        lastMessagePreview = null
+                        lastMessagePreview = null,
+                        unreadCount = 0
                 )
         )
 
@@ -278,7 +273,7 @@ class ChatServiceTest {
                 )
         )
         whenever(workerService.getWorkerInfo(workerId)).thenReturn(Optional.of(buildWorker(workerId)))
-        whenever(chatMapper.toDTO(any<Chat>(), any())).thenAnswer {
+        whenever(chatMapper.toDTO(any<Chat>(), any(), eq(0))).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             ChatDTO(
                     id = chat.id!!,
@@ -290,7 +285,8 @@ class ChatServiceTest {
                     taskId = chat.taskId,
                     createdAt = chat.createdAt!!,
                     lastMessageAt = null,
-                    lastMessagePreview = null
+                    lastMessagePreview = null,
+                    unreadCount = 0
             )
         }
 
@@ -321,7 +317,7 @@ class ChatServiceTest {
 
         whenever(messageRepository.findByChatIdAndCreatedAtBefore(eq(chatId), eq(before), any<PageRequest>()))
                 .thenReturn(mockPage)
-        whenever(messageMapper.toDto(any())).thenAnswer {
+        whenever(messageMapper.toDto(any(), any())).thenAnswer {
             val message = it.getArgument<com.masterello.chat.domain.Message>(0)
             ChatMessageDTO(
                     id = message.id!!,
@@ -359,7 +355,10 @@ class ChatServiceTest {
                         chat2.workerId to buildUser(chat2.workerId, "Bob", "Builder")
                 )
         )
-        whenever(chatMapper.toDTO(any<Chat>(), any())).thenAnswer {
+        whenever(messageReadRepository.unreadPerChat(userId))
+                .thenReturn(listOf(UnreadPerChatImpl(chat1.id!!, UNREAD_MESSAGES),
+                        UnreadPerChatImpl(chat2.id!!, UNREAD_MESSAGES)))
+        whenever(chatMapper.toDTO(any<Chat>(), any(), eq(UNREAD_MESSAGES))).thenAnswer {
             val chat = it.getArgument<Chat>(0)
             ChatDTO(
                     id = chat.id!!,
@@ -371,7 +370,8 @@ class ChatServiceTest {
                     taskId = chat.taskId,
                     createdAt = chat.createdAt!!,
                     lastMessageAt = null,
-                    lastMessagePreview = null
+                    lastMessagePreview = null,
+                    unreadCount = UNREAD_MESSAGES
             )
         }
 
@@ -384,9 +384,9 @@ class ChatServiceTest {
 
     // === Helper Methods ===
 
-    private fun createGeneralChat(userId: UUID, workerId: UUID): Chat {
+    private fun createGeneralChat(userId: UUID, workerId: UUID, chatId: UUID = UUID.randomUUID()): Chat {
         return Chat(
-                id = UUID.randomUUID(),
+                id = chatId,
                 userId = userId,
                 workerId = workerId,
                 chatType = ChatType.GENERAL,
@@ -433,5 +433,16 @@ class ChatServiceTest {
                 createdDate = OffsetDateTime.now(),
                 updatedDate = OffsetDateTime.now()
         )
+    }
+
+    private class UnreadPerChatImpl(var vChatId: UUID, var vUnreadCount: Long) : UnreadPerChat{
+        override fun getChatId(): UUID {
+            return vChatId
+        }
+
+        override fun getUnread(): Long {
+            return vUnreadCount
+        }
+
     }
 }

@@ -29,7 +29,10 @@
         <!-- Sidebar -->
         <aside id="chatSidebar" style="width:320px; border-right:1px solid #eee; padding-right:12px; display:flex; flex-direction:column; height:100%; overflow:hidden;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
-                <h3 style="margin:8px 0;">My messages</h3>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 style="margin:8px 0;">My messages</h3>
+                    <span id="totalUnreadBadge" class="badge" style="display:none;" title="Total unread">0</span>
+                </div>
                 <button onclick="openNewChatPanel()" title="Create new chat" style="padding:6px 10px;">+ New</button>
             </div>
             <input id="chatSearch" type="text" placeholder="Search" style="width:100%; padding:8px; border:1px solid #ddd; border-radius:6px;">
@@ -246,6 +249,8 @@
             chatPage.page = 1;
             await loadCurrentUserAndChats(true);
             wireSearch();
+            // Fetch server-side total unread to account for chats not yet paged in
+            try { await fetchTotalUnread(); } catch(_) {}
             // Wire infinite scroll for chat list
             var list = document.getElementById('chatList');
             if (list) {
@@ -308,6 +313,8 @@
                             unreadCounts[cid] = (unreadCounts[cid] || 0) + 1;
                             // If row exists already, reflect immediately
                             updateBadge(cid, unreadCounts[cid]);
+                            // Also refresh total unread from server to include off-screen chats
+                            fetchTotalUnread().catch(function(_){});
                         }
                         // Update cache if exists
                         if (myChatsIndex[cid]) {
@@ -434,6 +441,8 @@
         row.appendChild(badge);
         row.onclick = function(){ selectChat(c.id); };
         list.appendChild(row);
+        // Initialize badge from DTO unreadCount if provided; persist to unreadCounts
+        if (typeof c.unreadCount === 'number') unreadCounts[c.id] = c.unreadCount;
         // Initialize badge from persisted unread count
         if (typeof unreadCounts[c.id] === 'number') updateBadge(c.id, unreadCounts[c.id]);
     }
@@ -443,7 +452,48 @@
         if (!b) return;
         if (count > 0) { b.style.display = 'inline-block'; b.textContent = '+' + count; }
         else { b.style.display = 'none'; b.textContent = '0'; }
+        // Also refresh the total unread badge
+        updateTotalUnread();
     }
+
+    function updateTotalUnread() {
+        try {
+            var total = 0;
+            Object.keys(unreadCounts).forEach(function(id){
+                var v = unreadCounts[id] || 0;
+                if (typeof v === 'number' && v > 0) total += v;
+            });
+            var badge = document.getElementById('totalUnreadBadge');
+            if (!badge) return;
+            if (total > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = String(total);
+            } else {
+                badge.style.display = 'none';
+                badge.textContent = '0';
+            }
+        } catch (e) { console.warn('updateTotalUnread error', e); }
+    }
+
+    async function fetchTotalUnread() {
+        try {
+            const resp = await fetch('/api/chat/unread/total', { credentials: 'include' });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            const total = Number(data && data.total);
+            var badge = document.getElementById('totalUnreadBadge');
+            if (!badge) return;
+            if (!isNaN(total) && total > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = String(total);
+            } else {
+                badge.style.display = 'none';
+                badge.textContent = '0';
+            }
+        } catch (e) { console.warn('fetchTotalUnread error', e); }
+    }
+
+    // NOTE: No separate unread snapshot fetch; counts are provided per chat item via unreadCount
 
     async function ensureWebSocketConnected() {
         if (stompClient && stompClient.connected) return;
@@ -596,12 +646,16 @@
                     if (nearBottom) {
                         var chat = connectedChats[chatId]; if (chat) chat.newWhileScrolled = 0;
                         updateJumpToLatest(chatId);
+                        // Mark visible as read when at bottom
+                        try { await markReadVisible(chatId); } catch(_){}
                     }
                 } catch (e) { console.warn('scroll handler error', e); }
             };
         }
         // Save selected
         window.selectedChatId = chatId;
+        // After selecting, optimistically mark visible messages as read
+        setTimeout(function(){ markReadVisible(chatId).catch(function(e){ console.warn('markReadVisible failed', e); }); }, 0);
     }
 
     async function connectSelectedChat() {
@@ -726,6 +780,33 @@
                 if (window.selectedChatId === chatId) updateTypingHeader(chatId);
             } catch(e) { console.warn('typing parse error', e); }
         }));
+        // Read receipts subscription for realtime ticks/badge updates
+        subs.push(stompClient.subscribe('/topic/read-receipts/' + chatId, function (rcpt) {
+            try {
+                var dto = JSON.parse(rcpt.body);
+                var chat = connectedChats[chatId]; if (!chat) return;
+                var readerId = dto.readerId;
+                var applyTo = function(predicate){
+                    chat.messages.forEach(function(m){
+                        try {
+                            if (!predicate(m)) return;
+                            if (!Array.isArray(m.messageReadBy)) m.messageReadBy = [];
+                            var idx = m.messageReadBy.findIndex(function(x){ return String(x.readerId) === String(readerId); });
+                            var entry = { readerId: readerId, readAt: dto.readAt };
+                            if (idx >= 0) m.messageReadBy[idx] = entry; else m.messageReadBy.push(entry);
+                        } catch(_){}
+                    });
+                };
+                if (Array.isArray(dto.messageIds) && dto.messageIds.length > 0) {
+                    var idSet = {};
+                    dto.messageIds.forEach(function(id){ idSet[String(id)] = true; });
+                    applyTo(function(m){ return idSet[String(m.id)] === true; });
+                } else if (dto.visibleUpTo) {
+                    applyTo(function(m){ return new Date(m.createdAt) <= new Date(dto.visibleUpTo); });
+                }
+                if (window.selectedChatId === chatId) renderMessagesMulti(chatId, { scrollToBottom: false });
+            } catch(e) { console.warn('read receipt parse error', e); }
+        }));
         if (connectedChats[chatId]) connectedChats[chatId].subscriptions = subs;
     }
 
@@ -778,30 +859,49 @@
         var chat = connectedChats[chatId]; if (!chat) return;
         var myId = (currentUser && (currentUser.uuid || currentUser.id)) || null;
         var arr = Array.from(chat.messages.values()).sort(function(a,b){ return new Date(a && a.createdAt) - new Date(b && b.createdAt); });
-        arr.forEach(function(m){
-            var isOwn = myId && m && (m.createdBy === myId);
-            var bubble = document.createElement('div');
-            bubble.style.maxWidth = '65%';
-            bubble.style.margin = '6px 0';
-            bubble.style.padding = '8px 10px';
-            bubble.style.borderRadius = '12px';
-            bubble.style.display = 'inline-block';
-            if (isOwn) {
-                bubble.style.background = '#2b6cb0'; // blue
-                bubble.style.color = '#ffffff';
-                bubble.style.borderTopRightRadius = '4px';
-            } else {
-                bubble.style.background = '#eeeeee'; // neutral gray for counterpart
-                bubble.style.color = '#111111';
-                bubble.style.borderTopLeftRadius = '4px';
-            }
-            bubble.textContent = m.message;
-            var wrap = document.createElement('div');
-            wrap.style.display = 'flex';
-            wrap.style.justifyContent = isOwn ? 'flex-end' : 'flex-start';
-            wrap.appendChild(bubble);
-            thread.appendChild(wrap);
-        });
+            arr.forEach(function(m){
+                var isOwn = myId && m && (m.createdBy === myId);
+                var bubbleWrap = document.createElement('div');
+                bubbleWrap.style.display = 'flex';
+                bubbleWrap.style.flexDirection = 'column';
+                bubbleWrap.style.alignItems = isOwn ? 'flex-end' : 'flex-start';
+
+                var bubble = document.createElement('div');
+                bubble.id = 'msg-' + m.id;
+                bubble.style.maxWidth = '65%';
+                bubble.style.margin = '6px 0 2px 0';
+                bubble.style.padding = '8px 10px';
+                bubble.style.borderRadius = '12px';
+                bubble.style.display = 'inline-block';
+                if (isOwn) {
+                    bubble.style.background = '#2b6cb0'; // blue
+                    bubble.style.color = '#ffffff';
+                    bubble.style.borderTopRightRadius = '4px';
+                } else {
+                    bubble.style.background = '#eeeeee'; // neutral gray for counterpart
+                    bubble.style.color = '#111111';
+                    bubble.style.borderTopLeftRadius = '4px';
+                }
+                bubble.textContent = m.message;
+
+                bubbleWrap.appendChild(bubble);
+
+                // Seen indicator for my messages
+                if (isOwn) {
+                    var reads = Array.isArray(m.messageReadBy) ? m.messageReadBy : [];
+                    var counterpartId = getCounterpartId(chatId);
+                    var receipt = reads.find(function(x){ return String(x.readerId) === String(counterpartId); });
+                    var meta = document.createElement('div');
+                    meta.style.fontSize = '11px';
+                    meta.style.color = isOwn ? '#dbeafe' : '#666';
+                    meta.style.marginTop = '0px';
+                    meta.style.padding = '0 2px';
+                    meta.textContent = receipt && receipt.readAt ? ('Seen ' + new Date(receipt.readAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) : '';
+                    bubbleWrap.appendChild(meta);
+                }
+
+                thread.appendChild(bubbleWrap);
+            });
         if (options.scrollToBottom || atBottom) {
             thread.scrollTop = thread.scrollHeight;
         }
@@ -961,6 +1061,27 @@
         var panel = document.getElementById('newChatPanel');
         if (panel) panel.style.display = 'none';
     }
+    async function markReadVisible(chatId) {
+        try {
+            var chat = connectedChats[chatId]; if (!chat) return;
+            // Find the latest message timestamp we have
+            var latest = null;
+            chat.messages.forEach(function(m){ if (m && m.createdAt) { if (!latest || new Date(m.createdAt) > new Date(latest)) latest = m.createdAt; } });
+            if (!latest) return;
+            // POST mark-read up to latest visible
+            await fetch('/api/chat/' + encodeURIComponent(chatId) + '/read', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ visibleUpTo: latest })
+            });
+            // Optimistically clear unread badge for this chat
+            unreadCounts[chatId] = 0; updateBadge(chatId, 0);
+            // Refresh total unread from server to ensure accuracy across all chats
+            fetchTotalUnread().catch(function(_){});
+        } catch (e) { console.warn('markReadVisible error', e); }
+    }
+
     function updateJumpToLatest(chatId) {
         var btn = document.getElementById('jumpToLatestBtn');
         var thread = document.getElementById('chatThread');
