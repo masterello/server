@@ -830,11 +830,16 @@
             msgs.forEach(function(m){
                 if (m && m.id && !chat.messages.has(m.id)) chat.messages.set(m.id, m);
             });
-            // Update oldestAt
-            msgs.forEach(function(m){
-                if (!m || !m.createdAt) return;
-                if (!chat.oldestAt || new Date(m.createdAt) < new Date(chat.oldestAt)) chat.oldestAt = m.createdAt;
-            });
+            // Update oldestAt using nextCursor from response (more accurate than oldest message)
+            if (history.nextCursor) {
+                chat.oldestAt = history.nextCursor;
+            } else {
+                // Fallback to oldest message createdAt if no cursor
+                msgs.forEach(function(m){
+                    if (!m || !m.createdAt) return;
+                    if (!chat.oldestAt || new Date(m.createdAt) < new Date(chat.oldestAt)) chat.oldestAt = m.createdAt;
+                });
+            }
             chat.historyLoaded = true;
             renderMessagesMulti(chatId, { scrollToBottom: scrollToBottom, preserveTopGap: prepend, prevHeight: prevHeight });
             // If we prepended, maintain scroll position
@@ -843,8 +848,8 @@
                 var delta = newHeight - prevHeight;
                 threadEl.scrollTop = threadEl.scrollTop + delta;
             }
-            // Track if there might be more
-            chat.hasMore = (msgs.length >= limit);
+            // Use hasMore from response for accurate pagination state
+            chat.hasMore = history.hasMore !== undefined ? history.hasMore : (msgs.length >= limit);
         } catch (e) { console.warn('history error', e); }
     }
 

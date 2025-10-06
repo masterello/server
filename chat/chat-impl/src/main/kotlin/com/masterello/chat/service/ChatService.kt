@@ -2,6 +2,8 @@ package com.masterello.chat.service
 
 import com.masterello.chat.domain.Chat
 import com.masterello.chat.domain.ChatType
+import com.masterello.chat.domain.Message
+import com.masterello.chat.domain.MessageRead
 import com.masterello.chat.dto.*
 import com.masterello.chat.exceptions.ChatAlreadyExistsException
 import com.masterello.chat.exceptions.ChatNotFoundException
@@ -19,6 +21,7 @@ import com.masterello.user.value.MasterelloUser
 import com.masterello.worker.service.ReadOnlyWorkerService
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.dao.DataIntegrityViolationException
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -104,8 +107,33 @@ class ChatService(
         log.info { "Retrieving chat history: chatId=$chatId, limit=$limit" }
 
         // Fetch and return messages
-        val messages = fetchMessages(chatId, before, limit)
-        return ChatHistoryDTO(messages)
+        val messagesPage = fetchMessages(chatId, before, limit)
+        val reads = fetchReads(messagesPage)
+
+        val messages =
+                messagesPage.map { m -> messageMapper.toDto(m, reads.getOrDefault(m.id, emptyList())) }
+                .reversed()
+                .toList()
+
+        val nextCursor = messages.firstOrNull()?.createdAt
+        val hasMore = messagesPage.totalPages > 1
+        return ChatHistoryDTO(
+                messages = messages,
+                nextCursor = nextCursor,
+                hasMore = hasMore
+        )
+    }
+
+    fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int): Page<Message> {
+        val pageRequest = PageRequest.of(0, limit, Sort.by("createdAt").descending())
+        return messageRepository.findByChatIdAndCreatedAtBefore(chatId, before, pageRequest)
+    }
+
+    fun fetchReads(messages: Iterable<Message>): Map<UUID, List<MessageRead>> {
+        val ids = messages.mapNotNull { it.id }
+        return if (ids.isNotEmpty()) {
+            messageReadRepository.findAllByMessageIds(ids).groupBy { it.id.messageId }
+        } else emptyMap()
     }
 
     /**
@@ -222,19 +250,5 @@ class ChatService(
 
     private fun getChatParticipantsInfo(userId: UUID, workerId: UUID): Map<UUID, MasterelloUser> {
         return userService.findAllByIds(setOf(userId, workerId))
-    }
-
-    fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int): List<ChatMessageDTO> {
-        val pageRequest = PageRequest.of(0, limit, Sort.by("createdAt").descending())
-        val messages = messageRepository.findByChatIdAndCreatedAtBefore(chatId, before, pageRequest)
-        val ids = messages.mapNotNull { it.id }
-        val reads = if (ids.isNotEmpty()) {
-            messageReadRepository.findAllByMessageIds(ids).groupBy { it.id.messageId }
-        } else emptyMap()
-
-        return messages
-                .map { m -> messageMapper.toDto(m, reads.getOrDefault(m.id, emptyList())) }
-                .reversed()
-                .toList()
     }
 }
