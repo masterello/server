@@ -81,4 +81,7 @@ logging:
     org.springframework.web.socket.messaging.SubProtocolWebSocketHandler: DEBUG
     org.springframework.messaging.simp: DEBUG
     com.masterello.chat: DEBUG
+    # Enable Hibernate SQL logging
+    org.hibernate.SQL: debug
+    org.hibernate.type: trace
 
