@@ -106,17 +106,19 @@ class ChatService(
     fun getChatHistory(chatId: UUID, limit: Int, before: OffsetDateTime): ChatHistoryDTO {
         log.info { "Retrieving chat history: chatId=$chatId, limit=$limit" }
 
-        // Fetch and return messages
-        val messagesPage = fetchMessages(chatId, before, limit)
-        val reads = fetchReads(messagesPage)
+        // Fetch limit+1 messages to determine if there are more
+        val messagesList = fetchMessages(chatId, before, limit + 1)
+        val hasMore = messagesList.size > limit
+        
+        // Take only the requested limit
+        val messagesToReturn = if (hasMore) messagesList.dropLast(1) else messagesList
+        val reads = fetchReads(messagesToReturn)
 
-        val messages =
-                messagesPage.map { m -> messageMapper.toDto(m, reads.getOrDefault(m.id, emptyList())) }
+        val messages = messagesToReturn
+                .map { m -> messageMapper.toDto(m, reads.getOrDefault(m.id, emptyList())) }
                 .reversed()
-                .toList()
 
         val nextCursor = messages.firstOrNull()?.createdAt
-        val hasMore = messagesPage.totalPages > 1
         return ChatHistoryDTO(
                 messages = messages,
                 nextCursor = nextCursor,
@@ -124,9 +126,9 @@ class ChatService(
         )
     }
 
-    fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int): Page<Message> {
-        val pageRequest = PageRequest.of(0, limit, Sort.by("createdAt").descending())
-        return messageRepository.findByChatIdAndCreatedAtBefore(chatId, before, pageRequest)
+    fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int): List<Message> {
+        val pageable = PageRequest.of(0, limit, Sort.by("createdAt").descending())
+        return messageRepository.findByChatIdAndCreatedAtBefore(chatId, before, pageable)
     }
 
     fun fetchReads(messages: Iterable<Message>): Map<UUID, List<MessageRead>> {

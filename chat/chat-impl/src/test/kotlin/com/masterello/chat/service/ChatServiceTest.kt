@@ -313,10 +313,9 @@ class ChatServiceTest {
                 createMockMessage(UUID.randomUUID(), chatId, "Hello", userId),
                 createMockMessage(UUID.randomUUID(), chatId, "Hi there", workerId)
         )
-        val mockPage = PageImpl(mockMessages)
 
         whenever(messageRepository.findByChatIdAndCreatedAtBefore(eq(chatId), eq(before), any<PageRequest>()))
-                .thenReturn(mockPage)
+                .thenReturn(mockMessages)
         whenever(messageMapper.toDto(any(), any())).thenAnswer {
             val message = it.getArgument<com.masterello.chat.domain.Message>(0)
             ChatMessageDTO(
