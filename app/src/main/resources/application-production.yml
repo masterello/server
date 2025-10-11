@@ -109,7 +109,6 @@ management:
     mail:
       enabled: false
 
-logging:
-  level:
-    com.masterello.chat.config.LoggingHandshakeInterceptor: DEBUG
-    com.masterello.chat.service.ChatService: DEBUG
+#logging:
+#  level:
+#    com.masterello.chat.config.LoggingHandshakeInterceptor: DEBUG

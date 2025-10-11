@@ -81,18 +81,8 @@ class ChatSecurityExpressions(
      * This version accepts userId parameter for WebSocket contexts.
      */
     fun canAccessChat(userId: UUID, chatId: UUID): Boolean {
-        val start = System.currentTimeMillis()
-        try {
-            val chat = chatRepository.findById(chatId).orElse(null) ?: return false
-            return chat.userId == userId || chat.workerId == userId
-        } finally {
-            val duration = System.currentTimeMillis() - start
-            if (duration > 10) {
-                log.warn { "canAccessChat took ${duration}ms for chatId=$chatId" }
-            } else {
-                log.debug { "canAccessChat took ${duration}ms for chatId=$chatId" }
-            }
-        }
+        val chat = chatRepository.findById(chatId).orElse(null) ?: return false
+        return chat.userId == userId || chat.workerId == userId
     }
 
     /**

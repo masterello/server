@@ -1,7 +1,9 @@
 package com.masterello.commons.monitoring.logger
 
+import ch.qos.logback.classic.AsyncAppender
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.Appender
 import ch.qos.logback.core.AppenderBase
 import com.masterello.commons.monitoring.LogDto
 import com.masterello.commons.monitoring.LogSender
@@ -18,10 +20,27 @@ class ExternalLogAppender(
 ) : AppenderBase<ILoggingEvent>() {
 
     @PostConstruct
-    fun addAppenderToMasterelloLogger() {
+    fun addAppenderToRootLogger() {
+        val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
+        val loggerContext = rootLogger.loggerContext
+
+        if (rootLogger.getAppender("ExternalLogAsync") != null) return
+
+        this.context = loggerContext
         this.start()
-        val rootLogger = LoggerFactory.getLogger("root") as Logger
-        rootLogger.addAppender(this)
+
+        val async = AsyncAppender().apply {
+            name = "ExternalLogAsync"
+            context = loggerContext
+
+            queueSize = 8192
+            discardingThreshold = 0
+            isNeverBlock = true
+        }
+
+        async.addAppender(this as Appender<ILoggingEvent>)
+        async.start()
+        rootLogger.addAppender(async)
     }
 
     override fun append(eventObject: ILoggingEvent) {
