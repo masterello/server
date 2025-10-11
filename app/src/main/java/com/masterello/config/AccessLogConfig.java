@@ -17,7 +17,7 @@ public class AccessLogConfig {
     public WebServerFactoryCustomizer<TomcatServletWebServerFactory> accessLogValveCustomizer() {
         return factory -> factory.addContextValves(new AbstractAccessLogValve() {
             {
-                setPattern("[ACCESS] %h %t \"%r\" %s %b");
+                setPattern("[ACCESS] %h %t \"%r\" %s %b %{ms}T");
                 setConditionUnless("NO_LOG"); // skip if header present
             }
             @Override

@@ -112,3 +112,4 @@ management:
 logging:
   level:
     com.masterello.chat.config.LoggingHandshakeInterceptor: DEBUG
+    com.masterello.chat.service.ChatService: DEBUG
