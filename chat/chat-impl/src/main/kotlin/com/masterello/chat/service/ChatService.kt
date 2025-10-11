@@ -101,29 +101,40 @@ class ChatService(
 
     /**
      * Retrieves chat history.
-     * Authorization is handled at the controller level with @PreAuthorize.
      */
     fun getChatHistory(chatId: UUID, limit: Int, before: OffsetDateTime): ChatHistoryDTO {
-        log.info { "Retrieving chat history: chatId=$chatId, limit=$limit" }
+        val startTime = System.currentTimeMillis()
+        log.debug { "Retrieving chat history: chatId=$chatId, limit=$limit" }
 
         // Fetch limit+1 messages to determine if there are more
+        val t1 = System.currentTimeMillis()
         val messagesList = fetchMessages(chatId, before, limit + 1)
+        log.debug { "fetchMessages took ${System.currentTimeMillis() - t1}ms, returned ${messagesList.size} messages" }
+        
         val hasMore = messagesList.size > limit
         
         // Take only the requested limit
         val messagesToReturn = if (hasMore) messagesList.dropLast(1) else messagesList
+        
+        val t2 = System.currentTimeMillis()
         val reads = fetchReads(messagesToReturn)
+        log.debug { "fetchReads took ${System.currentTimeMillis() - t2}ms, returned ${reads.size} message reads" }
 
+        val t3 = System.currentTimeMillis()
         val messages = messagesToReturn
                 .map { m -> messageMapper.toDto(m, reads.getOrDefault(m.id, emptyList())) }
                 .reversed()
+        log.debug { "mapping took ${System.currentTimeMillis() - t3}ms" }
 
         val nextCursor = messages.firstOrNull()?.createdAt
-        return ChatHistoryDTO(
+        val result = ChatHistoryDTO(
                 messages = messages,
                 nextCursor = nextCursor,
                 hasMore = hasMore
         )
+        
+        log.debug { "getChatHistory TOTAL took ${System.currentTimeMillis() - startTime}ms" }
+        return result
     }
 
     fun fetchMessages(chatId: UUID, before: OffsetDateTime, limit: Int): List<Message> {
